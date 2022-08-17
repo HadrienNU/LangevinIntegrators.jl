@@ -9,12 +9,14 @@ module LangevinIntegrators
 using ConfParser
 using ForwardDiff # For automatic differentiation of potential
 using TimerOutputs
+using ApproxFun
 
 #Gérer aussi le module de @timeit_debug
 
 include("potentials.jl")
 include("force.jl")
 export ForceFromPotential
+export ForceFromBasis
 #Integrators
 
 include("integrators/integrators_types.jl")
@@ -34,7 +36,7 @@ export EM
 
 
 include("params.jl")
- 
+
 export read_conf,LangevinParams
 
 include("run.jl")

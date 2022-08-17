@@ -5,13 +5,16 @@ Read parameters file and launch the trajectories
 =#
 
 using Plots
-include("../src/LangevinIntegrators.jl")
-using .LangevinIntegrators
+using LangevinIntegrators
 
 
 let
     # params,integrator=read_conf("onetraj.ini")
-    integrator=EM(ForceFromPotential("Harmonic"),1.0,0.001)
+    # force=ForceFromPotential("Harmonic")
+    coeffs=zeros(Float64,(1,2))
+    coeffs[1,:]=[0,-2]
+    force=ForceFromBasis("Taylor",coeffs)
+    integrator=EM(force,1.0,0.001)
     params=LangevinParams()
 	state=init_trajectory(integrator; params = params)
 

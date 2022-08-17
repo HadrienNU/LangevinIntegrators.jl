@@ -21,10 +21,20 @@ function ForceFromPotential(potential::String,ndim=1::Int)
 end
 
 #Se baser sur ApproxFun et (BasisMatrices.jl/ Dierckx.jl) et probablement faire un sous-type selon le package sous jacent
-# struct ForceFromBasis <: AbstractForceFromBasis # 
-# 	basis::Basis
-# 	coeffs::Array
-# end
+struct ForceFromBasis <: AbstractForceFromBasis #
+	basis::Vector{Fun}
+	ndim::Int
+end
+
+function ForceFromBasis(type::String,coeffs::Array{TF}) where{TF<:AbstractFloat}
+	ndim=size(coeffs)[1]
+	function_space=getfield(ApproxFun, Symbol(type))
+	basis=Vector{Fun}(undef,ndim)
+	for d in 1:ndim
+		basis[d]=Fun(function_space,coeffs[d,:])
+	end
+	return ForceFromBasis(basis,ndim)
+end
 
 # struct ForceFromSplines <: AbstractForceFromBasis # Ca utilisera Dierckx.jl
 # end
@@ -32,6 +42,12 @@ end
 #La fonction qui calcule la force
 function forceUpdate!(force::ForceFromPotential,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
 	force.gradV!(f,x)
+end
+
+function forceUpdate!(force::ForceFromBasis,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
+	for d in 1:force.ndim
+		f[d]=force.basis[d](x[1]) # TODO, dealing with nd function
+	end
 end
 
 #function forceUpdate!(force::ForceFromSplines,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
