@@ -1,0 +1,13 @@
+name = "LangevinIntegrators"
+uuid = "563ade2f-8390-447b-b9b3-bcdc9d7fe8e5"
+authors = ["Hadrien <hadrien.vroylandt@sorbonne-universite.fr> and contributors"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
