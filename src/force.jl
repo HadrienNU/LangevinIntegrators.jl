@@ -42,6 +42,7 @@ end
 #La fonction qui calcule la force
 function forceUpdate!(force::ForceFromPotential,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
 	force.gradV!(f,x)
+	f.*=-1
 end
 
 function forceUpdate!(force::ForceFromBasis,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}

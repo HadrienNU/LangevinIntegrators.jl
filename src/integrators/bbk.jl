@@ -45,10 +45,10 @@ end
 
 function UpdateState!(state::BBKState, integrator::BBK)
 
-    @. state.p_mid = state.v - 0.5 * integrator.Δt * state.f - 0.5 * integrator.Δt * integrator.γ/integrator.M * state.v + integrator.σ * randn()
+    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f - 0.5 * integrator.Δt * integrator.γ/integrator.M * state.v + integrator.σ * randn()
     @. state.x = state.x + integrator.Δt/integrator.M * state.p_mid
     forceUpdate!(integrator.force,state.f, state.x)
-    @. state.v = (state.p_mid - 0.5 * integrator.Δt * state.f + integrator.σ * randn())/(1 + 0.5 * integrator.Δt * integrator.γ/integrator.M)
+    @. state.v = (state.p_mid + 0.5 * integrator.Δt * state.f + integrator.σ * randn())/(1 + 0.5 * integrator.Δt * integrator.γ/integrator.M)
 
     state
 end

@@ -46,7 +46,7 @@ end
 
 function UpdateState!(state::EMState, integrator::EM)
 
-    @. state.x = state.x - integrator.Δt * state.f + integrator.σ * randn()
+    @. state.x = state.x + integrator.Δt * state.f + integrator.σ * randn()
     forceUpdate!(integrator.force,state.f, state.x)
 
     state

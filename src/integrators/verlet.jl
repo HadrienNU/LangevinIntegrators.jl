@@ -33,9 +33,9 @@ function InitState(x₀, integrator::Verlet)
 end
 
 function UpdateState!(state::VerletState, integrator::Verlet)
-    @. state.p_mid = state.v - 0.5 * integrator.Δt * state.f;
+    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f;
     @. state.x = state.x + integrator.Δt * state.p_mid/integrator.M;
 	forceUpdate!(integrator.force,state.f,state.x)
-    @. state.v = state.p_mid - 0.5 * integrator.Δt * state.f;
+    @. state.v = state.p_mid + 0.5 * integrator.Δt * state.f;
     state
 end

@@ -61,9 +61,9 @@ function UpdateState!(state::ABOBAState, integrator::ABOBA)
 
     @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v/integrator.M
     forceUpdate!(integrator.force,state.f_mid,state.q_mid)
-    @. state.p_mid = state.v - 0.5 * integrator.Δt * state.f_mid
+    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
     @. state.p̂_mid = integrator.c₀ * state.p_mid + integrator.c₁ * integrator.sqrtM * randn()
-    @. state.v = state.p̂_mid - 0.5 * integrator.Δt * state.f_mid
+    @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
     @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v/integrator.M
 
     state

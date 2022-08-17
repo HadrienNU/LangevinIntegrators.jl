@@ -52,12 +52,12 @@ end
 
 function UpdateState!(state::BAOABState, integrator::BAOAB)
 
-    @. state.p_mid = state.v - 0.5 * integrator.Δt * state.f
+    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f
     @. state.q_mid = state.x + 0.5 * integrator.Δt * state.p_mid/integrator.M
     @. state.p̂_mid = integrator.c₀ * state.p_mid + integrator.c₁ * integrator.sqrtM * randn()
     @. state.x = state.q_mid + 0.5 * integrator.Δt * state.p̂_mid/integrator.M
     forceUpdate!(integrator.force,state.f,state.x)
-    @. state.v = state.p̂_mid - 0.5 * integrator.Δt * state.f
+    @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f
 
     state
 end
