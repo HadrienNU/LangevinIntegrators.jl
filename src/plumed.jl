@@ -1,15 +1,13 @@
 using CBinding
-
-#TODO: ça a l'air compliqu" de faire ça en dehors du scope global, à voir
+#TODO: ça a l'air compliqué de faire ça en dehors du scope global, à voir
+# Ou sinon on ne fait l'include dans le module que si necessaire
 #Modifier les dossiers d'inclusion selon les variables d'environment
 #En vrai, il faut surtout vérifier si les fichiers exists
 pathlib="/usr/local/lib/"
 pathinclude="/usr/local/include"
 
 c`-L$(pathlib) -llibplumed.so -I$(pathinclude)`
-c"""
-  #include <plumed/wrapper/Plumed.h>
-"""
+c"#include <plumed/wrapper/Plumed.h>"
 
 struct Plumed{TF<: AbstractFloat}
     plumedmain
