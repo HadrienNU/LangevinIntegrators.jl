@@ -1,24 +1,18 @@
 module Plumed
-
     using CBinding
-    #TODO: ça a l'air compliqué de faire ça en dehors du scope global, à voir
-    # Ou sinon on ne fait l'include dans le module que si necessaire
-    #Modifier les dossiers d'inclusion selon les variables d'environment
-    #En vrai, il faut surtout vérifier si les fichiers exists
 
-
-    const path_loc="/usr/local/"
-
+    # En fait si c'est dans les dossiers d'include normal ça va le trouver sans souci
+    # Donc on peut se contenter de dire que plumed doit être dans le path pour l'inclusion
+    # In case we need to specify location of plumed, we can use environment variable PLUMED_PATH
+    # In general, it should be accesible from common lib and include path
+    # "PLUMED_PATH/lib/libplumed.so and PLUMED_PATH//include/plumed/wrapper/Plumed.h must exist"
     if haskey(ENV,"PLUMED_PATH")
         path_plumed=ENV["PLUMED_PATH"]
     else
-        path_plumed=path_loc
+        path_plumed="/usr/local/"
     end
-    if haskey(ENV,"PLUMED_DEBUG")
-        println("Loading plumed from ", path_plumed)
-    end
-    
     c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
+    # c`-llibplumed.so`
     c"#include <plumed/wrapper/Plumed.h>"
 
     struct plumed{TF<: AbstractFloat}
