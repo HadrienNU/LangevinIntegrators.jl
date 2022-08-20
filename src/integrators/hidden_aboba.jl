@@ -1,6 +1,5 @@
 struct ABOBA_Hidden{TGV, TF<:AbstractFloat, TM} <: InertialIntegrator
     force::TGV
-    M::TM
     Δt::TF
     S::AA
     friction_vv::Matrix{TF}
@@ -60,7 +59,7 @@ end
 
 function UpdateState!(state::ABOBAState, integrator::ABOBA)
 
-    @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v/integrator.M
+    @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v
     forceUpdate!(integrator.force,state.f_mid,state.q_mid)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
@@ -70,7 +69,7 @@ function UpdateState!(state::ABOBAState, integrator::ABOBA)
     @. state.h =  integrator.friction_hv*state.p_mid + integrator.friction_hh*state.h + gauss[1+integrator.dim:integrator.dim_tot]
 
     @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
-    @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v/integrator.M
+    @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v
 
 
 

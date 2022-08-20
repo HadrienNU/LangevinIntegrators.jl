@@ -56,11 +56,11 @@ function UpdateState!(state::GJFState, integrator::GJF)
 
     @. state.ξ = randn()
 
-    @. state.x = state.x + integrator.b * integrator.Δt / integrator.M * state.v + 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f + 0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
+    @. state.x = state.x + integrator.b * integrator.Δt * state.v + 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f + 0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
 
     forceUpdate!(integrator.force,state.f_new, state.x)
 
-    @. state.v = integrator.a * state.v + 0.5 * integrator.Δt * (integrator.a * state.f + state.f_new) + integrator.b * integrator.sqrtM * integrator.σ * state.ξ
+    @. state.v = integrator.a * state.v + 0.5 * integrator.Δt/ integrator.M  * (integrator.a * state.f + state.f_new) + integrator.b * integrator.sqrtM / integrator.M  * integrator.σ * state.ξ
 
     @. state.f = state.f_new
 

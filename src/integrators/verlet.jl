@@ -19,7 +19,7 @@ mutable struct VerletState{TF<:AbstractFloat} <:AbstractInertialState
     x::Vector{TF}
 	v::Vector{TF}
     f::Vector{TF}
-    p_mid::Vector{TF}
+    v_mid::Vector{TF}
 end
 
 function InitState!(x₀, integrator::Verlet)
@@ -33,9 +33,9 @@ function InitState(x₀, integrator::Verlet)
 end
 
 function UpdateState!(state::VerletState, integrator::Verlet)
-    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f;
-    @. state.x = state.x + integrator.Δt * state.p_mid/integrator.M;
+    @. state.v_mid = state.v + 0.5 * integrator.Δt * state.f/integrator.M;
+    @. state.x = state.x + integrator.Δt * state.v_mid;
 	forceUpdate!(integrator.force,state.f,state.x)
-    @. state.v = state.p_mid + 0.5 * integrator.Δt * state.f;
+    @. state.v = state.v_mid + 0.5 * integrator.Δt * state.f/integrator.M;
     state
 end
