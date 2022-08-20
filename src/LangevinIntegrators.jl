@@ -7,18 +7,30 @@ Library to generate trajectories from (Generalized) Langevin Equation
 module LangevinIntegrators
 
 using ConfParser
-using ForwardDiff # For automatic differentiation of potential
-using TimerOutputs
-using ApproxFun
+using TimerOutputs # Somes timer for debug #Gérer aussi le module de @timeit_debug
 
-#Gérer aussi le module de @timeit_debug
+#Package for the force evaluation
+using ForwardDiff # For automatic differentiation of potential
+using ApproxFun # Various basis function
+using BSplineKit # Bsplines function
+
+const timer = TimerOutput() # A global timer to time computation when debugging
+
+function similar(x::TF) where{TF<:AbstractFloat} #Helper function for the 1D case
+    return x
+end
+
 
 include("potentials.jl")
 include("force.jl")
 export ForceFromPotential
 export ForceFromBasis
-#Integrators
 
+#Plumed module
+include("plumed.jl")
+
+
+#Integrators
 include("integrators/integrators_types.jl")
 
 include("integrators/overdamped_em.jl")

@@ -3,6 +3,7 @@ abstract type AbstractIntegrator end
 
 abstract type OverdampedIntegrator <: AbstractIntegrator end
 abstract type InertialIntegrator <: AbstractIntegrator end
+abstract type HiddenIntegrator <: AbstractIntegrator end
 
 
 abstract type AbstractState end
@@ -21,4 +22,3 @@ abstract type AbstractMemoryHiddenState <: AbstractState end
 #    x::Vector{TF}
 #	v::Vector{TF}
 #end
-
