@@ -7,7 +7,7 @@ Read parameters file and launch the trajectories
 using Plots
 using LangevinIntegrators
 
-LangevinIntegrators.TimerOutputs.enable_debug_timings(Main)  #Enable timer
+# LangevinIntegrators.TimerOutputs.enable_debug_timings(Main)  #Enable timer
 # LangevinIntegrators.TimerOutputs.reset_timer!(LangevinIntegrators.timer) # Reset timer
 let
     # params,integrator=read_conf("onetraj.ini")
@@ -21,12 +21,12 @@ let
 
 	traj=run_trajectory!(state, integrator; params =params)
 
-    LangevinIntegrators.TimerOutputs.reset_timer!(LangevinIntegrators.timer) # Reset timer
+    # LangevinIntegrators.TimerOutputs.reset_timer!(LangevinIntegrators.timer) # Reset timer
     state=init_trajectory(integrator; params = params)
 	traj=run_trajectory!(state, integrator; params =params)
     println(state.x)
 
-    println(LangevinIntegrators.timer)
+    # println(LangevinIntegrators.timer)
 
 
     # histogram([X[1] for X in traj],label="Traj",normalize=true);
