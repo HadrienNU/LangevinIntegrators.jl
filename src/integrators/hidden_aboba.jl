@@ -29,7 +29,7 @@ function ABOBA_Hidden(force::TGV, A::Array{TF},C::Array{TF}, Δt::TF,dim::Int)wh
     return ABOBA_Hidden(force, Δt, cholesky(friction*C+C*A').L,friction[1:dim,1:dim],friction[1:dim,1+dim:dim_tot],friction[1+dim:dim_tot,1:dim],friction[1+dim:dim_tot,1+dim:dim_tot],dim,dim_tot)
 end
 
-mutable struct ABOBAState{TF<:AbstractFloat} <:AbstractInertialState
+mutable struct HiddenABOBAState{TF<:AbstractFloat} <:AbstractMemoryHiddenState
     x::Vector{TF}
 	v::Vector{TF}
     h::Vector{TF}
@@ -41,23 +41,23 @@ end
 
 #TODO initialize velocity
 
-function InitState!(x₀,v₀, integrator::ABOBA)
-    return ABOBAState(x₀, v₀, similar(x₀), similar(x₀), similar(x₀), similar(x₀))
+function InitState!(x₀,v₀, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(x₀, v₀, similar(x₀), similar(x₀), similar(x₀), similar(x₀))
 end
 
-function InitState(x₀,v₀, integrator::ABOBA)
-    return ABOBAState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(x₀),similar(x₀), similar(x₀))
+function InitState(x₀,v₀, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(x₀),similar(x₀), similar(x₀))
 end
 
-function InitState!(s::AbstractMemoryHiddenState, integrator::EM)
-    return ABOBAState(s.x,s.v, similar(s.x), similar(s.x),similar(s.x), similar(s.x))
+function InitState!(s::AbstractMemoryHiddenState, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(s.x,s.v, similar(s.x), similar(s.x),similar(s.x), similar(s.x))
 end
 
-function InitState(s::AbstractMemoryHiddenState, integrator::EM)
-    return ABOBAState(deepcopy(s.x),deepcopy(s.v), similar(s.x), similar(s.x),similar(s.x), similar(s.x))
+function InitState(s::AbstractMemoryHiddenState, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(deepcopy(s.x),deepcopy(s.v), similar(s.x), similar(s.x),similar(s.x), similar(s.x))
 end
 
-function UpdateState!(state::ABOBAState, integrator::ABOBA)
+function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
 
     @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v
     forceUpdate!(integrator.force,state.f_mid,state.q_mid)

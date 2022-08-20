@@ -1,6 +1,21 @@
 #=
 The struct that hold global parameters
     Le reste des parametres est passé à l'intégrateur
+
+    Parametres:
+    -Globaux
+        Nombre de trajectoires
+        Nombre de pas de temps
+        Dimension du système
+        PBC (boite)
+    -Initialisation:
+
+    -Intégrateur:
+        Pas de temps
+        Force
+        Paramètres friction
+        Paramètres bain
+
 =#
 
 function read_conf(file::String)
@@ -23,6 +38,26 @@ function read_conf(file::String)
     return params,integrator
 end
 
+function select_integrator(name::String)
+    return integrator
+end
+
+"""
+Function to read NPZ config from GLE_analysisEM
+"""
+
+function read_npz(file::String; integrator_type="EM", dt=1.0)
+    vars = npzread("data.npz")
+
+    #TODO some sanity checks and deal with the possibility of changing the time step
+
+    if integrator_type in ["EM","euler"] and dim_h > 0
+        integrator = EM_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
+    else if integrator_type == "aboba" and dim_h > 0
+        integrator = ABOBA_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
+    end
+    return integrator
+end
 
 struct LangevinParams
     n_iters::Int
