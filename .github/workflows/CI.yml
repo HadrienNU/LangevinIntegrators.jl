@@ -24,19 +24,22 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+        plumed_version:
+          - v2.7
     steps:
       - uses: actions/checkout@v2
         with:
           repository: plumed/plumed2
           path: plumed
-          ref: v2.7
-      - name: Build Plumed
+          ref: ${{ matrix.plumed_version }}
+      - name: Build Plumed ${{ matrix.plumed_version }}
         run: |
           cd plumed
-          ./configure --prefix=/usr/local
+          ./configure --prefix=~/.local
           make -j 4
           make install
           cd ..
+          export PLUMED_PATH="~/.local"
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
