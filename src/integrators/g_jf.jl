@@ -1,5 +1,5 @@
-struct GJF{TGV, TF<:AbstractFloat, TM} <: InertialIntegrator
-    force::TGV
+struct GJF{FP<:AbstractForce, TF<:AbstractFloat, TM} <: InertialIntegrator
+    force::FP
     β::TF
     γ::TF
     M::TM
@@ -23,7 +23,7 @@ Set up the G-JF integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF(force::TGV, β::TF, γ::TF, M::TM, Δt::TF) where {TGV, TF<:AbstractFloat,TM}
+function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce, TF<:AbstractFloat,TM}
     a = (1 - 0.5 * γ * Δt)/(1 + 0.5 * γ * Δt)
     b = 1 / (1 + 0.5 * γ * Δt)
     σ = sqrt(2 * γ * Δt / β)
@@ -54,15 +54,15 @@ end
 
 function UpdateState!(state::GJFState, integrator::GJF)
 
-    @. state.ξ = randn()
+    state.ξ = randn()
 
-    @. state.x = state.x + integrator.b * integrator.Δt * state.v + 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f + 0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
+    state.x = state.x + integrator.b * integrator.Δt * state.v + 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f + 0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
 
     forceUpdate!(integrator.force,state.f_new, state.x)
 
-    @. state.v = integrator.a * state.v + 0.5 * integrator.Δt/ integrator.M  * (integrator.a * state.f + state.f_new) + integrator.b * integrator.sqrtM / integrator.M  * integrator.σ * state.ξ
+    state.v = integrator.a * state.v + 0.5 * integrator.Δt/ integrator.M  * (integrator.a * state.f + state.f_new) + integrator.b * integrator.sqrtM / integrator.M  * integrator.σ * state.ξ
 
-    @. state.f = state.f_new
+    state.f = state.f_new
 
     state
 end

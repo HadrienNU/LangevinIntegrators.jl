@@ -9,8 +9,8 @@ Set up the Verlet integrator.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-struct Verlet{TGV, TF<:AbstractFloat, TM} <: InertialIntegrator
-    force::TGV
+struct Verlet{FP<:AbstractForce, TF<:AbstractFloat, TM} <: InertialIntegrator
+    force::FP
     M::TM
     Δt::TF
 end
@@ -33,9 +33,9 @@ function InitState(x₀, integrator::Verlet)
 end
 
 function UpdateState!(state::VerletState, integrator::Verlet)
-    @. state.v_mid = state.v + 0.5 * integrator.Δt * state.f/integrator.M;
-    @. state.x = state.x + integrator.Δt * state.v_mid;
+    state.v_mid = state.v + 0.5 * integrator.Δt * state.f/integrator.M;
+    state.x = state.x + integrator.Δt * state.v_mid;
 	forceUpdate!(integrator.force,state.f,state.x)
-    @. state.v = state.v_mid + 0.5 * integrator.Δt * state.f/integrator.M;
+    state.v = state.v_mid + 0.5 * integrator.Δt * state.f/integrator.M;
     state
 end

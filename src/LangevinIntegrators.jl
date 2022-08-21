@@ -29,6 +29,8 @@ include("force.jl")
 export ForceFromPotential
 export ForceFromBasis
 
+export force_eval
+
 #Plumed module
 include("plumed.jl")
 
@@ -38,16 +40,23 @@ include("integrators/integrators_types.jl")
 
 include("integrators/overdamped_em.jl")
 export EM
-#include("integrators/bbk.jl")
-#export BBK
-#include("integrators/g_jf.jl")
-#export GJF
-#include("integrators/aboba.jl")
-#export ABOBA
-#include("integrators/baoab.jl")
-#export BAOAB
-#include("integrators/verlet.jl")
-#export Verlet
+#Inertial
+include("integrators/bbk.jl")
+export BBK
+include("integrators/g_jf.jl")
+export GJF
+include("integrators/aboba.jl")
+export ABOBA
+include("integrators/baoab.jl")
+export BAOAB
+include("integrators/verlet.jl")
+export Verlet
+#Hidden
+include("integrators/hidden_em.jl")
+export EM_Hidden
+include("integrators/hidden_aboba.jl")
+export ABOBA_Hidden
+#MemoryKernel
 
 
 include("params.jl")

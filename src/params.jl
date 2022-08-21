@@ -50,10 +50,10 @@ function read_npz(file::String; integrator_type="EM", dt=1.0)
     vars = npzread("data.npz")
 
     #TODO some sanity checks and deal with the possibility of changing the time step
-
-    if integrator_type in ["EM","euler"] and dim_h > 0
+	
+    if integrator_type in ["EM","euler"] && vars["dim_h"] > 0
         integrator = EM_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
-    else if integrator_type == "aboba" and dim_h > 0
+    elseif integrator_type == "aboba" && vars["dim_h"] > 0
         integrator = ABOBA_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
     end
     return integrator

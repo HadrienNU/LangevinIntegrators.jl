@@ -1,5 +1,5 @@
-struct ABOBA{TGV, TF<:AbstractFloat, TM} <: InertialIntegrator
-    force::TGV
+struct ABOBA{FP<:AbstractForce, TF<:AbstractFloat, TM} <: InertialIntegrator
+    force::FP
     β::TF
     γ::TF
     M::TM
@@ -22,7 +22,7 @@ Set up the ABOBA integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function ABOBA(force::TGV, β::TF, γ::TF, M::TM, Δt::TF) where {TGV, TF<:AbstractFloat,TM}
+function ABOBA(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce, TF<:AbstractFloat,TM}
 
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2*γ*Δt))/β)
@@ -59,12 +59,12 @@ end
 
 function UpdateState!(state::ABOBAState, integrator::ABOBA)
 
-    @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
+    state.x_mid = state.x + 0.5 * integrator.Δt * state.v
     forceUpdate!(integrator.force,state.f_mid,state.x_mid)
-    @. state.v_mid = state.v + 0.5 * integrator.Δt/integrator.M * state.f_mid
-    @. state.p̂_mid = integrator.c₀ * state.v_mid + integrator.c₁ * integrator.sqrtM * randn()
-    @. state.v = state.p̂_mid + 0.5 * integrator.Δt/integrator.M * state.f_mid
-    @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
+    state.v_mid = state.v + 0.5 * integrator.Δt/integrator.M * state.f_mid
+    state.p̂_mid = integrator.c₀ * state.v_mid + integrator.c₁ * integrator.sqrtM * randn()
+    state.v = state.p̂_mid + 0.5 * integrator.Δt/integrator.M * state.f_mid
+    state.x = state.x_mid + 0.5 * integrator.Δt * state.v
 
     state
 end

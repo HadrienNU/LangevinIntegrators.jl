@@ -42,7 +42,7 @@ end
 
 # The struct is writed to have the same interface than Force from basis to have only one forceUpdate
 struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
-	basis::Vector{Splines}
+	basis::Array#{Splines}
 	ndim::Int
 end
 
@@ -80,9 +80,9 @@ function forceUpdate(force::FP, x::Vector{TF})   where{FP<:AbstractForce, TF<:Ab
 end
 
 # A function to plot value of the force for comparison with python code
-function force_eval(force::FP, x::Vector{TF})
+function force_eval(force::FP, x::Vector{TF}) where{FP<:AbstractForce,TF<:AbstractFloat}
 	f=similar(x)
-	for (n, val) in enumerate(a)
+	for (n, val) in enumerate(x)
 		f[n] = forceUpdate(force,[val])[1]
 	end
 	return f
