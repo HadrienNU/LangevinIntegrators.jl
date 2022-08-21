@@ -27,19 +27,30 @@ jobs:
         plumed_version:
           - v2.7
     steps:
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+          $HOME/.local/include
+          $HOME/.local/lib
+          key: ${{ runner.os }}-${{ matrix.plumed_version }}
       - uses: actions/checkout@v2
         with:
           repository: plumed/plumed2
           path: plumed
           ref: ${{ matrix.plumed_version }}
       - name: Build Plumed ${{ matrix.plumed_version }}
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd plumed
           ./configure --prefix=$HOME/.local
           make -j 4
           make install
           cd ..
-          export PLUMED_PATH="$HOME/.local"
+          echo "PLUMED_PATH=$HOME/.local" >> $GITHUB_ENV
+      - name: Plumed ${{ matrix.plumed_version }} location
+        run: |
+          echo "PLUMED_PATH=$HOME/.local" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
