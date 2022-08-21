@@ -32,9 +32,11 @@ jobs:
           ref: v2.7
       - name: Build Plumed
         run: |
+          cd plumed
           ./configure --prefix=/usr/local
           make -j 4
           make install
+          cd ..
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
