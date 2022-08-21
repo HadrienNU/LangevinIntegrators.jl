@@ -35,11 +35,11 @@ jobs:
       - name: Build Plumed ${{ matrix.plumed_version }}
         run: |
           cd plumed
-          ./configure --prefix=~/.local
+          ./configure --prefix=$HOME/.local
           make -j 4
           make install
           cd ..
-          export PLUMED_PATH="~/.local"
+          export PLUMED_PATH="$HOME/.local"
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
