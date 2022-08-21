@@ -25,11 +25,11 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
   		  with:
-  			repository: plumed/plumed2
-  			path: plumed
-  			ref: v2.7
+          repository: plumed/plumed2
+          path: plumed
+          ref: v2.7
       - name: Build Plumed
         run: |
           ./configure --prefix=/usr/local
