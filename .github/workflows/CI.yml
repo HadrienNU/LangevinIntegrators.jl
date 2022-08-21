@@ -27,15 +27,15 @@ jobs:
     steps:
 #Build plumed
       - uses: actions/checkout@v3
-		  with:
-			repository: plumed/plumed2
-			path: plumed
-			ref: v2.7
+  		  with:
+  			repository: plumed/plumed2
+  			path: plumed
+  			ref: v2.7
     - name: Build Plumed
       run: |
         ./configure --prefix=/usr/local
-  		make -j 4
-  		make install
+        make -j 4
+        make install
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
