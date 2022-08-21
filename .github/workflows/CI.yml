@@ -31,8 +31,8 @@ jobs:
         id: cache
         with:
           path: |
-          $HOME/.local/include
-          $HOME/.local/lib
+          ~/.local/include
+          ~/.local/lib
           key: ${{ runner.os }}-${{ matrix.plumed_version }}
       - uses: actions/checkout@v2
         with:
