@@ -31,7 +31,7 @@ end
 
 function InitState(integrator::OverdampedIntegrator, params::LangevinParams ;  id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond_pos; id=id)
+    state.x=generate_initcond(params.init_cond[1]; id=id)
     return state
 end
 
@@ -50,8 +50,8 @@ end
 
 function InitState(integrator::InertialIntegrator, params::LangevinParams ; id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond_pos; id=id)
-    state.v=generate_initcond(params.init_cond_vitesse; id=id)
+    state.x=generate_initcond(params.init_cond[1]; id=id)
+    state.v=generate_initcond(params.init_cond[2]; id=id)
     return state
 end
 
@@ -69,8 +69,8 @@ end
 
 function InitState(integrator::InertialIntegrator, params::LangevinParams;  id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond_pos; id=id)
-    state.v=generate_initcond(params.init_cond_vitesse; id=id)
-    state.h=generate_initcond(params.init_cond_hidden; id=id)
+    state.x=generate_initcond(params.init_cond[1]; id=id)
+    state.v=generate_initcond(params.init_cond[2]; id=id)
+    state.h=generate_initcond(params.init_cond[3]; id=id)
     return state
 end
