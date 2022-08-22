@@ -7,10 +7,10 @@ module Plumed
     if haskey(ENV,"PLUMED_PATH")
         path_plumed=ENV["PLUMED_PATH"]
     else
-        path_plumed="/usr/local/"
+        path_plumed="/usr/local"
     end
-    c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
-    # c`-llibplumed.so`
+    # c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
+    c`-llibplumed.so -I$(path_plumed)/include`
     c"#include <plumed/wrapper/Plumed.h>"
 
     struct plumed{TF<: AbstractFloat}
