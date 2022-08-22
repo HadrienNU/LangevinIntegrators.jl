@@ -8,7 +8,6 @@ module LangevinIntegrators
 
 using ConfParser
 using NPZ
-# using TimerOutputs # Somes timer for debug #Gérer aussi le module de @timeit_debug
 # En vrai il faudrait le remplacer par PkgBenchmark.jl ou juste @profile
 # PkgBenchmark.jl ça marche avec BenchmarkTools.jl
 
@@ -37,6 +36,8 @@ export force_eval
 
 #Integrators
 include("integrators/integrators_types.jl")
+export InitState
+export InitState!
 
 include("integrators/overdamped_em.jl")
 export EM
@@ -66,6 +67,7 @@ export read_conf,LangevinParams
 include("run.jl")
 export init_trajectory
 export run_trajectory!
+export run_trajectories_parallel
 
 include("initialization.jl")
 

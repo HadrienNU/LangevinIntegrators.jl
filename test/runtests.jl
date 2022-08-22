@@ -27,7 +27,10 @@ using Test
 
     @testset "integrators_overdamped" begin
         force=ForceFromPotential("Harmonic")
+
         integrator=EM(force,1.0,1e-3)
+        state = InitState!([0.0], integrator)
+        UpdateState!(state, integrator)
 
     end
 
@@ -36,23 +39,35 @@ using Test
         force=ForceFromPotential("Harmonic")
 
         integrator=BBK(force, 1.0, 1.0, 1.0, 1e-3)
+        state = InitState!([0.0],[0.0], integrator)
+        UpdateState!(state, integrator)
 
         integrator=GJF(force, 1.0, 1.0, 1.0, 1e-3)
+        state = InitState!([0.0],[0.0], integrator)
+        UpdateState!(state, integrator)
 
         integrator=ABOBA(force, 1.0, 1.0, 1.0, 1e-3)
+        state = InitState!([0.0],[0.0], integrator)
+        UpdateState!(state, integrator)
 
         integrator=BAOAB(force, 1.0, 1.0, 1.0, 1e-3)
+        UpdateState!(state, integrator)
 
         integrator=Verlet(force, 1.0, 1e-3)
+        UpdateState!(state, integrator)
 
     end
 
     @testset "integrators_hidden" begin
         force=ForceFromPotential("Harmonic")
+        params=LangevinParams()
         integrator=EM_Hidden(force,[[1.0,1.0] [-1.0,2.0]],[[1.0,0.0] [0.0,1.0]],1e-3,1)
-
+        state = InitState!([0.0],[0.0],[0.0], integrator)
+        UpdateState!(state, integrator)
 
         integrator=ABOBA_Hidden(force,[[1.0,1.0] [-1.0,2.0]],[[1.0,0.0] [0.0,1.0]],1e-3,1)
+        state = InitState!([0.0],[0.0],[0.0], integrator)
+        UpdateState!(state, integrator)
 
     end
 

@@ -8,7 +8,7 @@ using Random
 # On peut tester aussi le calul des forces pour les différents moyen
 const SUITE = BenchmarkGroup()
 
-SUITE["trajectories"] = BenchmarkGroup(["string", "unicode"])
+SUITE["trajectories"] = BenchmarkGroup(["run"])
 force=ForceFromPotential("Harmonic")
 integrator=EM(force,1.0,0.001)
 params=LangevinParams()

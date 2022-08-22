@@ -6,9 +6,22 @@ The struct that hold global parameters
     -Globaux
         Nombre de trajectoires
         Nombre de pas de temps
+        Burning steps (mais ça va avec le logging)
         Dimension du système
         PBC (boite)
+    -Logging:
+        Fréquence de sortie des infos
+        Si on affiche quelque chose sur l'écran
+
+    ---> params
+
     -Initialisation:
+        Position
+        Vitesse
+        Variables cachées
+        Mémoire
+
+    --> initializer
 
     -Intégrateur:
         Pas de temps
@@ -16,6 +29,9 @@ The struct that hold global parameters
         Paramètres friction
         Paramètres bain
 
+    --> integrateur
+
+    Les fonctions, read_conf doivent donc returner un params, un intégrateur et un initializer
 =#
 
 function read_conf(file::String)
@@ -35,7 +51,7 @@ function read_conf(file::String)
         integrator=EM(force::FP, 1.0/sampling_conf["temperature"], sampling_conf["dt"])
 	end
 
-    return params,integrator
+    return params, integrator
 end
 
 function select_integrator(name::String)
@@ -50,7 +66,7 @@ function read_npz(file::String; integrator_type="EM", dt=1.0)
     vars = npzread("data.npz")
 
     #TODO some sanity checks and deal with the possibility of changing the time step
-	
+
     if integrator_type in ["EM","euler"] && vars["dim_h"] > 0
         integrator = EM_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
     elseif integrator_type == "aboba" && vars["dim_h"] > 0
@@ -75,9 +91,9 @@ Set options for samplers.
                   n_save_iters=1, every iteration is saved.  If n_save_iters=n_iters,
                   only the final iteration is saved.
 """
-function LangevinParams(; n_iters = 10^4, n_save_iters = 1)
+function LangevinParams(; n_iters = 10^4,n_trajs=1, n_save_iters = 1)
 
-    return LangevinParams(n_iters,1, n_save_iters, floor(Int, n_iters / n_save_iters))
+    return LangevinParams(n_iters,n_trajs, n_save_iters, floor(Int, n_iters / n_save_iters))
 end
 
 # function LangevinParams(sampling_dict,logging_dict,dump_dict, init_dict)
