@@ -49,7 +49,7 @@ jobs:
           cd ..
           # echo "PLUMED_PATH=$HOME/.local" >> $GITHUB_ENV
           # ls $HOME/.local
-          ls $HOME/.local/lib
+          # ls $HOME/.local/lib
       - name: Plumed ${{ matrix.plumed_version }} location
         run: |
           # echo "PLUMED_PATH=$HOME/.local" >> $GITHUB_ENV
