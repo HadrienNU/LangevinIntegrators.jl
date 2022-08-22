@@ -80,6 +80,7 @@ struct LangevinParams
 	n_trajs::Int
     n_save_iters::Int
     n_save::Int
+    init_cond_pos::AbstractInitCond
 end
 
 """

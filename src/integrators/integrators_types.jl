@@ -29,9 +29,9 @@ function InitState(integrator::OverdampedIntegrator;dim=1)
     return InitState!(zeros(dim), integrator)
 end
 
-function InitState(integrator::OverdampedIntegrator, init_cond::AbstractInitCond ;  id=1)
+function InitState(integrator::OverdampedIntegrator, params::LangevinParams ;  id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(init_cond; id=id)
+    state.x=generate_initcond(params.init_cond_pos; id=id)
     return state
 end
 
@@ -48,10 +48,10 @@ function InitState(integrator::InertialIntegrator;dim=1)
     return InitState!(zeros(dim),zeros(dim), integrator)
 end
 
-function InitState(integrator::InertialIntegrator, init_cond_pos ::AbstractInitCond, init_cond_vitesse::AbstractInitCond ; id=1)
+function InitState(integrator::InertialIntegrator, params::LangevinParams ; id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(init_cond_pos; id=id)
-    state.v=generate_initcond(init_cond_vitesse; id=id)
+    state.x=generate_initcond(params.init_cond_pos; id=id)
+    state.v=generate_initcond(params.init_cond_vitesse; id=id)
     return state
 end
 
@@ -67,10 +67,10 @@ function InitState(integrator::HiddenIntegrator;dim=1)
     return InitState!(zeros(dim),zeros(dim),zeros(integrator.dim_tot-dim), integrator)
 end
 
-function InitState(integrator::InertialIntegrator, init_cond_pos ::AbstractInitCond, init_cond_vitesse::AbstractInitCond, init_cond_hidden::AbstractInitCond ;  id=1)
+function InitState(integrator::InertialIntegrator, params::LangevinParams;  id=1)
     state = InitState(integrator)
-    state.x=generate_initcond(init_cond_pos; id=id)
-    state.v=generate_initcond(init_cond_vitesse; id=id)
-    state.h=generate_initcond(init_cond_hidden; id=id)
+    state.x=generate_initcond(params.init_cond_pos; id=id)
+    state.v=generate_initcond(params.init_cond_vitesse; id=id)
+    state.h=generate_initcond(params.init_cond_hidden; id=id)
     return state
 end

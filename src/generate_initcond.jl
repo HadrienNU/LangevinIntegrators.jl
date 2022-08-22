@@ -17,9 +17,9 @@ En fait on a 2 types d'initialisation en série et en parallèle.
 Ca veut dire qu'il y a un état interne qui détermine l'initialisation d'après
 Ca sera une seed pour le cas uniforme et un index pour le tableau
 Pour se simplifier la vie, on peut supposer qu'il n'y a que des initializer serial et ce sont des états qu'on passe au cas distribués.
-Ca permet un meileur controle de ce qu'on passe
+Ca permet un meileur controle de ce qu'on passe, on passe un id qui permet de gérer les 2 cas
 
-En vrai on a pas besoin de passer l'état, on a juste besoin de retourner des vecteurs générés d'une certains manière
+
 =#
 
 abstract type AbstractInitCond end
@@ -33,6 +33,12 @@ end
 
 struct Array_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Matrix{TF}
+    dim::Int64
+end
+
+struct Uniform_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
+    low::Array{TF}
+    high::Array{TF}
     dim::Int64
 end
 
@@ -57,6 +63,10 @@ end
 
 function generate_initcond(init_cond::Array_InitCond; id=id)
     return init_cond.val[1+(id-1)%val.size[1],:]
+end
+
+function generate_initcond(init_cond::Uniform_InitCond; id=id)
+    return low.+(high.-low).*rand(init_cond.dim)
 end
 
 
