@@ -57,19 +57,29 @@ end
 #Et les constructeurs de ces machins vont prendre l'intégrateur et les params en arguments, du moins un sous-ensemble des params comme ça on passe params["init_position"], params["init_velocity"]
 # En vrai on va juste avoir un grand constructeur qui va s'appellait init_conditions qui retournera selon un if la bonne chose
 
-function generate_initcond(init_cond::Constant_InitCond; id=id)
+function get_init_conditions(args::Dict)
+    type=get(args,:type,"Constant")
+    dim=get(args,:dim,1)
+    if type in ["cste","Constante"]
+        return Constant_InitCond(get(args,:val,zeros(dim)),dim)
+    else
+        println("Unknwon initializer")
+    end
+end
+
+function generate_initcond(init_cond::Constant_InitCond;  kwargs...)
     return init_cond.val
 end
 
-function generate_initcond(init_cond::Array_InitCond; id=id)
+function generate_initcond(init_cond::Array_InitCond; id=1, kwargs...)
     return init_cond.val[1+(id-1)%val.size[1],:]
 end
 
-function generate_initcond(init_cond::Uniform_InitCond; id=id)
+function generate_initcond(init_cond::Uniform_InitCond; kwargs...)
     return low.+(high.-low).*rand(init_cond.dim)
 end
 
 
-function generate_initcond(init_cond::Gaussian_InitCond; id=id)
+function generate_initcond(init_cond::Gaussian_InitCond; kwargs...)
     return init_cond.mean .+ init_cond.std.*randn(init_cond.dim)
 end

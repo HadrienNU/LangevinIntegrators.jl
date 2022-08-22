@@ -36,7 +36,7 @@ end
 function UpdateState!(state::VerletState, integrator::Verlet)
     state.v_mid = state.v .+ 0.5 * integrator.Δt /integrator.M * state.f;
     @. state.x = state.x + integrator.Δt * state.v_mid;
-	forceUpdate!(integrator.force,state.f,state.x)
+	nostop = forceUpdate!(integrator.force,state.f,state.x)
     state.v = state.v_mid .+ 0.5 * integrator.Δt/integrator.M * state.f;
-    state
+    return nostop
 end

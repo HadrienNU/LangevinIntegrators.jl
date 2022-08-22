@@ -68,8 +68,10 @@ include("params.jl")
 
 export read_conf,LangevinParams
 
+include("observers.jl")
+
+
 include("run.jl")
-export init_trajectory
 export run_trajectory!
 export run_trajectories_parallel
 

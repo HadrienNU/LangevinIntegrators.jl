@@ -1,5 +1,6 @@
 
-
+#S'il y a un object plumed il doit être stocké dans la force?
+# En tout cas, force update doit appeler plumed_step
 abstract type AbstractForce end
 
 abstract type AbstractForceFromBasis <:AbstractForce  end
@@ -65,12 +66,14 @@ end
 function forceUpdate!(force::ForceFromPotential,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
 	force.gradV!(f,x)
 	f.*=-1
+	return 0
 end
 
 function forceUpdate!(force::FB,f::Vector{TF}, x::Vector{TF})  where{FB<:AbstractForceFromBasis,TF<:AbstractFloat}
 	for d in 1:force.ndim
 		f[d]=force.basis[d](x[1]) # TODO, dealing with nd function
 	end
+	return 0
 end
 
 function forceUpdate(force::FP, x::Vector{TF})   where{FP<:AbstractForce, TF<:AbstractFloat}

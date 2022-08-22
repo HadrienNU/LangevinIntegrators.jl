@@ -4,6 +4,7 @@ abstract type AbstractIntegrator end
 abstract type OverdampedIntegrator <: AbstractIntegrator end
 abstract type InertialIntegrator <: AbstractIntegrator end
 abstract type HiddenIntegrator <: AbstractIntegrator end
+abstract type KernelIntegrator <: AbstractIntegrator end
 
 
 abstract type AbstractState end
@@ -29,13 +30,6 @@ function InitState(integrator::OverdampedIntegrator;dim=1)
     return InitState!(zeros(dim), integrator)
 end
 
-function InitState(integrator::OverdampedIntegrator, params::LangevinParams ;  id=1)
-    state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond[1]; id=id)
-    return state
-end
-
-
 function InitState!(s::AbstractInertialState, integrator::InertialIntegrator)
     return InitState!(s.x,s.v,integrator)
 end
@@ -46,13 +40,6 @@ end
 
 function InitState(integrator::InertialIntegrator;dim=1)
     return InitState!(zeros(dim),zeros(dim), integrator)
-end
-
-function InitState(integrator::InertialIntegrator, params::LangevinParams ; id=1)
-    state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond[1]; id=id)
-    state.v=generate_initcond(params.init_cond[2]; id=id)
-    return state
 end
 
 function InitState!(s::AbstractMemoryHiddenState, integrator::HiddenIntegrator)
@@ -67,10 +54,16 @@ function InitState(integrator::HiddenIntegrator;dim=1)
     return InitState!(zeros(dim),zeros(dim),zeros(integrator.dim_tot-dim), integrator)
 end
 
-function InitState(integrator::InertialIntegrator, params::LangevinParams;  id=1)
-    state = InitState(integrator)
-    state.x=generate_initcond(params.init_cond[1]; id=id)
-    state.v=generate_initcond(params.init_cond[2]; id=id)
-    state.h=generate_initcond(params.init_cond[3]; id=id)
-    return state
+#InitState from init_cond generator
+
+function InitState(integrator::OverdampedIntegrator, init_cond::Array ;  id=1)
+    return InitState(generate_initcond(init_cond[1]; id=id),integrator)
+end
+
+function InitState(integrator::InertialIntegrator, init_cond::Array ; id=1)
+    return InitState(generate_initcond(init_cond[1]; id=id),generate_initcond(init_cond[2]; id=id),integrator)
+end
+
+function InitState(integrator::InertialIntegrator,init_cond::Array;  id=1)
+    return InitState(generate_initcond(init_cond[1]; id=id),generate_initcond(init_cond[2]; id=id),generate_initcond(init_cond[3]; id=id),integrator)
 end

@@ -42,8 +42,8 @@ function UpdateState!(state::EMState, integrator::EM)
 
     state.x = state.x .+ integrator.Δt .* state.f .+ integrator.σ .* randn(state.dim)
     # @timeit_debug timer "UpdateState: forceUpdate!" begin
-        forceUpdate!(integrator.force,state.f, state.x)
+    nostop = forceUpdate!(integrator.force,state.f, state.x)
     # end
 
-    state
+    return nostop
 end

@@ -17,7 +17,7 @@ let
     force=ForceFromBasis("Taylor",coeffs)
     integrator=EM(force,1.0,0.001)
     params=LangevinParams()
-	state=init_trajectory(integrator; params = params)
+	state=InitState(integrator, params)
 
 	traj=run_trajectory!(state, integrator; params =params)
 

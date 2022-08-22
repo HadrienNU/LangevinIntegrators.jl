@@ -53,7 +53,7 @@ end
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
 
     @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v
-    forceUpdate!(integrator.force,state.f_mid,state.q_mid)
+    nostop = forceUpdate!(integrator.force,state.f_mid,state.q_mid)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
@@ -64,8 +64,5 @@ function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
     @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
     @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v
 
-
-
-
-    state
+    return nostop
 end

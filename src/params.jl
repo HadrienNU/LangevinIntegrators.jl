@@ -51,11 +51,52 @@ function read_conf(file::String)
         integrator=EM(force::FP, 1.0/sampling_conf["temperature"], sampling_conf["dt"])
 	end
 
-    return params, integrator
+    return params, integrator, init_conds_args
 end
 
 function select_integrator(name::String)
     return integrator
+end
+
+"""
+Function to initialize the init_cond
+"""
+function initialize_initcond(integrator;kwargs...)
+    # En vrai ça se contente de savoir si on doit générer, 1 2 ou 3 init_cond et ça appelle get_init_conditions qui les crée
+    # Ca permet de définir des valeurs par défauts si rien n'est donné
+    # ça retourne un vecteur de init_cond
+    intcond_pos = get_init_conditions(get(args,:position,Dict("type"=>"Cste"))
+    if integrator <:OverdampedIntegrator
+        # if integrator <: HiddenOverdampedIntegrator
+        #     initcond_hidden = get_init_conditions(args["hidden"])
+        #     return [intcond_pos,initcond_hidden]
+        # elseif integrator <: KernelOverdampedIntegrator
+        #     initcond_mem = get_init_conditions(args["memory"])
+        #     return [intcond_pos,initcond_mem]
+        # end
+        return [intcond_pos]
+    else
+        initcond_velocity = get_init_conditions(get(args,:velocity,Dict("type"=>"Gaussian","std"=>1.0)) # à remplacer la la maxelliene
+        if integrator <: HiddenIntegrator
+            initcond_hidden = get_init_conditions(args["hidden"])
+            return [intcond_pos,initcond_velocity,initcond_hidden]
+        elseif integrator <: KernelIntegrator
+            initcond_mem = get_init_conditions(args["memory"])
+            return [intcond_pos,initcond_velocity,initcond_mem]
+        end
+        if integrator <: InertialIntegrator
+            return [intcond_pos,initcond_velocity]
+        end
+    end
+    # raise error
+end
+
+"""
+Function to initialize the observers
+"""
+function initialize_observers(args,integrator)
+    # Ca prend une liste de dict et ça génère une observable par element de la liste
+    return []
 end
 
 """
@@ -75,29 +116,33 @@ function read_npz(file::String; integrator_type="EM", dt=1.0)
     return integrator
 end
 
-struct LangevinParams
-    n_iters::Int
+
+
+struct LangevinParams # La dedans on stocke les trucs initialisé
+    n_steps::Int
 	n_trajs::Int
-    n_save_iters::Int
-    n_save::Int
-    init_cond::Vector{AbstractInitCond}
+    observers::Array{AbstractObserver}
 end
 
 """
-    LangevinParams(;n_iters = 10^4, n_save_iters=1)
+    LangevinParams(;n_steps = 10^4, n_save_iters=1)
 Set options for samplers.
 ### Fields
-* n_iters       - Set the number of iterations of the sampler
+* n_steps       - Set the number of iterations of the sampler
 * n_save_iters  - Set the frequency at which iterations are saved.  If
-                  n_save_iters=1, every iteration is saved.  If n_save_iters=n_iters,
+                  n_save_iters=1, every iteration is saved.  If n_save_iters=n_steps,
                   only the final iteration is saved.
 """
-function LangevinParams(; n_iters = 10^4,n_trajs=1, n_save_iters = 1)
+function LangevinParams(; n_steps = 10^4, n_trajs=1)
+    return LangevinParams(n_steps,n_trajs, [])
+end
 
-    return LangevinParams(n_iters,n_trajs, n_save_iters, floor(Int, n_iters / n_save_iters))
+function LangevinParams(sampling_dict,obs_dict)
+    obs_list=initialize_observers(obs_dict)
+    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_traj"], obs_list)
 end
 
 # function LangevinParams(sampling_dict,logging_dict,dump_dict, init_dict)
 #
-#     return LangevinParams(n_iters, n_save_iters, floor(Int, n_iters / n_save_iters))
+#     return LangevinParams(n_steps, n_save_iters, floor(Int, n_steps / n_save_iters))
 # end
