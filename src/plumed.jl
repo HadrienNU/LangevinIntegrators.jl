@@ -9,8 +9,9 @@ module Plumed
     else
         path_plumed="/usr/local"
     end
-    # c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
-    c`-llibplumed.so -I$(path_plumed)/include`
+    println(ENV)
+    c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
+    # c`-llibplumed.so -I$(path_plumed)/include`
     c"#include <plumed/wrapper/Plumed.h>"
 
     struct plumed{TF<: AbstractFloat}

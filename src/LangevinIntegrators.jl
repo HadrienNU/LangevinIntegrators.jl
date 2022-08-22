@@ -32,7 +32,7 @@ export ForceFromBasis
 export force_eval
 
 #Plumed module
-include("plumed.jl")
+# include("plumed.jl")
 
 
 #Integrators
