@@ -37,24 +37,25 @@ mutable struct GJFState{TF<:AbstractFloat} <:AbstractInertialState
     f::Vector{TF}
     f_new::Vector{TF}
     ξ::Vector{TF}
+    dim::Int64
 end
 
 function InitState!(x₀, integrator::GJF)
     f = similar(x₀)
     f=forceUpdate!(integrator.force, x₀)
-    return GJFState(x₀, similar(x₀), copy(f), similar(x₀), similar(x₀))
+    return GJFState(x₀, similar(x₀), copy(f), similar(x₀), similar(x₀),length(x₀))
 end
 
 function InitState(x₀, integrator::GJF)
 
     f = similar(x₀)
     f=forceUpdate!(integrator.force, x₀)
-    return GJFState(deepcopy(x₀), similar(x₀), copy(f), similar(x₀), similar(x₀))
+    return GJFState(deepcopy(x₀), similar(x₀), copy(f), similar(x₀), similar(x₀),length(x₀))
 end
 
 function UpdateState!(state::GJFState, integrator::GJF)
 
-    state.ξ = randn()
+    state.ξ = randn(state.dim)
 
     state.x = state.x + integrator.b * integrator.Δt * state.v + 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f + 0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
 

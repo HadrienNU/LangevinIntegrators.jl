@@ -37,24 +37,17 @@ mutable struct HiddenABOBAState{TF<:AbstractFloat} <:AbstractMemoryHiddenState
     p_mid::Vector{TF}
     p̂_mid::Vector{TF}
     f_mid::Vector{TF}
+    dim::Int64
 end
 
 #TODO initialize velocity
 
-function InitState!(x₀,v₀, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(x₀, v₀, similar(x₀), similar(x₀), similar(x₀), similar(x₀))
+function InitState!(x₀,v₀,h₀, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(x₀, v₀, h₀,similar(x₀), similar(x₀), similar(x₀), similar(x₀))
 end
 
-function InitState(x₀,v₀, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(x₀),similar(x₀), similar(x₀))
-end
-
-function InitState!(s::AbstractMemoryHiddenState, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(s.x,s.v, similar(s.x), similar(s.x),similar(s.x), similar(s.x))
-end
-
-function InitState(s::AbstractMemoryHiddenState, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(deepcopy(s.x),deepcopy(s.v), similar(s.x), similar(s.x),similar(s.x), similar(s.x))
+function InitState(x₀,v₀,h₀, integrator::ABOBA_Hidden)
+    return HiddenABOBAState(deepcopy(x₀),deepcopy(v₀),deepcopy(h₀), similar(x₀), similar(x₀),similar(x₀), similar(x₀))
 end
 
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)

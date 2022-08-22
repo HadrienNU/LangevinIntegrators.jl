@@ -23,32 +23,24 @@ end
 mutable struct EMState{TF<:AbstractFloat} <:AbstractOverdampedState
     x::Vector{TF}
     f::Vector{TF}
+    dim::Int64
 end
 
 
 function InitState!(x₀, integrator::EM)
     f=forceUpdate(integrator.force, x₀)
-    return EMState(x₀, copy(f))
+    return EMState(x₀, copy(f),length(x₀))
 end
 
 function InitState(x₀, integrator::EM)
     f=forceUpdate(integrator.force, x₀)
-    return EMState(deepcopy(x₀), copy(f))
+    return EMState(deepcopy(x₀), copy(f),length(x₀))
 end
 
-function InitState!(s::AbstractOverdampedState, integrator::EM)
-    f=forceUpdate(integrator.force, s.x)
-    return EMState(s.x, copy(f))
-end
-
-function InitState(s::AbstractOverdampedState, integrator::EM)
-    f=forceUpdate(integrator.force, s.x)
-    return EMState(deepcopy(s.x), copy(f))
-end
 
 function UpdateState!(state::EMState, integrator::EM)
 
-    state.x = state.x + integrator.Δt * state.f + integrator.σ * randn()
+    state.x = state.x + integrator.Δt * state.f + integrator.σ * randn(state.dim)
     # @timeit_debug timer "UpdateState: forceUpdate!" begin
         forceUpdate!(integrator.force,state.f, state.x)
     # end
