@@ -71,6 +71,6 @@ function InitState(integrator::InertialIntegrator, init_cond_pos ::AbstractInitC
     state = InitState(integrator)
     state.x=generate_initcond(init_cond_pos; id=id)
     state.v=generate_initcond(init_cond_vitesse; id=id)
-    state.h=generate_initcond(init_cond_hidden; dim=integrator.dim_tot-dim,id=id)
+    state.h=generate_initcond(init_cond_hidden; id=id)
     return state
 end
