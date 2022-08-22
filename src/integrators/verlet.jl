@@ -23,14 +23,14 @@ mutable struct VerletState{TF<:AbstractFloat} <:AbstractInertialState
     dim::Int64
 end
 
-function InitState!(x₀, integrator::Verlet)
+function InitState!(x₀,v₀, integrator::Verlet)
     f= forceUpdate(integrator.force,x₀)
-    return VerletState(x₀, similar(x₀), copy(f) , similar(x₀),length(x₀));
+    return VerletState(x₀,v₀, f, similar(v₀),length(x₀));
 end
 
-function InitState(x₀, integrator::Verlet)
+function InitState(x₀,v₀, integrator::Verlet)
 	f= forceUpdate(integrator.force,x₀)
-    return VerletState(deepcopy(x₀), similar(x₀), copy(f) , similar(x₀),length(x₀));
+    return VerletState(deepcopy(x₀),deepcopy(v₀),f , similar(v₀),length(x₀));
 end
 
 function UpdateState!(state::VerletState, integrator::Verlet)

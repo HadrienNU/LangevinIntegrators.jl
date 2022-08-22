@@ -43,11 +43,11 @@ end
 #TODO initialize velocity
 
 function InitState!(x₀,v₀, integrator::ABOBA)
-    return ABOBAState(x₀,v₀, similar(x₀), similar(x₀), similar(x₀), similar(x₀),length(x₀))
+    return ABOBAState(x₀,v₀, similar(x₀), similar(v₀), similar(v₀), similar(x₀),length(x₀))
 end
 
 function InitState(x₀,v₀, integrator::ABOBA)
-    return ABOBAState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(x₀),similar(x₀), similar(x₀),length(x₀))
+    return ABOBAState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(v₀),similar(v₀), similar(x₀),length(x₀))
 end
 
 function UpdateState!(state::ABOBAState, integrator::ABOBA)

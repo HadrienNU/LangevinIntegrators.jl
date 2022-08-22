@@ -34,6 +34,8 @@ export force_eval
 # include("plumed.jl")
 
 
+include("generate_initcond.jl")
+
 #Integrators
 include("integrators/integrators_types.jl")
 export InitState
@@ -59,6 +61,8 @@ include("integrators/hidden_aboba.jl")
 export ABOBA_Hidden
 #MemoryKernel
 
+export UpdateState!
+
 
 include("params.jl")
 
@@ -68,8 +72,6 @@ include("run.jl")
 export init_trajectory
 export run_trajectory!
 export run_trajectories_parallel
-
-include("initialization.jl")
 
 
 end

@@ -33,15 +33,14 @@ mutable struct BBKState{TF<:AbstractFloat} <:AbstractInertialState
     dim::Int64
 end
 
-function InitState!(x₀, integrator::BBK)
-    f=forceUpdate!(integrator.force, x₀[1])
-    return BBKState(x₀, similar(x₀[1]), copy(f),length(x₀))
+function InitState!(x₀,v₀, integrator::BBK)
+    f=forceUpdate(integrator.force, x₀)
+    return BBKState(x₀,v₀, similar(v₀), f,length(x₀))
 end
 
-function InitState(x₀, integrator::BBK)
-
-    f=forceUpdate!(integrator.force, x₀[1])
-    return BBKState(deepcopy(x₀), similar(x₀[1]), copy(f),length(x₀))
+function InitState(x₀,v₀, integrator::BBK)
+    f=forceUpdate(integrator.force, x₀)
+    return BBKState(deepcopy(x₀),deepcopy(v₀), similar(v₀), f,length(x₀))
 end
 
 function UpdateState!(state::BBKState, integrator::BBK)

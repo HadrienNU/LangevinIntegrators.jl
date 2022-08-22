@@ -6,7 +6,6 @@ Launch the trajectories
 
 function init_trajectory(integrator::S; params = LangevinParams()) where {S<:AbstractIntegrator}
 		state = InitState(integrator)
-		#Ensuite on peut randomiser les vitesses
 		return state
 end
 
@@ -31,7 +30,7 @@ function run_trajectory!(state::IS, integrator::S; params = LangevinParams()) wh
 end
 
 # """
-# Pour lancer plein de traj en parallèle
+# For launching a bunch of trajectories. For distributed computing see examples
 # """
 function run_trajectories(integrator::S; params = LangevinParams()) where {S<:AbstractIntegrator}
 	state = InitState(integrator) # To get the type of the state

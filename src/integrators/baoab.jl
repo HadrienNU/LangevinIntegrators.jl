@@ -40,15 +40,14 @@ mutable struct BAOABState{TF<:AbstractFloat} <:AbstractInertialState
     dim::Int64
 end
 
-function InitState!(x₀, integrator::BAOAB)
-    f=forceUpdate!(integrator.force, x₀[1])
-    return BAOABState(x₀, similar(x₀[1]), similar(x₀[1]),similar(x₀[1]), copy(f),length(x₀))
+function InitState!(x₀,v₀, integrator::BAOAB)
+    f=forceUpdate(integrator.force, x₀)
+    return BAOABState(x₀,v₀, similar(x₀), similar(v₀),similar(v₀), f,length(x₀))
 end
 
-function InitState(x₀, integrator::BAOAB)
-
-    f=forceUpdate!(integrator.force, x₀[1])
-    return BAOABState(deepcopy(x₀), similar(x₀[1]), similar(x₀[1]),similar(x₀[1]), copy(f),length(x₀))
+function InitState(x₀,v₀, integrator::BAOAB)
+    f=forceUpdate(integrator.force, x₀)
+    return BAOABState(deepcopy(x₀),deepcopy(v₀), similar(x₀), similar(x₀),similar(x₀), f,length(x₀))
 end
 
 function UpdateState!(state::BAOABState, integrator::BAOAB)

@@ -23,7 +23,7 @@ Set up the EM_Hidden integrator for underdamped Langevin with hidden variables.
 function EM_Hidden(force::FP, A::Array{TF},C::Array{TF}, Δt::TF,dim::Int) where{FP<:AbstractForce, TF<:AbstractFloat}
     dim_tot=size(A)[1]
     friction = A * Δt
-    # return EM_Hidden(force, Δt, cholesky(friction*C+C*friction').L,friction[1:dim,1:dim],friction[1:dim,(1+dim):dim_tot],friction[(1+dim):dim_tot,1:dim],friction[(1+dim):dim_tot,(1+dim):dim_tot],dim,dim_tot)
+    return EM_Hidden(force, Δt, cholesky(friction*C+C*friction').L,friction[1:dim,1:dim],friction[1:dim,(1+dim):dim_tot],friction[(1+dim):dim_tot,1:dim],friction[(1+dim):dim_tot,(1+dim):dim_tot],dim,dim_tot)
 end
 
 
@@ -38,12 +38,12 @@ end
 
 function InitState!(x₀, v₀, h₀, integrator::EM_Hidden)
     f=forceUpdate(integrator.force, x₀)
-    return HiddenEMState(x₀, v₀, h₀, copy(f))
+    return HiddenEMState(x₀, v₀, h₀, f,length(x₀))
 end
 
 function InitState(x₀, v₀, h₀, integrator::EM_Hidden)
     f=forceUpdate(integrator.force, x₀)
-    return HiddenEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀),copy(f))
+    return HiddenEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀),f,length(x₀))
 end
 
 

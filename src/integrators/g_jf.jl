@@ -40,17 +40,14 @@ mutable struct GJFState{TF<:AbstractFloat} <:AbstractInertialState
     dim::Int64
 end
 
-function InitState!(x₀, integrator::GJF)
-    f = similar(x₀)
-    f=forceUpdate!(integrator.force, x₀)
-    return GJFState(x₀, similar(x₀), copy(f), similar(x₀), similar(x₀),length(x₀))
+function InitState!(x₀,v₀, integrator::GJF)
+    f=forceUpdate(integrator.force, x₀)
+    return GJFState(x₀, v₀, f, copy(f), similar(f),length(x₀))
 end
 
-function InitState(x₀, integrator::GJF)
-
-    f = similar(x₀)
-    f=forceUpdate!(integrator.force, x₀)
-    return GJFState(deepcopy(x₀), similar(x₀), copy(f), similar(x₀), similar(x₀),length(x₀))
+function InitState(x₀,v₀, integrator::GJF)
+    f=forceUpdate(integrator.force, x₀)
+    return GJFState(deepcopy(x₀),deepcopy(v₀), f, copy(f), similar(f),length(x₀))
 end
 
 function UpdateState!(state::GJFState, integrator::GJF)

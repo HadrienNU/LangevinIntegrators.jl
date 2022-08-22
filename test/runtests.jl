@@ -51,9 +51,11 @@ using Test
         UpdateState!(state, integrator)
 
         integrator=BAOAB(force, 1.0, 1.0, 1.0, 1e-3)
+        state = InitState!([0.0],[0.0], integrator)
         UpdateState!(state, integrator)
 
         integrator=Verlet(force, 1.0, 1e-3)
+        state = InitState!([0.0],[0.0], integrator)
         UpdateState!(state, integrator)
 
     end
