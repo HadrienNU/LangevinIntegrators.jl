@@ -52,17 +52,17 @@ end
 
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
 
-    state.q_mid = state.x + 0.5 * integrator.Δt * state.v
+    @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v
     forceUpdate!(integrator.force,state.f_mid,state.q_mid)
-    state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
+    @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
 
-    state.p̂_mid = integrator.friction_vv*state.p_mid +integrator.friction_vh*state.h  + gauss[1:integrator.dim] # A remplacer par la ligne suivante
-    state.h =  integrator.friction_hv*state.p_mid + integrator.friction_hh*state.h + gauss[1+integrator.dim:integrator.dim_tot]
+    state.p̂_mid = integrator.friction_vv*state.p_mid .+integrator.friction_vh*state.h  .+ gauss[1:integrator.dim] # A remplacer par la ligne suivante
+    state.h =  integrator.friction_hv*state.p_mid .+ integrator.friction_hh*state.h .+ gauss[1+integrator.dim:integrator.dim_tot]
 
-    state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
-    state.x = state.q_mid + 0.5 * integrator.Δt * state.v
+    @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
+    @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v
 
 
 
