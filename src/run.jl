@@ -36,6 +36,7 @@ function run_trajectory!(state::IS, integrator::S; params = LangevinParams(), kw
 				run_obs(observer,n*integrator.Δt,state; kwargs) # Compute observables and dump data if required
 			end
 		end
+        n+=1
     end
     # Et là un end_fix
     # for fix in integrator.force.fixes

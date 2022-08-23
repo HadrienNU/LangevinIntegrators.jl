@@ -7,37 +7,56 @@ using LangevinIntegrators
 
 init_conds_args=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=>"Cste"))
 force=ForceFromPotential("Harmonic")
-params=LangevinParams(;n_steps = 10^4)
+params=LangevinParams(;n_steps = 10^5)
 
 # On peut tester aussi le calul des forces pour les différents moyen
 const SUITE = BenchmarkGroup()
 
-SUITE["trajectories"] = BenchmarkGroup(["run"])
+SUITE["integrator"] = BenchmarkGroup(["run"])
 
-integrator=EM(force,1.0,0.001)
-init_conds=initialize_initcond(integrator,init_conds_args)
+integrator_em=EM(force,1.0,0.001)
+init_conds_em=initialize_initcond(integrator_em,init_conds_args)
 
-SUITE["trajectories"]["init_EM"] = @benchmarkable InitState($integrator,$params)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_EM"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+SUITE["integrator"]["init_EM"] = @benchmarkable InitState($integrator_em,$init_conds_em)
+state_em=InitState(integrator_em, init_conds_em)
+SUITE["integrator"]["run_EM"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)
 
-integrator=BBK(force, 1.0, 1.0, 1.0, 1e-3)
-init_conds=initialize_initcond(integrator,init_conds_args)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_BBK"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+integrator_bbk=BBK(force, 1.0, 1.0, 1.0, 1e-3)
+init_conds=initialize_initcond(integrator_bbk,init_conds_args)
+state_bbk=InitState(integrator_bbk, init_conds)
+SUITE["integrator"]["run_BBK"] = @benchmarkable run_trajectory!($state_bbk, $integrator_bbk; params = $params)
 
-integrator=GJF(force, 1.0, 1.0, 1.0, 1e-3)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_GJF"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+integrator_gjf=GJF(force, 1.0, 1.0, 1.0, 1e-3)
+state_gjf=InitState(integrator_gjf, init_conds)
+SUITE["integrator"]["run_GJF"] = @benchmarkable run_trajectory!($state_gjf, $integrator_gjf; params = $params)
 
-integrator=ABOBA(force, 1.0, 1.0, 1.0, 1e-3)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_ABOBA"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+integrator_aboba=ABOBA(force, 1.0, 1.0, 1.0, 1e-3)
+state_aboba=InitState(integrator_aboba, init_conds)
+SUITE["integrator"]["run_ABOBA"] = @benchmarkable run_trajectory!($state_aboba, $integrator_aboba; params = $params)
 
-integrator=BAOAB(force, 1.0, 1.0, 1.0, 1e-3)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_BAOAB"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+integrator_baoab=BAOAB(force, 1.0, 1.0, 1.0, 1e-3)
+state_baoab=InitState(integrator_baoab, init_conds)
+SUITE["integrator"]["run_BAOAB"] = @benchmarkable run_trajectory!($state_baoab, $integrator_baoab; params = $params)
 
-integrator=Verlet(force, 1.0, 1e-3)
-state=InitState(integrator, init_conds)
-SUITE["trajectories"]["run_Verlet"] = @benchmarkable run_trajectory!($state, $integrator; params = $params)
+integrator_verlet=Verlet(force, 1.0, 1e-3)
+state_verlet=InitState(integrator_verlet, init_conds)
+SUITE["integrator"]["run_Verlet"] = @benchmarkable run_trajectory!($state_verlet, $integrator_verlet; params = $params)
+
+
+SUITE["forces"] = BenchmarkGroup(["run"])
+
+force=ForceFromPotential("Harmonic")
+integrator_em=EM(force,1.0,0.001)
+init_conds_em=initialize_initcond(integrator_em,init_conds_args)
+state_em=InitState(integrator_em, init_conds_em)
+
+SUITE["forces"]["potential"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)
+
+coeffs=zeros(Float64,(1,2))
+coeffs[1,:]=[0,-2]
+force=ForceFromBasis("Taylor",coeffs)
+integrator_em=EM(force,1.0,0.001)
+init_conds_em=initialize_initcond(integrator_em,init_conds_args)
+state_em=InitState(integrator_em, init_conds_em)
+
+SUITE["forces"]["fromBasisTaylor"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)
