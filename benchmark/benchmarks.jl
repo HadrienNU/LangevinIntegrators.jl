@@ -1,6 +1,6 @@
 using BenchmarkTools
 using LangevinIntegrators
-using Random
+# using Random
 
 #Defining somes benchmark
 # J'ai besoin de tester, l'évaluation d'une trajectoire pour les différents intégrateurs

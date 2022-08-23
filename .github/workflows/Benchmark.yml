@@ -51,6 +51,7 @@ jobs:
         run: |
           cd benchmark
           julia --project --color=yes -e '
+            import Pkg; Pkg.add("BenchmarkTools")
             include("benchmarks.jl")
             tune!(SUITE)
             results = run(SUITE, verbose = true)
