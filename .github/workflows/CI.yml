@@ -19,6 +19,7 @@ jobs:
       matrix:
         version:
           - '1.6'
+          - '1.7'
 #          - 'nightly'
         os:
           - ubuntu-latest
@@ -59,10 +60,10 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-          cache: 'pip' # caching pip dependencies
+      # - uses: actions/setup-python@v4
+      #   with:
+      #     python-version: '3.9'
+      #     cache: 'pip' # caching pip dependencies
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1

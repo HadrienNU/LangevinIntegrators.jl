@@ -46,6 +46,7 @@ jobs:
       #       ${{ env.cache-name }}-
       #       ${{ runner.os }}-test-
       #       ${{ runner.os }}-
+      - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run benchmark
