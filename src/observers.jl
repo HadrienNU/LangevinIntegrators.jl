@@ -12,6 +12,7 @@ Function to initialize the observers
 """
 function initialize_observers(args)
     # Ca prend une liste de dict et ça génère une observable par element de la liste
+    #On gère le type avec une suite de if et on leur passe des paramètres
     return []
 end
 
@@ -23,10 +24,9 @@ struct TrajectoryMemoryDump <: AbstractDump
     save_index::Int64
 end
 
-function TrajectoryMemoryDump(params::LangevinParams)
-    n_save_iters=params.n_save_iters
-    n_save=floor(Int, params.n_iters / n_save_iters)
-    traj = Array{typeof(state.x[1])}(undef,(,size(state.x)[1]))
+function TrajectoryMemoryDump(;n_save_iters=1,n_step=1e4)
+    n_save=floor(Int, n_step / n_save_iters)
+    traj = Array{typeof(state.x[1])}(undef,size(state.x)[1])
     time= Array{Float64}(1:n_save)
     return TrajectoryMemoryDump(n_save_iters,time,traj,1)
 end
@@ -42,8 +42,7 @@ struct TrajectoryFileDump <: AbstractDump
     file::IOStream
 end
 
-function TrajectoryFileDump(params::LangevinParams)
-    n_save_iters=params.n_save_iters
+function TrajectoryFileDump(;n_save_iters=1,n_step=1e4)
     file=open(filename,"w")
     return TrajectoryFileDump(n_save_iters,file)
 end
@@ -73,10 +72,10 @@ function run_obs(obs::AbstractObserver,t::Float64,state::AbstractState;kwargs...
 end
 
 # Defined to exist when there is no one
-function end_obs_traj(obs::AbstractObserver)
+function end_obs_traj(obs::AbstractObserver) # At the end of one traj
 
 end
 
-function close_obs(obs::AbstractObserver)
+function close_obs(obs::AbstractObserver) # At the end of all traj
 
 end

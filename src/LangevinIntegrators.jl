@@ -65,11 +65,13 @@ export ABOBA_Hidden
 export UpdateState!
 
 
+include("observers.jl")
+
 include("params.jl")
 
 export read_conf,LangevinParams
 
-include("observers.jl")
+
 
 
 include("run.jl")

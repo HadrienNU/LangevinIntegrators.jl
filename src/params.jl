@@ -140,7 +140,7 @@ TODO: Sortir un npz aussi de VolterraBasis et ensuite faire un read_npz_kernel
 puis une function read_npz qui selectionne hidden ou gle selon le nom des key dans le npz
 """
 
-function read_integrator_hidden_npz(file::String; integrator_type="EM"; kwargs...)
+function read_integrator_hidden_npz(file::String; integrator_type="EM", kwargs...)
     vars = npzread("data.npz")
     force=force_from_dict(vars["force"]) # Check if this is a spline fct alors on doit passer le niveau d'après
     #TODO some sanity checks
@@ -166,7 +166,7 @@ function initialize_initcond(integrator;kwargs...)
     # En vrai ça se contente de savoir si on doit générer, 1 2 ou 3 init_cond et ça appelle get_init_conditions qui les crée
     # Ca permet de définir des valeurs par défauts si rien n'est donné
     # ça retourne un vecteur de init_cond
-    intcond_pos = get_init_conditions(get(args,:position,Dict("type"=>"Cste"))
+    intcond_pos = get_init_conditions(get(args,:position,Dict("type"=>"Cste")))
     if integrator <:OverdampedIntegrator
         # if integrator <: HiddenOverdampedIntegrator
         #     initcond_hidden = get_init_conditions(args["hidden"])
@@ -177,12 +177,12 @@ function initialize_initcond(integrator;kwargs...)
         # end
         return [intcond_pos]
     else
-        initcond_velocity = get_init_conditions(get(args,:velocity,Dict("type"=>"Gaussian","std"=>1.0)) # à remplacer la la maxelliene
+        initcond_velocity = get_init_conditions(get(args,:velocity,Dict("type"=>"Gaussian","std"=>1.0))) # à remplacer la la maxelliene
         if integrator <: HiddenIntegrator
-            initcond_hidden = get_init_conditions(args["hidden"])
+            initcond_hidden = get_init_conditions(args["hidden"],Dict("type"=>"Cste"))
             return [intcond_pos,initcond_velocity,initcond_hidden]
         elseif integrator <: KernelIntegrator
-            initcond_mem = get_init_conditions(args["memory"])
+            initcond_mem = get_init_conditions(args["memory"],Dict("type"=>"Cste"))
             return [intcond_pos,initcond_velocity,initcond_mem]
         end
         if integrator <: InertialIntegrator
@@ -193,7 +193,7 @@ function initialize_initcond(integrator;kwargs...)
 end
 
 
-struct LangevinParams where {AO <: AbstractObserver} # La dedans on stocke les trucs initialisé
+struct LangevinParams{AO <: AbstractObserver} # La dedans on stocke les trucs initialisé
     n_steps::Int
 	n_trajs::Int
     #Par défaut le tableaux suivants sont vide

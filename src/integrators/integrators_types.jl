@@ -64,6 +64,6 @@ function InitState(integrator::InertialIntegrator, init_cond::Array ; id=1)
     return InitState(generate_initcond(init_cond[1]; id=id),generate_initcond(init_cond[2]; id=id),integrator)
 end
 
-function InitState(integrator::InertialIntegrator,init_cond::Array;  id=1)
+function InitState(integrator::HiddenIntegrator,init_cond::Array;  id=1)
     return InitState(generate_initcond(init_cond[1]; id=id),generate_initcond(init_cond[2]; id=id),generate_initcond(init_cond[3]; id=id),integrator)
 end

@@ -49,7 +49,7 @@ using Test
 
 
     @testset "Boundary conditions" begin # Voir si on peut faire une matrice de test
-        
+
     end
 
     @testset "integrators_overdamped" begin
@@ -90,7 +90,7 @@ using Test
 
     @testset "integrators_hidden" begin
         force=ForceFromPotential("Harmonic")
-        params=LangevinParams()
+
         integrator=EM_Hidden(force,[[1.0,1.0] [-1.0,2.0]],[[1.0,0.0] [0.0,1.0]],1e-3,1)
         state = InitState!([0.0],[0.0],[0.0], integrator)
         UpdateState!(state, integrator)
