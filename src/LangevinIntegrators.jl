@@ -32,6 +32,7 @@ include("force.jl")
 export ForceFromPotential
 export ForceFromBasis
 export ForceFromSplines
+export ForceFromScipySplines
 
 export force_eval
 
