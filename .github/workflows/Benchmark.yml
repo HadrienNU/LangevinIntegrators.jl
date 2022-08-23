@@ -1,0 +1,71 @@
+name: Benchmark
+on:
+  push:
+    branches:
+      - main
+    tags: ['*']
+  pull_request:
+
+permissions:
+  contents: write
+  deployments: write
+
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  benchmark:
+    name: Benchmark ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.7'
+#          - 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+    steps:
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - uses: julia-actions/cache@v1
+          env:
+            cache-name: cache-artifacts
+          with:
+            path: ~/.julia/artifacts
+            key: runner.os−test−env.cache−name−{{ hashFiles('**/Project.toml') }}
+            restore-keys: |
+              runner.os−test−
+              ${{ env.cache-name }}-
+              ${{ runner.os }}-test-
+              ${{ runner.os }}-
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run benchmark
+        run: |
+          cd benchmark
+          julia --project --color=yes -e '
+            include("benchmark.jl")
+            tune!(SUITE)
+            results = run(SUITE, verbose = true)
+            BenchmarkTools.save("output.json", median(results))'
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: Julia benchmark result
+          tool: 'julia'
+          output-file-path: benchmark/output.json
+          # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: true
+          alert-comment-cc-users: '@HadrienNU'
