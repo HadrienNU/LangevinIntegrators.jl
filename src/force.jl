@@ -69,6 +69,24 @@ function ForceFromSplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{
 	return ForceFromSplines(basis,ndim)
 end
 
+struct ForceFromScipySplines <: AbstractForceFromBasis # use Scipy
+	basis::Array#{Splines}
+	ndim::Int
+end
+
+function ForceFromScipySplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{TF<:AbstractFloat}
+	if ndims(coeffs) >=2
+		ndim=size(coeffs)[1]
+	else
+		ndim=1
+	end
+	basis=Vector{Function}(undef,ndim)
+	for d in 1:ndim
+		basis[d]= x-> scipy_interpolate.splev(x, (knots, coeffs[d,:], k))
+	end
+	return ForceFromScipySplines(basis,ndim)
+end
+
 function addFix(force::FP,fix::AF) where {FP<:AbstractForce,AF<:AbstractFix}
 	#Ici on doit initil
 	push!(force.fixes,fix)

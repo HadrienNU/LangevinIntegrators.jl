@@ -189,7 +189,6 @@ puis une function read_npz qui selectionne hidden ou gle selon le nom des key da
 
 function read_integrator_hidden_npz(file::String; integrator_type="EM", kwargs...)
     # vars = npzread(file)
-    np = pyimport("numpy")
     data = np.load(file, allow_pickle=true)
     force=force_from_dict(get(data,:force),get(data,:basis)[]) # Check if this is a spline fct alors on doit passer le niveau d'après
     dim = size(get(data,:force))[1]
@@ -213,7 +212,7 @@ function force_from_dict(coeffs,args)
     force=ForceFromPotential("Flat")
     basis_type=get(args,:basis_type)
     if basis_type == "bsplines"
-        force= ForceFromSplines(get(args,:bsplines)[1][3],get(args,:bsplines)[1][1],coeffs)
+        force= ForceFromScipySplines(get(args,:bsplines)[1][3],get(args,:bsplines)[1][1],coeffs)
     elseif basis_type == "linear"
         coeffs_taylor=zeros(Float64,(1,2))
         coeffs_taylor[1,:]=[get(args,:mean)[1],coeffs[1,1]]

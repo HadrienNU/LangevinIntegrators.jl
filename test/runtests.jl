@@ -45,20 +45,20 @@ using PyCall
         @test force_eval(integrator.force,[1.0])[1] ≈ -9.0294072
 
 
-        # int_free_energy= read_integrator_hidden_npz("test_free_energy_force.npz")
-        #
-        # @test force_eval(int_free_energy.force,[1.0])[1] ≈ 49.65808451
-        # @test force_eval(int_free_energy.force,[2.0])[1] ≈ -0.3815412
+        int_free_energy= read_integrator_hidden_npz("test_free_energy_force.npz")
 
-        # int_linear= read_integrator_hidden_npz("test_linear_force.npz")
-        #
-        # @test int_linear.dim_tot == 2
-        # @test size(int_linear.S) == (2,2)
-        # @test int_linear.friction_hv ≈ -4.82129755
-        # @test int_linear.friction_hh ≈ 2.95635407
-        #
-        # @test force_eval(int_linear.force,[0.0])[1] ≈ 0.0
-        # @test force_eval(int_linear.force,[1.0])[1] ≈ -1.00027734
+        @test force_eval(int_free_energy.force,[1.0])[1] ≈ 49.65808451
+        @test force_eval(int_free_energy.force,[2.0])[1] ≈ -0.3815412
+
+        int_linear= read_integrator_hidden_npz("test_linear_force.npz")
+
+        @test int_linear.dim_tot == 2
+        @test size(int_linear.S) == (2,2)
+        @test int_linear.friction_hv ≈ -4.82129755
+        @test int_linear.friction_hh ≈ 2.95635407
+
+        @test force_eval(int_linear.force,[0.0])[1] ≈ 0.0
+        @test force_eval(int_linear.force,[1.0])[1] ≈ -1.00027734
 
     end
 
@@ -88,6 +88,13 @@ using PyCall
         @test force_eval(force,[0.5])[1] ≈ -0.07372447
         @test force_eval(force,[1.0])[1] ≈ -9.0294072
         # @test force_eval(force,[2.0])[1] ≈ 49.3164884 # BSplineKit does not extrapolate TODO
+
+        #Forces from Scipy.interpolate
+        force= ForceFromScipySplines(3,[0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],[8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538])
+
+        @test force_eval(force,[0.5])[1] ≈ -0.07372447
+        @test force_eval(force,[1.0])[1] ≈ -9.0294072
+        @test force_eval(force,[2.0])[1] ≈ 49.3164884
     end
 
     @testset "Initial conditions" begin # Voir si on peut faire une matrice de test

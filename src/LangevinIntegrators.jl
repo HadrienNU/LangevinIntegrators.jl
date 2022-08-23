@@ -9,6 +9,8 @@ module LangevinIntegrators
 using ConfParser
 # using NPZ
 using PyCall
+np = pyimport("numpy")
+scipy_interpolate = pyimport("scipy.interpolate")
 # En vrai il faudrait le remplacer par PkgBenchmark.jl ou juste @profile
 # PkgBenchmark.jl ça marche avec BenchmarkTools.jl
 
