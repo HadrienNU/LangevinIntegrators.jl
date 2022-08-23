@@ -35,17 +35,18 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
-        with:
-          path: ~/.julia/artifacts
-          key: runner.os−test−env.cache−name−{{ hashFiles('**/Project.toml') }}
-          restore-keys: |
-            runner.os−test−
-            ${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+      # - uses: actions/cache@v1
+      #   env:
+      #     cache-name: cache-artifacts
+      #   with:
+      #     path: ~/.julia/artifacts
+      #     key: runner.os−test−env.cache−name−{{ hashFiles('**/Project.toml') }}
+      #     restore-keys: |
+      #       runner.os−test−
+      #       ${{ env.cache-name }}-
+      #       ${{ runner.os }}-test-
+      #       ${{ runner.os }}-
+      - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run benchmark
         run: |
@@ -56,17 +57,26 @@ jobs:
             tune!(SUITE)
             results = run(SUITE, verbose = true)
             BenchmarkTools.save("output.json", median(results))'
+
+      - name: Download previous benchmark data
+        uses: actions/cache@v1
+        with:
+          path: ./cache
+        key: ${{ runner.os }}-benchmark
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Julia benchmark result
           tool: 'julia'
           output-file-path: benchmark/output.json
-          # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          # Show alert with commit comment on detecting possible performance regression
-          alert-threshold: '200%'
-          comment-on-alert: true
+          external-data-json-path: ./cache/benchmark-data.json
+          # Workflow will fail when an alert happens
           fail-on-alert: true
-          alert-comment-cc-users: '@HadrienNU'
+          # Use personal access token instead of GITHUB_TOKEN due to https://github.community/t/github-action-not-triggering-gh-pages-upon-push/16096
+          # github-token: ${{ secrets.GITHUB_TOKEN }}
+          # auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          # alert-threshold: '200%'
+          # comment-on-alert: true
+          # fail-on-alert: true
+          # alert-comment-cc-users: '@HadrienNU'

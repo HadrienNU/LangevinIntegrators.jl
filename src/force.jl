@@ -55,12 +55,14 @@ end
 function ForceFromSplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{TF<:AbstractFloat}
 	if ndims(coeffs) >=2
 		ndim=size(coeffs)[1]
+		nb_coeffs=size(coeffs)[2]
 	else
 		ndim=1
+		nb_coeffs=length(coeffs)
 	end
 	#Note the order of the splines is k+1 with k the degree
-	B = BSplineBasis(BSplineOrder(k+1), knots;augment=false);
-	basis=Vector{Splines}(undef,ndim)
+	B = BSplineBasis(BSplineOrder(k+1), knots;augment=Val(nb_coeffs==length(knots)));
+	basis=Vector{Spline}(undef,ndim)
 	for d in 1:ndim
 		basis[d]=Spline(B, coeffs[d,:])
 	end

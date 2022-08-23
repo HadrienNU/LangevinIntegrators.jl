@@ -9,19 +9,24 @@ init_conds_args=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=
 force=ForceFromPotential("Harmonic")
 params=LangevinParams(;n_steps = 10^5)
 
-# On peut tester aussi le calul des forces pour les différents moyen
-const SUITE = BenchmarkGroup()
-
-SUITE["integrator"] = BenchmarkGroup(["run"])
-
 integrator_em=EM(force,1.0,0.001)
 init_conds_em=initialize_initcond(integrator_em,init_conds_args)
 
-SUITE["integrator"]["init_EM"] = @benchmarkable InitState($integrator_em,$init_conds_em)
+integrator_bbk=BBK(force, 1.0, 1.0, 1.0, 1e-3)
+
+# On peut tester aussi le calul des forces pour les différents moyen
+const SUITE = BenchmarkGroup()
+
+SUITE["init"] = BenchmarkGroup(["initialization"])
+
+SUITE["init"]["overdamped"] = @benchmarkable generate_initial_conditions($integrator_em; params = $params,init_conds_args=$init_conds_args)
+SUITE["init"]["underdamped"] = @benchmarkable generate_initial_conditions($integrator_bbk; params = $params,init_conds_args=$init_conds_args)
+
+SUITE["integrator"] = BenchmarkGroup(["run"])
+
 state_em=InitState(integrator_em, init_conds_em)
 SUITE["integrator"]["run_EM"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)
 
-integrator_bbk=BBK(force, 1.0, 1.0, 1.0, 1e-3)
 init_conds=initialize_initcond(integrator_bbk,init_conds_args)
 state_bbk=InitState(integrator_bbk, init_conds)
 SUITE["integrator"]["run_BBK"] = @benchmarkable run_trajectory!($state_bbk, $integrator_bbk; params = $params)

@@ -128,8 +128,9 @@ function read_integrator_conf(file::String)
         if typeof(physics_conf["force"]) == String # Assume this is a file
             ext=split(physics_conf["force"], ".")[2]
             if ext =="npz"
-                force_vars = npzread("data.npz")
-                force=force_from_dict(force_vars)
+                np = pyimport("numpy")
+                data_force = np.load(file, allow_pickle=true)
+                force=force_from_dict(get(data,:force),get(data,:basis)[])
             else
                 throw(ArgumentError("Unable to read force file"))
             end
@@ -187,22 +188,46 @@ puis une function read_npz qui selectionne hidden ou gle selon le nom des key da
 """
 
 function read_integrator_hidden_npz(file::String; integrator_type="EM", kwargs...)
-    vars = npzread("data.npz")
-    force=force_from_dict(vars["force"]) # Check if this is a spline fct alors on doit passer le niveau d'après
+    # vars = npzread(file)
+    np = pyimport("numpy")
+    data = np.load(file, allow_pickle=true)
+    force=force_from_dict(get(data,:force),get(data,:basis)[]) # Check if this is a spline fct alors on doit passer le niveau d'après
+    dim = size(get(data,:force))[1]
     #TODO some sanity checks
-    Δt=get(kwargs,:dt, vars["dt"]) # To allow changing the time step
-    if lowercase(integrator_type) in ["em","euler"] && vars["dim_h"] > 0
-        integrator = EM_Hidden(force,vars["A"],vars["C"],Δt,vars["dim_x"])
-    elseif lowercase(integrator_type) == "aboba" && vars["dim_h"] > 0
-        integrator = ABOBA_Hidden(force,vars["A"],vars["C"], Δt,vars["dim_x"])
+    Δt=get(kwargs,:dt, get(data,:dt)[]) # To allow changing the time step
+    dim_h = size(get(data,:A))[1]-dim # Il faudrait récué
+    if dim_h > 0
+        if lowercase(integrator_type) in ["em","euler"]
+            integrator = EM_Hidden(force,get(data,:A),get(data,:C),Δt,dim)
+        elseif lowercase(integrator_type) == "aboba"
+            integrator = ABOBA_Hidden(force,get(data,:A),get(data,:C), Δt,dim)
+        end
+    else
+        integrator = ABOBA(force,get(data,:C)[1,1],get(data,:A)[1,1],1.0, Δt)
     end
     return integrator
 end
 
 
-function force_from_dict(args)
-    # Pour le type, on peut le deviner juste au contenu du dict
-    return ForceFromPotential("Flat")
+function force_from_dict(coeffs,args)
+    force=ForceFromPotential("Flat")
+    basis_type=get(args,:basis_type)
+    if basis_type == "bsplines"
+        force= ForceFromSplines(get(args,:bsplines)[1][3],get(args,:bsplines)[1][1],coeffs)
+    elseif basis_type == "linear"
+        coeffs_taylor=zeros(Float64,(1,2))
+        coeffs_taylor[1,:]=[get(args,:mean)[1],coeffs[1,1]]
+        force=ForceFromBasis("Taylor",coeffs_taylor)
+    # elseif basis_type == "polynomial"
+    #
+    # elseif basis_type == "bins"
+    #
+    elseif basis_type == "free_energy_kde"  || basis_type == "free_energy"
+        force= ForceFromSplines(get(args,:fe_spline)[3],get(args,:fe_spline)[1],coeffs[1,1]*get(args,:fe_spline)[2])
+    else
+        throw(ArgumentError("Unsupported basis type"))
+    end
+    return force
 end
 
 """

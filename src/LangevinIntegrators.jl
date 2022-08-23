@@ -7,7 +7,8 @@ Library to generate trajectories from (Generalized) Langevin Equation
 module LangevinIntegrators
 
 using ConfParser
-using NPZ
+# using NPZ
+using PyCall
 # En vrai il faudrait le remplacer par PkgBenchmark.jl ou juste @profile
 # PkgBenchmark.jl ça marche avec BenchmarkTools.jl
 
@@ -28,6 +29,7 @@ include("potentials.jl")
 include("force.jl")
 export ForceFromPotential
 export ForceFromBasis
+export ForceFromSplines
 
 export force_eval
 
@@ -76,6 +78,7 @@ export LangevinParams
 
 
 include("run.jl")
+export generate_initial_conditions
 export run_trajectory!
 export run_trajectories_parallel
 

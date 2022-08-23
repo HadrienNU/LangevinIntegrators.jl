@@ -11,6 +11,7 @@ ConfParser = "88353bc9-fd38-507d-a820-d3b43837d6b9"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
