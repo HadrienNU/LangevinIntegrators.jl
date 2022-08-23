@@ -10,6 +10,6 @@ using LangevinIntegrators
 let
     #We should take the config file name as argument
     params,init_conf=read_conf("onetraj.ini")
-    integrator=read_integrator_config("onetraj.ini")
+    integrator=read_integrator_conf("onetraj.ini")
     run_trajectories(integrator; params = params, init_conds_args=init_conf)
 end

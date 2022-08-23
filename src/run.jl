@@ -5,7 +5,7 @@ Launch the trajectories
 =#
 
 function generate_initial_conditions(integrator::S; params = LangevinParams(), init_conds_args=Dict()) where {S<:AbstractIntegrator}
-    init_conds=initialize_initcond(integrator;init_conds_args...)
+    init_conds=initialize_initcond(integrator,init_conds_args)
 	state = InitState(integrator) # To get the type of the state
 	init_states=Vector{typeof(state)}(undef,params.n_trajs)
 	for n in 1:params.n_trajs
@@ -26,9 +26,9 @@ function run_trajectory!(state::IS, integrator::S; params = LangevinParams(), kw
 	n = 1
 	nostop=0
     # Ici ik faut faire un init_fix
-    for fix in integrator.force.fixes
-        init_fix(fix)
-    end
+    # for fix in integrator.force.fixes
+    #     init_fix(fix)
+    # end
 	while n < params.n_steps && nostop ==0
     	nostop=UpdateState!(state, integrator)
         for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
@@ -38,9 +38,9 @@ function run_trajectory!(state::IS, integrator::S; params = LangevinParams(), kw
 		end
     end
     # Et là un end_fix
-    for fix in integrator.force.fixes
-        close_fix(fix)
-    end
+    # for fix in integrator.force.fixes
+    #     close_fix(fix)
+    # end
     for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
         end_obs_traj(observer;end_time=n*integrator.Δt,stoppingCriterion=nostop) # Close file if needed
     end

@@ -5,11 +5,37 @@ using Test
 @testset "LangevinIntegrators.jl" begin
     # Write your tests here.
 
-    # @testset "Params" begin
-    #     # Tester from_config avec différent fichier, ça devrait tester l'ensemble des fonctions d'init
+    @testset "Params" begin
+        # Test from_config with various config file
+        params, init_conds_args=read_conf("test_params.ini")
 
-            # Tester from npz
-    # end
+        @test params.n_steps == 5000
+        @test params.n_trajs == 1
+
+        integrator = read_integrator_conf("test_integrator_em.ini")
+
+        cond_arr=initialize_initcond(integrator, init_conds_args)
+
+        @test length(cond_arr) == 1
+        @test cond_arr[1] isa LangevinIntegrators.Gaussian_InitCond
+        @test cond_arr[1].mean == [0.0]
+
+
+        integrator = read_integrator_conf("test_integrator_baoab.ini")
+
+        cond_arr=initialize_initcond(integrator, init_conds_args)
+
+        @test length(cond_arr) == 2
+        @test cond_arr[2] isa LangevinIntegrators.Gaussian_InitCond
+        @test cond_arr[2].mean == [0.0]
+        @test cond_arr[2].std == 1.0
+
+        # Test that the force from the config is correct
+        @test force_eval(integrator.force,[0.0])[1] ≈ 0.0
+        @test force_eval(integrator.force,[1.0])[1] ≈ -2.0
+
+        # Tester from npz
+    end
 
     @testset "Forces" begin
         # From potential

@@ -13,7 +13,7 @@ Function to initialize the observers
 function initialize_observers(args)
     # Ca prend une liste de dict et ça génère une observable par element de la liste
     #On gère le type avec une suite de if et on leur passe des paramètres
-    return []
+    return  empty([],AbstractObserver)
 end
 
 

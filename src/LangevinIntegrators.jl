@@ -69,7 +69,8 @@ include("observers.jl")
 
 include("params.jl")
 
-export read_conf,LangevinParams
+export read_conf, read_integrator_conf, read_integrator_hidden_npz, initialize_initcond
+export LangevinParams
 
 
 

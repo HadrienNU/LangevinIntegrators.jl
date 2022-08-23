@@ -58,10 +58,33 @@ end
 # En vrai on va juste avoir un grand constructeur qui va s'appellait init_conditions qui retournera selon un if la bonne chose
 
 function get_init_conditions(args::Dict)
-    type=get(args,:type,"Constant")
-    dim=get(args,:dim,1)
-    if type in ["cste","Constante"]
+    type=get(args,"type","Constant")
+    dim=get(args,"dim",1)
+    if lowercase(type) in ["cste","constant"]
         return Constant_InitCond(get(args,:val,zeros(dim)),dim)
+    elseif lowercase(type) in ["uniform","random"]
+        low = get(args,"low",zeros(dim))
+        if (low isa Number)
+            low= low*ones(dim)
+        else
+            low=parse.(Float64,low)
+        end
+        high= get(args,"high",ones(dim))
+        if (high isa Number)
+            high= high*ones(dim)
+        else
+            high=parse.(Float64,high)
+        end
+        return Uniform_InitCond(low,high,dim)
+    elseif lowercase(type) in ["gaussian","normal"]
+        mean = get(args,"mean",zeros(dim))
+        if (mean isa Number)
+            mean= mean *ones(dim)
+        else
+            mean=parse.(Float64,mean)
+        end
+        std= get(args,"std",1.0)
+        return Gaussian_InitCond(mean,std,dim)
     else
         println("Unknwon initializer")
     end
