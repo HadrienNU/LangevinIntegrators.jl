@@ -51,7 +51,7 @@ jobs:
         run: |
           cd benchmark
           julia --project --color=yes -e '
-            include("benchmark.jl")
+            include("benchmarks.jl")
             tune!(SUITE)
             results = run(SUITE, verbose = true)
             BenchmarkTools.save("output.json", median(results))'

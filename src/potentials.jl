@@ -1,6 +1,11 @@
 using StaticArrays
 
 #Implement more potential
+
+function Flat(X)
+    return 0.0
+end
+
 function Harmonic(X)
     return 0.5 * X[1]^2
 end

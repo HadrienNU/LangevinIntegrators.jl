@@ -35,9 +35,14 @@ The struct that hold global parameters
 =#
 
 function read_conf(file::String)
-
-    conf = ConfParse("confs/config.ini")
+    conf = ConfParse(file)
     parse_conf!(conf)
+
+    if !haskey(conf,"sampling")
+        throw(ArgumentError("The config file should have a sampling section"))
+    # elseif !haskey(conf,"physics")
+    #     throw(ArgumentError("The config file should have a physics section"))
+    end
 
     sampling_conf  = retrieve(conf, "sampling")
     #The various et of observer that can be defined
@@ -72,16 +77,61 @@ function read_conf(file::String)
         init_conds_args["kernel"]=retrieve(conf, "init_kernel")
     end
 
+    return params, init_conds_args
+end
+
+function read_integrator_config(file::String)
+    conf = ConfParse(file)
+    parse_conf!(conf)
+
+    if !haskey(conf,"sampling")
+        throw(ArgumentError("The config file should have a sampling section"))
+    elseif !haskey(conf,"physics")
+        throw(ArgumentError("The config file should have a physics section"))
+    end
+
+    sampling_conf  = retrieve(conf, "sampling")
     #Ensuite on crée la structure qui tient la force,
+    physics_conf=retrieve(conf, "physics")
+    if haskey(physics_conf,"force") # Si il y a une clé force, elle domaine la clé potential
+        #Dans ce cas, l'argument est soit un fichier, soit un tuple "name",coeffs
+        if length(physics_conf["force"]) == 1 # Assume this is a file
+            ext=split(physics_conf["force"], ".")[2]
+            if ext =="npz"
+                force_vars = npzread("data.npz")
+                force=force_from_dict(force_vars)
+            else
+                throw(ArgumentError("Unable to read force file"))
+            end
+        else # Assume this is a type and its param
+            type=physics_conf["force"][1]
+            coeffs=parse.(Float64,physics_conf["force"][2:length(physics_conf["force"])])
+            if type in ["splines", "bsplines"]
+                k=parse(Int64,get(physics_conf,:splines_k,"3"))
+                knots=parse.(Float64,physics_conf["splines_knots"])
+                ForceFromSplines(k,knots,coeffs)
+            else
+                force=ForceFromBasis(type,coeffs)
+            end
+        end
+        # println(physics_conf["force"])
+    elseif haskey(physics_conf,"potential")
+        force=ForceFromPotential(physics_conf["potential"])
+    else
+        force=ForceFromPotential("Flat")
+    end
 
     #elle qui tient l'intégrateur en fonction des paramètres
 	#get(collection, key, default) pour avoir une valeur par défaut si la clé n'est pas présente
     if sampling_conf["integration"] in ["EM","euler"]
-        integrator=EM(force::FP, 1.0/sampling_conf["temperature"], sampling_conf["dt"])
+        integrator=EM(force::FP, 1.0/physics_conf["temperature"], sampling_conf["dt"])
 	end
 
-    return integrator, params, init_conds_args
+    #Ensuite selon l'intégrateur on récupère plus ou moins d'infos de la sectin physics
+
+    return integrator
 end
+
 
 
 """
@@ -90,9 +140,9 @@ TODO: Sortir un npz aussi de VolterraBasis et ensuite faire un read_npz_kernel
 puis une function read_npz qui selectionne hidden ou gle selon le nom des key dans le npz
 """
 
-function read_hidden_npz(file::String; integrator_type="EM"; kwargs...)
+function read_integrator_hidden_npz(file::String; integrator_type="EM"; kwargs...)
     vars = npzread("data.npz")
-
+    force=force_from_dict(vars["force"]) # Check if this is a spline fct alors on doit passer le niveau d'après
     #TODO some sanity checks
     dt=get(kwargs,:dt, vars["dt"]) # To allow changing the time step
     if integrator_type in ["EM","euler"] && vars["dim_h"] > 0
@@ -103,6 +153,11 @@ function read_hidden_npz(file::String; integrator_type="EM"; kwargs...)
     return integrator
 end
 
+
+function force_from_dict(args)
+    # Pour le type, on peut le deviner juste au cotenu du dict
+    return ForceFromPotential("Flat")
+end
 
 """
 Function to initialize the init_cond
@@ -159,12 +214,12 @@ function LangevinParams(; n_steps = 10^4, n_trajs=1)
 end
 
 function LangevinParams(sampling_dict)
-    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_trajs"], [])
+    return LangevinParams(sampling_dict["n_steps"],get(sampling_dict,:n_trajs,1), [])
 end
 
 function LangevinParams(sampling_dict,obs_dict)
     obs_list=initialize_observers(obs_dict)
-    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_trajs"], obs_list)
+    return LangevinParams(sampling_dict["n_steps"],get(sampling_dict,:n_trajs,1), obs_list)
 end
 
 function addObserver(params::LangevinParams;kwargs...)
