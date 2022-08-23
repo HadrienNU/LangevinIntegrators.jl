@@ -21,6 +21,7 @@ using LinearAlgebra
 # const timer = TimerOutput() # A global timer to time computation when debugging
 
 
+include("modifiers.jl")
 
 
 include("potentials.jl")

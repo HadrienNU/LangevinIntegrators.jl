@@ -33,7 +33,7 @@ mutable struct HiddenABOBAState{TF<:AbstractFloat} <:AbstractMemoryHiddenState
     x::Vector{TF}
 	v::Vector{TF}
     h::Vector{TF}
-    q_mid::Vector{TF}
+    x_mid::Vector{TF}
     p_mid::Vector{TF}
     p̂_mid::Vector{TF}
     f_mid::Vector{TF}
@@ -52,8 +52,9 @@ end
 
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
 
-    @. state.q_mid = state.x + 0.5 * integrator.Δt * state.v
-    nostop = forceUpdate!(integrator.force,state.f_mid,state.q_mid)
+    @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
+    #apply_bc!(integrator.bc,state.x_mid,state.v)
+    nostop = forceUpdate!(integrator.force,state.f_mid,state.x_mid)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
@@ -62,7 +63,8 @@ function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden)
     state.h =  integrator.friction_hv*state.p_mid .+ integrator.friction_hh*state.h .+ gauss[1+integrator.dim:integrator.dim_tot]
 
     @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
-    @. state.x = state.q_mid + 0.5 * integrator.Δt * state.v
+    @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
+    #apply_bc!(integrator.bc,state.x,state.v)
 
     return nostop
 end

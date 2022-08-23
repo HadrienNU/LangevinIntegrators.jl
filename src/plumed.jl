@@ -14,7 +14,7 @@ module Plumed
     # c`-llibplumed.so -I$(path_plumed)/include`
     c"#include <plumed/wrapper/Plumed.h>"
 
-    struct plumed{TF<: AbstractFloat}
+    struct plumed{TF<: AbstractFloat} <: LangevinIntegrators.AbstractFix
         plumedmain
         dim::Int64
         natoms::Int64
@@ -30,6 +30,9 @@ module Plumed
         masses::Array{Float64}
     end
 
+
+    # Je dois pouvoir ouvrir et fermer plumed pour chaque traj, donc plumed_init doit aller dans une function indep et on doit mettre les infos dans la struct
+    # Ou alors trouver la command qui reinitialize plumed
     function plumed(plumed_input_file,plumed_log_file="p.log",dim=1,delta_t=1e-3,temperature=1.0)
         #Je dois récupérer une structure de param avec dim, delta_t, temperature, masses
         ptr_plumed_file=pointer(plumed_input_file)
@@ -43,7 +46,13 @@ module Plumed
         box[2,2]=1.0
         box[3,3]=1.0
 
-        plumedmain=c"plumed_create"()
+
+
+        return plumed(plumedmain,dim,natoms,zeros(3*natoms),zeros(3*natoms),Ref{Cfloat}(0.0),Ref{Cint}(0),Ref{Cint}(0),box,zeros(3,3),ones(natoms))
+    end
+
+    function plumed_init(plumed_struct)
+        plumed_struct.plumedmain=c"plumed_create"()
 
         ref_plumed_api_version=Ref{Cint}(0)
         c"plumed_cmd"(plumedmain,"getApiVersion",ref_plumed_api_version) #Do Some check on plumed_api (en particulier)
@@ -84,10 +93,7 @@ module Plumed
 
         c"plumed_cmd"(plumedmain,"setBox",Ref(box,1));                  # Pass a pointer to the first element in the box share array to plumed
 
-
-        return plumed(plumedmain,dim,natoms,zeros(3*natoms),zeros(3*natoms),Ref{Cfloat}(0.0),Ref{Cint}(0),Ref{Cint}(0),box,zeros(3,3),ones(natoms))
     end
-
 
     function plumed_step(plumed_struct::plumed,n,positions,forces,energy)
 
@@ -123,8 +129,26 @@ module Plumed
     end
 
 
-    function plumed_finalize(plumed_struct)
+    function plumed_finalize(plumed_struct::plumed)
         c"plumed_finalize"(plumed_struct.plumedmain)
+    end
+
+
+    function init_fix(fix::plumed; kwargs...) # Différent du constructeur au sens que c'est appelé au début de chaque traj
+
+    end
+
+    function apply_fix!(fix::plumed,x::Array{TF},f::Array{TF}) where {TF<:AbstractFloat}
+        #Pour le n, on va juste le recalculer dans plumed puisque c'est appelé tous les pas de temps
+        stop_cond,energy=plumed_step(fix,fix.n,x,f,0.0) #Don't deal with energy for now
+        fix.n+=1
+        fix.energy=energy
+    	return stop_cond
+    end
+
+
+    function close_fix(fix::plumed)
+        plumed_finalize(fix)
     end
 
     export plumed

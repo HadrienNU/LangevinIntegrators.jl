@@ -3,6 +3,10 @@ struct EM{FP<:AbstractForce, TF<:AbstractFloat} <: OverdampedIntegrator
     β::TF
     Δt::TF
     σ::TF
+    # ou alors de BC global comme les contraintes, on va coder les 2 et avec les types paramétriques ça va marcher
+    # On a un type BC_indep qui est égal à Array{BC} et un type Contraintes pour le premier c'est element-wise
+    # bc::Array{BC}  # On a une BC par dimension, es-ce que ça ne serait pas une propriétésde l'intégrateur
+    #Si les BC sont dans l'intégrateur, on a pas besoin d'actualiser la force
 end
 #Il faut faire aussi un EM_ND qui gère un sigma matriciel
 
@@ -41,6 +45,7 @@ end
 function UpdateState!(state::EMState, integrator::EM)
 
     state.x = state.x .+ integrator.Δt .* state.f .+ integrator.σ .* randn(state.dim)
+    #apply_bc!(integrator.bc,state.x)
     # @timeit_debug timer "UpdateState: forceUpdate!" begin
     nostop = forceUpdate!(integrator.force,state.f, state.x)
     # end

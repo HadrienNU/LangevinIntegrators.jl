@@ -7,6 +7,15 @@ abstract type AbstractObserver end
 abstract type AbstractDump <: AbstractObserver end
 abstract type AbstractStatisticalObs <: AbstractObserver end
 
+"""
+Function to initialize the observers
+"""
+function initialize_observers(args)
+    # Ca prend une liste de dict et ça génère une observable par element de la liste
+    return []
+end
+
+
 struct TrajectoryMemoryDump <: AbstractDump
     n_save_iters::Int64
     time::Array
@@ -65,5 +74,9 @@ end
 
 # Defined to exist when there is no one
 function end_obs_traj(obs::AbstractObserver)
+
+end
+
+function close_obs(obs::AbstractObserver)
 
 end

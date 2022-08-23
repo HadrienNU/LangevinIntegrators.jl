@@ -50,6 +50,7 @@ end
 function UpdateState!(state::HiddenEMState, integrator::EM_Hidden)
 
     @. state.x = state.x + integrator.Δt * state.v
+    #apply_bc!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x)
 
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory

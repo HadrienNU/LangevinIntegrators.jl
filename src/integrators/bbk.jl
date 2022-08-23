@@ -47,6 +47,7 @@ function UpdateState!(state::BBKState, integrator::BBK)
 
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .- 0.5 * integrator.Δt .* integrator.γ * state.v .+ integrator.σ * randn(state.dim)
     @. state.x = state.x + integrator.Δt * state.v_mid
+    #apply_bc!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force,state.f, state.x)
     state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + integrator.σ * randn(state.dim))/(1 + 0.5 * integrator.Δt * integrator.γ)
 

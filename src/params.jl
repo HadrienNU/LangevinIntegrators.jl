@@ -40,8 +40,37 @@ function read_conf(file::String)
     parse_conf!(conf)
 
     sampling_conf  = retrieve(conf, "sampling")
+    #The various et of observer that can be defined
+    obs_conf=[]
+    if haskey(conf,"dump")
+        dump_dict=retrieve(conf, "dump")
+        dump_dict["name"]="dump"
+        push!(obs_conf,dump_dict)
+    end
+    if haskey(conf,"logging")
+        log_dict=retrieve(conf, "logging")
+        log_dict["name"]="log"
+        push!(obs_conf,log_dict)
+    end
+    if haskey(conf,"observer")
+        push!(obs_conf,retrieve(conf, "observer"))
+    end
+    params = LangevinParams(sampling_conf,obs_conf)
 
-    params = LangevinParams(sampling_conf, retrieve(conf, "logging"), retrieve(conf, "dump"),retrieve(conf, "init"))
+    # The information about the initial conditions
+    init_conds_args=Dict()
+    if haskey(conf,"init_position")
+        init_conds_args["position"]=retrieve(conf, "init_position")
+    end
+    if haskey(conf,"init_velocity")
+        init_conds_args["velocity"]=retrieve(conf, "init_velocity")
+    end
+    if haskey(conf,"init_hidden")
+        init_conds_args["hidden"]=retrieve(conf, "init_hidden")
+    end
+    if haskey(conf,"init_kernel")
+        init_conds_args["kernel"]=retrieve(conf, "init_kernel")
+    end
 
     #Ensuite on crée la structure qui tient la force,
 
@@ -51,12 +80,29 @@ function read_conf(file::String)
         integrator=EM(force::FP, 1.0/sampling_conf["temperature"], sampling_conf["dt"])
 	end
 
-    return params, integrator, init_conds_args
+    return integrator, params, init_conds_args
 end
 
-function select_integrator(name::String)
+
+"""
+Function to read NPZ config from GLE_analysisEM
+TODO: Sortir un npz aussi de VolterraBasis et ensuite faire un read_npz_kernel
+puis une function read_npz qui selectionne hidden ou gle selon le nom des key dans le npz
+"""
+
+function read_hidden_npz(file::String; integrator_type="EM"; kwargs...)
+    vars = npzread("data.npz")
+
+    #TODO some sanity checks
+    dt=get(kwargs,:dt, vars["dt"]) # To allow changing the time step
+    if integrator_type in ["EM","euler"] && vars["dim_h"] > 0
+        integrator = EM_Hidden(force,vars["A"],vars["C"],dt,vars["dim_x"])
+    elseif integrator_type == "aboba" && vars["dim_h"] > 0
+        integrator = ABOBA_Hidden(force,vars["A"],vars["C"], dt,vars["dim_x"])
+    end
     return integrator
 end
+
 
 """
 Function to initialize the init_cond
@@ -91,37 +137,12 @@ function initialize_initcond(integrator;kwargs...)
     # raise error
 end
 
-"""
-Function to initialize the observers
-"""
-function initialize_observers(args,integrator)
-    # Ca prend une liste de dict et ça génère une observable par element de la liste
-    return []
-end
 
-"""
-Function to read NPZ config from GLE_analysisEM
-"""
-
-function read_npz(file::String; integrator_type="EM", dt=1.0)
-    vars = npzread("data.npz")
-
-    #TODO some sanity checks and deal with the possibility of changing the time step
-
-    if integrator_type in ["EM","euler"] && vars["dim_h"] > 0
-        integrator = EM_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
-    elseif integrator_type == "aboba" && vars["dim_h"] > 0
-        integrator = ABOBA_Hidden(force,vars["A"],vars["C"], vars["dt"],vars["dim_x"])
-    end
-    return integrator
-end
-
-
-
-struct LangevinParams # La dedans on stocke les trucs initialisé
+struct LangevinParams where {AO <: AbstractObserver} # La dedans on stocke les trucs initialisé
     n_steps::Int
 	n_trajs::Int
-    observers::Array{AbstractObserver}
+    #Par défaut le tableaux suivants sont vide
+    observers::Array{AO}
 end
 
 """
@@ -137,12 +158,15 @@ function LangevinParams(; n_steps = 10^4, n_trajs=1)
     return LangevinParams(n_steps,n_trajs, [])
 end
 
-function LangevinParams(sampling_dict,obs_dict)
-    obs_list=initialize_observers(obs_dict)
-    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_traj"], obs_list)
+function LangevinParams(sampling_dict)
+    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_trajs"], [])
 end
 
-# function LangevinParams(sampling_dict,logging_dict,dump_dict, init_dict)
-#
-#     return LangevinParams(n_steps, n_save_iters, floor(Int, n_steps / n_save_iters))
-# end
+function LangevinParams(sampling_dict,obs_dict)
+    obs_list=initialize_observers(obs_dict)
+    return LangevinParams(sampling_dict["n_steps"],sampling_dict["n_trajs"], obs_list)
+end
+
+function addObserver(params::LangevinParams;kwargs...)
+    push!(params.constraints,new_obs)
+end

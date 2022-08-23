@@ -4,6 +4,13 @@ using Test
 
 @testset "LangevinIntegrators.jl" begin
     # Write your tests here.
+
+    # @testset "Params" begin
+    #     # Tester from_config avec différent fichier, ça devrait tester l'ensemble des fonctions d'init
+
+            # Tester from npz
+    # end
+
     @testset "Forces" begin
         # From potential
         force=ForceFromPotential("Harmonic")
@@ -23,6 +30,26 @@ using Test
         @test force_eval(force,[0.0])[1] ≈ 0.0
         @test force_eval(force,[1.0])[1] ≈ -2.0
         #Forces from BSplinesKit
+    end
+
+    @testset "Initial conditions" begin # Voir si on peut faire une matrice de test
+        #Tester les différents moyens d'avoir des conditions initiales
+        force=ForceFromPotential("Harmonic")
+        #Overdamped
+        integrator=EM(force,1.0,1e-3)
+        # state = InitState!(integrator,[])
+        #Underdamped
+        integrator=Verlet(force, 1.0, 1e-3)
+        # state = InitState!(integrator,[])
+        # @test state.x == ??
+
+        #Hidden
+        integrator=EM_Hidden(force,[[1.0,1.0] [-1.0,2.0]],[[1.0,0.0] [0.0,1.0]],1e-3,1)
+    end
+
+
+    @testset "Boundary conditions" begin # Voir si on peut faire une matrice de test
+        
     end
 
     @testset "integrators_overdamped" begin
@@ -57,7 +84,8 @@ using Test
         integrator=Verlet(force, 1.0, 1e-3)
         state = InitState!([0.0],[0.0], integrator)
         UpdateState!(state, integrator)
-
+        #Comme Verlet est déterministe on peut faire des test sur la valeur
+        # @test state.x ≈
     end
 
     @testset "integrators_hidden" begin

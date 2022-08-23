@@ -1,6 +1,9 @@
 
 #S'il y a un object plumed il doit être stocké dans la force?
 # En tout cas, force update doit appeler plumed_step
+# La force doit stocker une liste de Fix, dont celui de plumed
+# Function a créer
+
 abstract type AbstractForce end
 
 abstract type AbstractForceFromBasis <:AbstractForce  end
@@ -12,6 +15,8 @@ struct ForceFromPotential{F<:Function, G<: Function} <: AbstractForce
 	gradV!::F
 	V::G # On stocke aussi la valeur du potential
 	ndim::Int
+	# fixes::Array{AFix} # Uneliste de fix à appliquer
+	# plumed_object  à part?
 end
 
 function ForceFromPotential(potential::String,ndim=1::Int)
@@ -62,10 +67,19 @@ function ForceFromSplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{
 	return ForceFromSplines(basis,ndim)
 end
 
+function addFix(force::FP,fix::AF) where {FP<:AbstractForce,AF<:AbstractFix}
+	#Ici on doit initil
+	push!(force.fixes,fix)
+end
+
+
 #La fonction qui calcule la force a actualiser pour n'avoir que forceUpdate! from basis
 function forceUpdate!(force::ForceFromPotential,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
 	force.gradV!(f,x)
 	f.*=-1
+	# for fix in force.fixes
+	# 	apply_fix!(fix,x,f)
+	# end
 	return 0
 end
 
@@ -73,6 +87,9 @@ function forceUpdate!(force::FB,f::Vector{TF}, x::Vector{TF})  where{FB<:Abstrac
 	for d in 1:force.ndim
 		f[d]=force.basis[d](x[1]) # TODO, dealing with nd function
 	end
+	# for fix in force.fixes
+	# 	apply_fix!(fix,x,f)
+	# end
 	return 0
 end
 
