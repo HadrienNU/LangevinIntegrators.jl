@@ -102,7 +102,13 @@ function read_conf(file::String)
         init_conds_args["velocity"]=getsubDict(conf, "init_velocity")
     end
     if haskey(conf,"init_hidden")
-        init_conds_args["hidden"]=getsubDict(conf, "init_hidden")
+        hidden_dict = getsubDict(conf, "init_hidden")
+        if haskey(hidden_dict,"file") &&  split(hidden_dict["hidden"], ".")[2] =="npz" #If init_cond from .npz
+            data = np.load(hidden_dict["hidden"], allow_pickle=true)
+            init_conds_args["hidden"]=Dict("type"=>"Gaussian","mean"=> get(data,:µ0),"std"=>1.0)
+        else
+            init_conds_args["hidden"]=hidden_dict
+
     end
     if haskey(conf,"init_kernel")
         init_conds_args["kernel"]=getsubDict(conf, "init_kernel")
@@ -152,7 +158,7 @@ function read_integrator_conf(file::String)
             force=ForceFromPotential(physics_conf["potential"][1])
         end
     else
-        force=ForceFromPotential("Flat")
+        force=nothing
     end
 
     #elle qui tient l'intégrateur en fonction des paramètres
@@ -171,9 +177,9 @@ function read_integrator_conf(file::String)
         mass = retrieve(conf,"physics","mass",Float64,1.0)
         integrator=Verlet(force, mass, Δt)
     elseif integrator_type in ["em_hidden","hidden_em","euler_hidden","hidden_euler"]
-        integrator = read_integrator_hidden_npz(retrieve(conf,"physics","hidden");integrator_type="EM")
+        integrator = read_integrator_hidden_npz(retrieve(conf,"physics","hidden");integrator_type="EM",force=force)
     elseif integrator_type in ["aboba_hidden","hidden_aboba"]
-        integrator = read_integrator_hidden_npz(retrieve(conf,"physics","hidden");integrator_type="aboba")
+        integrator = read_integrator_hidden_npz(retrieve(conf,"physics","hidden");integrator_type="aboba",force=force)
 	end
 
     return integrator
@@ -190,11 +196,14 @@ puis une function read_npz qui selectionne hidden ou gle selon le nom des key da
 function read_integrator_hidden_npz(file::String; integrator_type="EM", kwargs...)
     # vars = npzread(file)
     data = np.load(file, allow_pickle=true)
-    force=force_from_dict(get(data,:force),get(data,:basis)[]) # Check if this is a spline fct alors on doit passer le niveau d'après
+     # Check if this is a spline fct alors on doit passer le niveau d'après
     dim = size(get(data,:force))[1]
-    #TODO some sanity checks
+    dim_h = size(get(data,:A))[1]-dim
+    #TODO some sanity checks, such as checking dimension
     Δt=get(kwargs,:dt, get(data,:dt)[]) # To allow changing the time step
-    dim_h = size(get(data,:A))[1]-dim # Il faudrait récué
+
+    force_ = get(kwargs,:force,nothing)
+    force = force == nothing  ? force_from_dict(get(data,:force),get(data,:basis)[]) : force
     if dim_h > 0
         if lowercase(integrator_type) in ["em","euler"]
             integrator = EM_Hidden(force,get(data,:A),get(data,:C),Δt,dim)
@@ -221,7 +230,7 @@ function force_from_dict(coeffs,args)
     #
     # elseif basis_type == "bins"
     #
-elseif basis_type == "free_energy_kde"  || basis_type == "free_energy" || basis_type == "free_energy_histogram"
+    elseif basis_type == "free_energy_kde"  || basis_type == "free_energy" || basis_type == "free_energy_histogram"
         force= ForceFromScipySplines(get(args,:fe_spline)[3],get(args,:fe_spline)[1],-1*coeffs[1,1].*get(args,:fe_spline)[2];der=1)
     else
         throw(ArgumentError("Unsupported basis type"))
@@ -251,6 +260,7 @@ function initialize_initcond(integrator ,args)
         initcond_velocity = get_init_conditions(get(args,"velocity",Dict("type"=>"Gaussian","std"=>1.0))) # à remplacer la la maxelliene
         if integrator isa HiddenIntegrator
             initcond_hidden = get_init_conditions(get(args,"hidden",Dict("type"=>"Gaussian","std"=>1.0)))
+
             return [intcond_pos,initcond_velocity,initcond_hidden]
         elseif integrator isa KernelIntegrator
             initcond_mem = get_init_conditions(get(args,"memory",Dict("type"=>"Cste")))
