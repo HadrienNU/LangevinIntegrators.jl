@@ -47,9 +47,6 @@ integrator_verlet=Verlet(force, 1.0, 1e-3)
 state_verlet=InitState(integrator_verlet, init_conds)
 SUITE["integrator"]["run_Verlet"] = @benchmarkable run_trajectory!($state_verlet, $integrator_verlet; params = $params)
 
-integrator=read_integrator_hidden_npz("coeffs_benchmark.npz")
-params,init_conf=read_conf("hidden_comparison.ini")
-SUITE["integrator"]["fullset"] = @benchmarkable run_trajectories($integrator; params = $params, init_conds_args=$init_conf)
 
 SUITE["forces"] = BenchmarkGroup(["run"])
 
@@ -68,10 +65,3 @@ init_conds_em=initialize_initcond(integrator_em,init_conds_args)
 state_em=InitState(integrator_em, init_conds_em)
 
 SUITE["forces"]["fromBasisTaylor"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)
-
-force= ForceFromScipySplines(3,[0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],[8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538])
-integrator_em=EM(force,1.0,0.001)
-init_conds_em=initialize_initcond(integrator_em,init_conds_args)
-state_em=InitState(integrator_em, init_conds_em)
-
-SUITE["forces"]["fromScipySplines"] = @benchmarkable run_trajectory!($state_em, $integrator_em; params = $params)

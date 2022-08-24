@@ -9,8 +9,14 @@ module LangevinIntegrators
 using ConfParser
 # using NPZ
 using PyCall
-np = pyimport("numpy")
-scipy_interpolate = pyimport("scipy.interpolate")
+
+const np = PyNULL()
+const scipy_interpolate = PyNULL()
+
+function __init__()
+    copy!(np, pyimport("numpy"))
+    copy!(scipy_interpolate, pyimport("scipy.interpolate"))
+end
 # En vrai il faudrait le remplacer par PkgBenchmark.jl ou juste @profile
 # PkgBenchmark.jl ça marche avec BenchmarkTools.jl
 
@@ -83,7 +89,7 @@ export LangevinParams
 include("run.jl")
 export generate_initial_conditions
 export run_trajectory!
-export run_trajectories_parallel
+export run_trajectories
 
 
 end

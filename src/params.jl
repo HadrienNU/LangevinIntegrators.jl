@@ -221,8 +221,8 @@ function force_from_dict(coeffs,args)
     #
     # elseif basis_type == "bins"
     #
-    elseif basis_type == "free_energy_kde"  || basis_type == "free_energy"
-        force= ForceFromSplines(get(args,:fe_spline)[3],get(args,:fe_spline)[1],coeffs[1,1]*get(args,:fe_spline)[2])
+elseif basis_type == "free_energy_kde"  || basis_type == "free_energy" || basis_type == "free_energy_histogram"
+        force= ForceFromScipySplines(get(args,:fe_spline)[3],get(args,:fe_spline)[1],-1*coeffs[1,1].*get(args,:fe_spline)[2];der=1)
     else
         throw(ArgumentError("Unsupported basis type"))
     end
@@ -231,6 +231,7 @@ end
 
 """
 Function to initialize the init_cond
+Note si il n'y as pas ce qu'il faut ça va échouer silenciement, il faut mettre un verbose pour montrer ce qui est utilisé
 """
 function initialize_initcond(integrator ,args)
     # En vrai ça se contente de savoir si on doit générer, 1 2 ou 3 init_cond et ça appelle get_init_conditions qui les crée
@@ -249,10 +250,10 @@ function initialize_initcond(integrator ,args)
     else
         initcond_velocity = get_init_conditions(get(args,"velocity",Dict("type"=>"Gaussian","std"=>1.0))) # à remplacer la la maxelliene
         if integrator isa HiddenIntegrator
-            initcond_hidden = get_init_conditions(args["hidden"],Dict("type"=>"Cste"))
+            initcond_hidden = get_init_conditions(get(args,"hidden",Dict("type"=>"Gaussian","std"=>1.0)))
             return [intcond_pos,initcond_velocity,initcond_hidden]
         elseif integrator isa KernelIntegrator
-            initcond_mem = get_init_conditions(args["memory"],Dict("type"=>"Cste"))
+            initcond_mem = get_init_conditions(get(args,"memory",Dict("type"=>"Cste")))
             return [intcond_pos,initcond_velocity,initcond_mem]
         end
         if integrator isa InertialIntegrator

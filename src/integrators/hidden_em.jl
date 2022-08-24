@@ -23,7 +23,8 @@ Set up the EM_Hidden integrator for underdamped Langevin with hidden variables.
 function EM_Hidden(force::FP, A::Array{TF},C::Array{TF}, Δt::TF,dim::Int) where{FP<:AbstractForce, TF<:AbstractFloat}
     dim_tot=size(A)[1]
     friction = A * Δt
-    return EM_Hidden(force, Δt, cholesky(friction*C+C*friction').L,friction[1:dim,1:dim],friction[1:dim,(1+dim):dim_tot],friction[(1+dim):dim_tot,1:dim],friction[(1+dim):dim_tot,(1+dim):dim_tot],dim,dim_tot)
+    C_sym=0.5.*(C.+C') #C should be symmetric
+    return EM_Hidden(force, Δt, cholesky(friction*C_sym+C_sym*friction').L,friction[1:dim,1:dim],friction[1:dim,(1+dim):dim_tot],friction[(1+dim):dim_tot,1:dim],friction[(1+dim):dim_tot,(1+dim):dim_tot],dim,dim_tot)
 end
 
 

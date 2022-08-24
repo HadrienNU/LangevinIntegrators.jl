@@ -6,7 +6,7 @@ using PyCall
 @testset "LangevinIntegrators.jl" begin
     # Write your tests here.
 
-    @testset "Params" begin
+    @testset "Read Ini conf" begin
         # Test from_config with various config file
         params, init_conds_args=read_conf("test_params.ini")
 
@@ -35,6 +35,21 @@ using PyCall
         @test force_eval(integrator.force,[0.0])[1] ≈ 0.0
         @test force_eval(integrator.force,[1.0])[1] ≈ -2.0
 
+
+        params, init_conds_args=read_conf("test_hidden.ini")
+        integrator = read_integrator_conf("test_hidden.ini")
+        print(init_conds_args)
+        cond_arr=initialize_initcond(integrator, init_conds_args)
+
+        @test length(cond_arr) == 3
+        @test cond_arr[3] isa LangevinIntegrators.Gaussian_InitCond
+        @test cond_arr[3].mean == [-0.15714558,-0.0034968]
+        @test cond_arr[3].std == 1.0
+
+
+        end
+
+        @testset "NPZread" begin
         # Test from npz
 
         integrator= read_integrator_hidden_npz("test_coeffs.npz")
@@ -54,8 +69,8 @@ using PyCall
 
         @test int_linear.dim_tot == 2
         @test size(int_linear.S) == (2,2)
-        @test int_linear.friction_hv ≈ -4.82129755
-        @test int_linear.friction_hh ≈ 2.95635407
+        @test int_linear.friction_hv[1,1] ≈ -0.024106487767047175
+        @test int_linear.friction_hh[1,1] ≈ 0.0147817703
 
         @test force_eval(int_linear.force,[0.0])[1] ≈ 0.0
         @test force_eval(int_linear.force,[1.0])[1] ≈ -1.00027734
@@ -83,10 +98,10 @@ using PyCall
 
         #Forces from BSplinesKit
         #[0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549]
-        force= ForceFromSplines(3,[0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],[8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538])
-
-        @test force_eval(force,[0.5])[1] ≈ -0.07372447
-        @test force_eval(force,[1.0])[1] ≈ -9.0294072
+        # force= ForceFromSplines(3,[0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],[8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538])
+        #
+        # @test force_eval(force,[0.5])[1] ≈ -0.07372447
+        # @test force_eval(force,[1.0])[1] ≈ -9.0294072
         # @test force_eval(force,[2.0])[1] ≈ 49.3164884 # BSplineKit does not extrapolate TODO
 
         #Forces from Scipy.interpolate

@@ -52,7 +52,7 @@ struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
 	ndim::Int
 end
 
-function ForceFromSplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{TF<:AbstractFloat}
+function ForceFromSplines(k::Int,knots::Array{TF},coeffs::Array{TF}) where{TF<:AbstractFloat}
 	if ndims(coeffs) >=2
 		ndim=size(coeffs)[1]
 		nb_coeffs=size(coeffs)[2]
@@ -68,23 +68,51 @@ function ForceFromSplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{
 	end
 	return ForceFromSplines(basis,ndim)
 end
+#
+# struct ForceFromScipySplines <: AbstractForceFromBasis  # use Scipy
+# 	basis::Array#{Splines}
+# 	ndim::Int
+# end
+#
+# function ForceFromScipySplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{TF<:AbstractFloat}
+# 	if ndims(coeffs) >=2
+# 		ndim=size(coeffs)[1]
+# 	else
+# 		ndim=1
+# 	end
+# 	basis=Vector{Function}(undef,ndim)
+# 	for d in 1:ndim
+# 		basis[d]= x-> scipy_interpolate.splev(x, (knots, coeffs[d,:], k))[]
+# 	end
+# 	return ForceFromScipySplines(basis,ndim)
+# end
 
-struct ForceFromScipySplines <: AbstractForceFromBasis # use Scipy
-	basis::Array#{Splines}
+# Another version
+struct ForceFromScipySplines{TF<:AbstractFloat} <: AbstractForceFromBasis  # use Scipy
+	knots::Array{TF}
+	coeffs_splines::Array{TF}
+	k::Int
+	der::Int
 	ndim::Int
 end
-
-function ForceFromScipySplines(k::Int,knots::AbstractVector,coeffs::Array{TF}) where{TF<:AbstractFloat}
+function ForceFromScipySplines(k::Int,knots::Array{TF},coeffs::Array{TF}; der=0)  where{TF<:AbstractFloat}
 	if ndims(coeffs) >=2
 		ndim=size(coeffs)[1]
 	else
 		ndim=1
+		coeffs=reshape(coeffs,(1,length(coeffs)))
 	end
-	basis=Vector{Function}(undef,ndim)
-	for d in 1:ndim
-		basis[d]= x-> scipy_interpolate.splev(x, (knots, coeffs[d,:], k))
+	return ForceFromScipySplines(knots,coeffs,k,der,ndim)
+end
+
+function forceUpdate!(force::ForceFromScipySplines,f::Vector{TF}, x::Vector{TF})  where{TF<:AbstractFloat}
+	for d in 1:force.ndim
+		f[d]=scipy_interpolate.splev(x[1], (force.knots, force.coeffs_splines[d,:], force.k),force.der)[]
 	end
-	return ForceFromScipySplines(basis,ndim)
+	# for fix in force.fixes
+	# 	apply_fix!(fix,x,f)
+	# end
+	return 0
 end
 
 function addFix(force::FP,fix::AF) where {FP<:AbstractForce,AF<:AbstractFix}
@@ -102,6 +130,8 @@ function forceUpdate!(force::ForceFromPotential,f::Vector{TF}, x::Vector{TF})  w
 	# end
 	return 0
 end
+
+
 
 function forceUpdate!(force::FB,f::Vector{TF}, x::Vector{TF})  where{FB<:AbstractForceFromBasis,TF<:AbstractFloat}
 	for d in 1:force.ndim

@@ -31,6 +31,14 @@ struct Constant_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     dim::Int64
 end
 
+function Constant_InitCond(val::TF) where {TF<:AbstractFloat}
+    return Constant_InitCond([val],1)
+end
+
+function Constant_InitCond(val::TF,dim) where {TF<:AbstractFloat}
+    return Constant_InitCond([val],1)
+end
+
 struct Array_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Matrix{TF}
     dim::Int64
@@ -42,10 +50,26 @@ struct Uniform_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     dim::Int64
 end
 
+function Uniform_InitCond(low::TF,high::TF) where {TF<:AbstractFloat}
+    return Uniform_InitCond([low],[high],1)
+end
+
+function Uniform_InitCond(low::TF,high::TF,dim) where {TF<:AbstractFloat}
+    return Uniform_InitCond([low],[high],1)
+end
+
 struct Gaussian_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     mean::Array{TF}
     std::TF
     dim::Int64
+end
+
+function Gaussian_InitCond(mean::TF,std::TF) where {TF<:AbstractFloat}
+    return Uniform_InitCond([mean],[high],1)
+end
+
+function Gaussian_InitCond(mean::TF,std::TF,dim) where {TF<:AbstractFloat}
+    return Uniform_InitCond([mean],[std],1)
 end
 
 # struct PMF_Init <: AbstractRandomInitCond where{TF<:AbstractFloat}
@@ -61,7 +85,7 @@ function get_init_conditions(args::Dict)
     type=get(args,"type","Constant")
     dim=get(args,"dim",1)
     if lowercase(type) in ["cste","constant"]
-        return Constant_InitCond(get(args,:val,zeros(dim)),dim)
+        return Constant_InitCond(get(args,"val",zeros(dim)),dim)
     elseif lowercase(type) in ["uniform","random"]
         low = get(args,"low",zeros(dim))
         if (low isa Number)

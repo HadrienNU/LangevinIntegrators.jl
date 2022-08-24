@@ -3,5 +3,7 @@
 *.jl.mem
 /docs/build/
 
+Manifest.toml
+
 /.benchmarkci
 /benchmark/*.json
