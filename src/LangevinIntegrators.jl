@@ -42,8 +42,6 @@ export ForceFromScipySplines
 
 export force_eval
 
-#Plumed module
-# include("plumed.jl")
 
 
 include("generate_initcond.jl")
@@ -80,8 +78,9 @@ include("observers.jl")
 
 include("params.jl")
 
+export set_from_conf, set_hidden_from_npz
 export read_conf, read_integrator_conf, read_integrator_hidden_npz, initialize_initcond
-export LangevinParams
+export TrajsParams
 
 
 

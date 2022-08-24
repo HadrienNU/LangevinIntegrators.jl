@@ -13,37 +13,45 @@ abstract type AbstractConstraints end
 
 
 #Generic function, that mean noPBC
-function apply_bc(bc::ABC,x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
-	return xi
+function apply_bc(
+    bc::ABC,
+    x_i::TF,
+) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+    return xi
 end
 
 
 abstract type AbstractBoundaryConditions <: AbstractConstraints end
 
-struct noBC{TF<:AbstractFloat} <:AbstractBoundaryConditions
+struct noBC{TF<:AbstractFloat} <: AbstractBoundaryConditions end
+
+struct PBC{TF<:AbstractFloat} <: AbstractBoundaryConditions
+    low_lim::TF
+    upp_lim::TF
 end
 
-struct PBC{TF<:AbstractFloat} <:AbstractBoundaryConditions
-	low_lim :: TF
-	upp_lim :: TF
-end
-
-struct ReflectingBC{TF<:AbstractFloat} <:AbstractBoundaryConditions # Mais ça doit récupérer la vitesse
-	low_lim :: TF
-	upp_lim :: TF
-end
-
-#Generic function, that mean noPBC
-function apply_bc(bc::ABC,x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
-	return xi
+struct ReflectingBC{TF<:AbstractFloat} <: AbstractBoundaryConditions # Mais ça doit récupérer la vitesse
+    low_lim::TF
+    upp_lim::TF
 end
 
 #Generic function, that mean noPBC
-function apply_bc(bc::ABC,x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
-	return xi
+function apply_bc(
+    bc::ABC,
+    x_i::TF,
+) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+    return xi
+end
+
+#Generic function, that mean noPBC
+function apply_bc(
+    bc::ABC,
+    x_i::TF,
+) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+    return xi
 end
 
 #Il faut en fait l'appliquer element wise
-function apply_bc(bc::PBC,x_i::TF) where {TF<:AbstractFloat}
-	return bc.low_lim+mod(x_i-bc.low_lim,bc.upp_lim-bc.low_lim)
+function apply_bc(bc::PBC, x_i::TF) where {TF<:AbstractFloat}
+    return bc.low_lim + mod(x_i - bc.low_lim, bc.upp_lim - bc.low_lim)
 end

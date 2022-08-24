@@ -1,20 +1,16 @@
 module Plumed
     using CBinding
 
-    # In case we need to specify location of plumed, we can use environment variable PLUMED_PATH
-    # In general, it should be accesible from common lib and include path
-    # "PLUMED_PATH/lib/libplumed.so and PLUMED_PATH//include/plumed/wrapper/Plumed.h must exist"
-    if haskey(ENV,"PLUMED_PATH")
-        path_plumed=ENV["PLUMED_PATH"]
+    if haskey(ENV,"PLUMED_INCLUDE_PATH")
+        path_plumed=ENV["PLUMED_INCLUDE_PATH"]
     else
-        path_plumed="/usr/local"
+        path_plumed="/usr/local/include"
     end
-    println(ENV)
-    c`-L$(path_plumed)/lib -llibplumed.so -I$(path_plumed)/include`
-    # c`-llibplumed.so -I$(path_plumed)/include`
+
+    c`-llibplumed.so -I$(path_plumed)` #-I~/.local/include
     c"#include <plumed/wrapper/Plumed.h>"
 
-    struct plumed{TF<: AbstractFloat} <: LangevinIntegrators.AbstractFix
+    struct plumed{TF<: AbstractFloat} #<: LangevinIntegrators.AbstractFix
         plumedmain
         dim::Int64
         natoms::Int64

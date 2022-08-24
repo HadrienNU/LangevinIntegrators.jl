@@ -1,2 +1,3 @@
 [deps]
 LangevinIntegrators = "563ade2f-8390-447b-b9b3-bcdc9d7fe8e5"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

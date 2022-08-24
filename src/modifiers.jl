@@ -14,19 +14,19 @@ Fix: (on pourrait les définir via plumed mais comme ils sont simples ça permet
 
 abstract type AbstractFix end
 
-struct Wall{TF<:AbstractFloat} <:AbstractFix
-	exponent::Int64 # Il faut vérifier que exponent est >1
-	at::Array{TF}
-	strenght::Array{TF}
-	dir:: TF
+struct Wall{TF<:AbstractFloat} <: AbstractFix
+    exponent::Int64 # Il faut vérifier que exponent est >1
+    at::Array{TF}
+    strenght::Array{TF}
+    dir::TF
 end
 
 
-function apply_fix!(fix::Wall,x::Array{TF},f::Array{TF}) where {TF<:AbstractFloat}
-	uscaled=x.- fix.at # Dire que si c'est négatif ou positif selon dir, on met à zero
-	uscaled[dir*uscaled.>0.0].=0.0 #selon la direction on met à zero les composantes positives ou négatives
-	f.+= -fix.exponent*fix.strenght.*uscaled.^(fix.exponent-1)
-	return 0
+function apply_fix!(fix::Wall, x::Array{TF}, f::Array{TF}) where {TF<:AbstractFloat}
+    uscaled = x .- fix.at # Dire que si c'est négatif ou positif selon dir, on met à zero
+    uscaled[dir*uscaled.>0.0] .= 0.0 #selon la direction on met à zero les composantes positives ou négatives
+    f .+= -fix.exponent * fix.strenght .* uscaled .^ (fix.exponent - 1)
+    return 0
 end
 
 
@@ -34,8 +34,8 @@ function init_fix(fix::AbstractFix; kwargs...) # Différent du constructeur au s
 
 end
 
-function apply_fix!(fix::AbstractFix,x::Array{TF},f::Array{TF}) where {TF<:AbstractFloat}
-	return 0
+function apply_fix!(fix::AbstractFix, x::Array{TF}, f::Array{TF}) where {TF<:AbstractFloat}
+    return 0
 end
 
 
