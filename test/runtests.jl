@@ -122,23 +122,23 @@ using Test
         # state = InitState!(integrator,[])
         cond_arr=initialize_initcond(integrator, init_conds_args)
         state=InitState(integrator, cond_arr)
-        @test state.x ≈ 1.0
-        @test state isa AbstractOverdampedState
+        @test state.x ≈ [1.0]
+        @test state isa LangevinIntegrators.AbstractOverdampedState
 
         #Underdamped
         integrator=Verlet(force, 1.0, 1e-3)
         # state = InitState!(integrator,[])
-        @test state.x ≈ 1.0
+        @test state.x ≈ [1.0]
         cond_arr=initialize_initcond(integrator, init_conds_args)
         state=InitState(integrator, cond_arr)
-        @test state isa AbstractInertialState
+        @test state isa LangevinIntegrators.AbstractInertialState
 
         #Hidden
         integrator=EM_Hidden(force,[[1.0,1.0] [-1.0,2.0]],[[1.0,0.0] [0.0,1.0]],1e-3,1)
         cond_arr=initialize_initcond(integrator, init_conds_args)
         state=InitState(integrator, cond_arr)
-        @test state.x ≈ 1.0
-        @test state isa AbstractMemoryHiddenState
+        @test state.x ≈ [1.0]
+        @test state isa LangevinIntegrators.AbstractMemoryHiddenState
     end
 
 
