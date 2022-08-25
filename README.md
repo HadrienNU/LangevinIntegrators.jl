@@ -58,4 +58,6 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   It have been tested with Plumed v2.7 only, but that should work with version above 2.5.
 
+  Note that Plumed add a significant overhead to the run time. So depending of your need that could be a good move to implemented the needed functionnality into a Fix (see fix.jl for examples) or an observers (see observers.jl).
+
 # TODO

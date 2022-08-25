@@ -29,7 +29,8 @@ function run_trajectory!(state::IS, integrator::S; params = TrajsParams(), kwarg
         init_fix(fix)
     end
     #Update initially force
-    nostop = forceUpdate!(integrator.force, state.f, state.x; step = n)
+    nostop = 0
+    # nostop = forceUpdate!(integrator.force, state.f, state.x; step = n) # Except that depending of the integrator state.f does not exist
     while n < params.n_steps && nostop == 0
         n += 1
         nostop = UpdateState!(state, integrator; step = n)

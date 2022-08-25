@@ -54,11 +54,13 @@ end
 #TODO initialize velocity
 
 function InitState!(x₀, v₀, h₀, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(x₀, v₀, h₀, similar(x₀), similar(v₀), similar(v₀), similar(x₀), length(x₀))
+    f = forceUpdate(integrator.force, x₀)
+    return HiddenABOBAState(x₀, v₀, h₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
 end
 
 function InitState(x₀, v₀, h₀, integrator::ABOBA_Hidden)
-    return HiddenABOBAState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), similar(x₀), similar(v₀), similar(v₀), similar(x₀), length(x₀))
+    f = forceUpdate(integrator.force, x₀)
+    return HiddenABOBAState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
 end
 
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs...)
