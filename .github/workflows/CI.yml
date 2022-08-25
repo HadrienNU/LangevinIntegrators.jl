@@ -29,7 +29,6 @@ jobs:
           - v2.5
           - v2.6
           - v2.7
-          - v2.8
     env:
       LD_LIBRARY_PATH: /usr/local/lib
     steps:

@@ -56,7 +56,7 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
   In general, it should work out of the box when plumed is installed in standard location.
   In case we need to specify location of plumed include file, we can use environment variable PLUMED_INCLUDE_PATH to setup the path to PLUMED_INCLUDE_PATH/plumed/wrapper/Plumed.h
 
-  It have been tested with Plumed v2.5 to 2.8.
+  It have been tested with Plumed v2.5 to 2.7.
 
   Note that Plumed add a significant overhead to the run time. So depending of your need that could be a good move to implemented the needed functionnality into a Fix (see fix.jl for examples) or an observers (see observers.jl).
 
