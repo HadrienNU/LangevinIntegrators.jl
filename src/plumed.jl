@@ -70,8 +70,8 @@ module Plumed
 
         get(kwargs,:verbose,0) > 1 && println("Plumed API VERSION $plumed_api_version")
 
-        if plumed_api_version < 6 || plumed_api_version > 10  # TODO: Faire des Tests sur l'api de 6 à 9
-            println("Incompatible API version $plumed_api_version for PLUMED. Only Plumed 2.5.x, and 2.6.x are tested and supported.")
+        if plumed_api_version < 6 || plumed_api_version > 11  # TODO: Faire des Tests sur l'api de 6 à 9
+            println("Incompatible API version $plumed_api_version for PLUMED. Only Plumed 2.5.x, 2.6.x, and 2.7.x are tested and supported.")
         end
 
         c"plumed_cmd"(plumed_struct.plumedmain,"setRealPrecision",Ref(8));     # Pass a pointer to an integer containing the size of a real number (4 or 8)
