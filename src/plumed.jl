@@ -1,38 +1,46 @@
 module Plumed
     using CBinding
+    import LangevinIntegrators: AbstractFix, init_fix, apply_fix!, close_fix
 
-    if haskey(ENV,"PLUMED_INCLUDE_PATH")
-        path_plumed=ENV["PLUMED_INCLUDE_PATH"]
-    else
-        path_plumed="/usr/local/include"
-    end
 
-    c`-llibplumed.so -I$(path_plumed)` #-I~/.local/include
+
+    import LangevinIntegrators: AbstractFix
+
+    path_plumed = get(ENV,"PLUMED_INCLUDE_PATH","/usr/local/include")
+
+    c`-llibplumed.so -I$(path_plumed)`
     c"#include <plumed/wrapper/Plumed.h>"
 
-    struct plumed{TF<: AbstractFloat} #<: LangevinIntegrators.AbstractFix
+    mutable struct plumed{TF<: AbstractFloat} <: AbstractFix
+
         plumedmain
+
+        plumed_input_file::String
+        plumed_log_file::String
+
+        delta_t::Float64
+        temperature::Float64
+
         dim::Int64
         natoms::Int64
         position_plumed::Vector{TF}
         forces_plumed::Vector{TF}
         #Some Ref to variables to pass and get back from plumed
-        ref_energy::Ref{Cfloat}
+        ref_bias::Ref{Cdouble}
         ref_stop_condition::Ref{Cint}
         ref_needs_energy::Ref{Cint}
 
         box::Array{Float64} # I don't really need those, but there are stored to not loose the reference
         virial::Array{Float64}
         masses::Array{Float64}
+
+        bias_energy::Float64
+
     end
 
-
-    # Je dois pouvoir ouvrir et fermer plumed pour chaque traj, donc plumed_init doit aller dans une function indep et on doit mettre les infos dans la struct
-    # Ou alors trouver la command qui reinitialize plumed
-    function plumed(plumed_input_file,plumed_log_file="p.log",dim=1,delta_t=1e-3,temperature=1.0)
-        #Je dois récupérer une structure de param avec dim, delta_t, temperature, masses
-        ptr_plumed_file=pointer(plumed_input_file)
-        ptr_plumed_log=pointer(plumed_log_file)
+    function plumed(plumed_input_file::String, plumed_log_file::String="p.log", dim::Int64=1, delta_t::Float64=1e-3; temperature=1.0)
+        #Check that plumed_input_file exist
+        isfile(plumed_input_file) || @warn "Plumed input file does not exist"
 
         natoms=div(dim,3)+(dim%3!=0)
 
@@ -42,56 +50,65 @@ module Plumed
         box[2,2]=1.0
         box[3,3]=1.0
 
-
-
-        return plumed(plumedmain,dim,natoms,zeros(3*natoms),zeros(3*natoms),Ref{Cfloat}(0.0),Ref{Cint}(0),Ref{Cint}(0),box,zeros(3,3),ones(natoms))
+        return plumed(nothing,plumed_input_file,plumed_log_file,delta_t,temperature,dim,natoms,zeros(3*natoms),zeros(3*natoms),Ref{Cdouble}(0.0),Ref{Cint}(0),Ref{Cint}(0),box,zeros(3,3),ones(natoms),0.0)
     end
 
-    function plumed_init(plumed_struct)
+
+    function plumed_init!(plumed_struct; kwargs...)
+
+
+        isnothing(plumed_struct.plumedmain) || plumed_finalize(plumed_struct) # If not nothing, finalize to reinitialize
+
+        ptr_plumed_file=pointer(plumed_struct.plumed_input_file)
+        ptr_plumed_log=pointer(plumed_struct.plumed_log_file)
+
         plumed_struct.plumedmain=c"plumed_create"()
 
         ref_plumed_api_version=Ref{Cint}(0)
-        c"plumed_cmd"(plumedmain,"getApiVersion",ref_plumed_api_version) #Do Some check on plumed_api (en particulier)
+        c"plumed_cmd"(plumed_struct.plumedmain,"getApiVersion",ref_plumed_api_version) #Do Some check on plumed_api (en particulier)
         plumed_api_version=ref_plumed_api_version[]
-        println("API VERSION $plumed_api_version")
-        if plumed_api_version < 5 || plumed_api_version > 10  # TODO: Faire des Tests sur l'api de 6 à 9
-            println("Incompatible API version $plumed_api_version for PLUMED. Only Plumed 2.4.x, 2.5.x, and 2.6.x are tested and supported.")
+
+        get(kwargs,:verbose,0) > 1 && println("Plumed API VERSION $plumed_api_version")
+
+        if plumed_api_version < 6 || plumed_api_version > 10  # TODO: Faire des Tests sur l'api de 6 à 9
+            println("Incompatible API version $plumed_api_version for PLUMED. Only Plumed 2.5.x, and 2.6.x are tested and supported.")
         end
 
-        c"plumed_cmd"(plumedmain,"setRealPrecision",Ref(8));     # Pass a pointer to an integer containing the size of a real number (4 or 8)
-        c"plumed_cmd"(plumedmain,"setMDEnergyUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the energy unit used in your code and kJ mol-1
-        c"plumed_cmd"(plumedmain,"setMDLengthUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the length unit used in your code and nm
-        c"plumed_cmd"(plumedmain,"setMDTimeUnits",Ref(1.0));            # Pass a pointer to the conversion factor between the time unit used in your code and ps
+        c"plumed_cmd"(plumed_struct.plumedmain,"setRealPrecision",Ref(8));     # Pass a pointer to an integer containing the size of a real number (4 or 8)
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDEnergyUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the energy unit used in your code and kJ mol-1
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDLengthUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the length unit used in your code and nm
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDTimeUnits",Ref(1.0));            # Pass a pointer to the conversion factor between the time unit used in your code and ps
 
         # This is valid only if API VERSION > 3
-        c"plumed_cmd"(plumedmain,"setMDChargeUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the charge unit used in your code and e
-        c"plumed_cmd"(plumedmain,"setMDMassUnits",Ref(1.0));            # Pass a pointer to the conversion factor between the mass unit used in your code and amu
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDChargeUnits",Ref(1.0));        # Pass a pointer to the conversion factor between the charge unit used in your code and e
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDMassUnits",Ref(1.0));            # Pass a pointer to the conversion factor between the mass unit used in your code and amu
 
-        c"plumed_cmd"(plumedmain,"setPlumedDat",ptr_plumed_file);            # Pass the name of the plumed input file from the md code to plumed
-        c"plumed_cmd"(plumedmain,"setLogFile",ptr_plumed_log);                     # Pass the file  on which to write out the plumed log (to be created)
+        c"plumed_cmd"(plumed_struct.plumedmain,"setPlumedDat",ptr_plumed_file);            # Pass the name of the plumed input file from the md code to plumed
+        c"plumed_cmd"(plumed_struct.plumedmain,"setLogFile",ptr_plumed_log);                     # Pass the file  on which to write out the plumed log (to be created)
 
 
         name_integrators="LangevinIntegrators"
-        c"plumed_cmd"(plumedmain,"setMDEngine",pointer(name_integrators));                # Pass the name of your md engine to plumed (now it is just a label)
+        c"plumed_cmd"(plumed_struct.plumedmain,"setMDEngine",pointer(name_integrators));                # Pass the name of your md engine to plumed (now it is just a label)
 
-        c"plumed_cmd"(plumedmain,"setNatoms",Ref{Cint}(natoms));                    # Pass a pointer to the number of atoms in the system to plumed
-        c"plumed_cmd"(plumedmain,"setTimestep",Ref(delta_t));                 # Pass a pointer to the molecular dynamics timestep to plumed
+        c"plumed_cmd"(plumed_struct.plumedmain,"setNatoms",Ref{Cint}(plumed_struct.natoms));                    # Pass a pointer to the number of atoms in the system to plumed
+        c"plumed_cmd"(plumed_struct.plumedmain,"setTimestep",Ref(plumed_struct.delta_t));                 # Pass a pointer to the molecular dynamics timestep to plumed
 
         # This is valid only if API VERSION > 1
-        c"plumed_cmd"(plumedmain,"setKbT",Ref(1.0*temperature));                          # Pointer to a real containing the value of kbT
+        c"plumed_cmd"(plumed_struct.plumedmain,"setKbT",Ref(1.0*plumed_struct.temperature));                          # Pointer to a real containing the value of kbT
 
         # This is valid only if API VERSION > 2
-        c"plumed_cmd"(plumedmain,"setRestart",Ref(0));                      # Pointer to an integer saying if we are restarting (zero means no, one means yes)
+        c"plumed_cmd"(plumed_struct.plumedmain,"setRestart",Ref(0));                      # Pointer to an integer saying if we are restarting (zero means no, one means yes)
 
         # Calls to do the actual initialization (all the above commands must appear before this call)
-        c"plumed_cmd"(plumedmain,"init",C_NULL);                            # Do all the initialization of plumed
+        c"plumed_cmd"(plumed_struct.plumedmain,"init",C_NULL);                            # Do all the initialization of plumed
 
 
-        c"plumed_cmd"(plumedmain,"setBox",Ref(box,1));                  # Pass a pointer to the first element in the box share array to plumed
+        c"plumed_cmd"(plumed_struct.plumedmain,"setBox",Ref(plumed_struct.box,1));                  # Pass a pointer to the first element in the box share array to plumed
 
+        return plumed_struct
     end
 
-    function plumed_step(plumed_struct::plumed,n,positions,forces,energy)
+    function plumed_step!(plumed_struct::plumed,n,positions,forces,energy)
 
         plumed_struct.position_plumed[1:plumed_struct.dim]=positions
         plumed_struct.forces_plumed[1:plumed_struct.dim]=forces
@@ -104,7 +121,6 @@ module Plumed
         c"plumed_cmd"(plumed_struct.plumedmain,"setStopFlag",plumed_struct.ref_stop_condition)
         c"plumed_cmd"(plumed_struct.plumedmain,"setMasses",Ref(plumed_struct.masses,1));                 # Pass a pointer to the first element in the masses array to plumed
         c"plumed_cmd"(plumed_struct.plumedmain,"setVirial",Ref(plumed_struct.virial,1));
-
         c"plumed_cmd"(plumed_struct.plumedmain,"setPositions",Ref(plumed_struct.position_plumed,1));
         c"plumed_cmd"(plumed_struct.plumedmain,"setForces",Ref(plumed_struct.forces_plumed,1));                 # Pass a pointer to the first element in the foces array to plumed
 
@@ -112,33 +128,32 @@ module Plumed
         c"plumed_cmd"(plumed_struct.plumedmain,"prepareCalc",C_NULL);
 
         c"plumed_cmd"(plumed_struct.plumedmain,"isEnergyNeeded",plumed_struct.ref_needs_energy);# assuming flag is an int, that will be set to 0 if energy is not needed and 1 if it is needed
-        plumed_struct.ref_energy[]=energy
         if plumed_struct.ref_needs_energy[] == 1
-            c"plumed_cmd"(plumed_struct.plumedmain,"setEnergy",plumed_struct.ref_energy);                  # Pass a pointer to the current value of the potential energy to plumed?
+            c"plumed_cmd"(plumed_struct.plumedmain,"setEnergy",Ref{Cfloat}(energy));                  # Pass a pointer to the current value of the potential energy to plumed?
         end
         c"plumed_cmd"(plumed_struct.plumedmain,"performCalc",C_NULL);
-        energy=plumed_struct.ref_energy[]
 
-        println("Stop conditions ",plumed_struct.ref_stop_condition[], " Need energy ", plumed_struct.ref_needs_energy[])
+        c"plumed_cmd"(plumed_struct.plumedmain,"getBias",plumed_struct.ref_bias)
+
         forces[1:plumed_struct.dim]=plumed_struct.forces_plumed[1:plumed_struct.dim]
-        return plumed_struct.ref_stop_condition[], energy
+        return plumed_struct.ref_stop_condition[], plumed_struct.ref_bias[]
     end
 
 
     function plumed_finalize(plumed_struct::plumed)
         c"plumed_finalize"(plumed_struct.plumedmain)
+        plumed_struct.plumedmain=nothing
     end
 
 
     function init_fix(fix::plumed; kwargs...) # Différent du constructeur au sens que c'est appelé au début de chaque traj
-
+        plumed_init!(fix)
     end
 
-    function apply_fix!(fix::plumed,x::Array{TF},f::Array{TF}) where {TF<:AbstractFloat}
-        #Pour le n, on va juste le recalculer dans plumed puisque c'est appelé tous les pas de temps
-        stop_cond,energy=plumed_step(fix,fix.n,x,f,0.0) #Don't deal with energy for now
-        fix.n+=1
-        fix.energy=energy
+    function apply_fix!(fix::plumed,x::Array{TF},f::Array{TF}; kwargs...) where {TF<:AbstractFloat}
+        step=get(kwargs,:step,1)
+        stop_cond, energy = plumed_step!(fix,step,x,f,0.0) #We just compute the extra energy that the fix is bringing
+        fix.bias_energy=energy
     	return stop_cond
     end
 
@@ -148,7 +163,8 @@ module Plumed
     end
 
     export plumed
-    export plumed_step
-    export plumed_finalize
+    export init_fix
+    export apply_fix!
+    export close_fix
 
 end

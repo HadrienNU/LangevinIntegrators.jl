@@ -40,13 +40,9 @@ function initialize_initcond(integrator, args; verbose = 0)
         end
         return [intcond_pos]
     else
-        initcond_velocity = get_init_conditions(
-            get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0)),
-        ) # à remplacer la la maxelliene
+        initcond_velocity = get_init_conditions(get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0))) # à remplacer la la maxelliene
         if integrator isa HiddenIntegrator
-            initcond_hidden = get_init_conditions(
-                get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)),
-            )
+            initcond_hidden = get_init_conditions(get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)))
 
             return [intcond_pos, initcond_velocity, initcond_hidden]
         elseif integrator isa KernelIntegrator
@@ -150,7 +146,7 @@ function get_init_conditions(args::Dict)
         std = get(args, "std", 1.0)
         return Gaussian_InitCond(mean, std, dim)
     else
-        println("Unknwon initializer")
+        @warn "Unknwon initializer"
     end
 end
 

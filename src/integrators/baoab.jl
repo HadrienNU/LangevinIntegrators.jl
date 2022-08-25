@@ -22,13 +22,7 @@ Set up the BAOAB integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BAOAB(
-    force::FP,
-    β::TF,
-    γ::TF,
-    M::TM,
-    Δt::TF,
-) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
 
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
@@ -53,27 +47,18 @@ end
 
 function InitState(x₀, v₀, integrator::BAOAB)
     f = forceUpdate(integrator.force, x₀)
-    return BAOABState(
-        deepcopy(x₀),
-        deepcopy(v₀),
-        similar(x₀),
-        similar(x₀),
-        similar(x₀),
-        f,
-        length(x₀),
-    )
+    return BAOABState(deepcopy(x₀), deepcopy(v₀), similar(x₀), similar(x₀), similar(x₀), f, length(x₀))
 end
 
-function UpdateState!(state::BAOABState, integrator::BAOAB)
+function UpdateState!(state::BAOABState, integrator::BAOAB; kwargs...)
 
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x_mid = state.x .+ 0.5 * integrator.Δt * state.v_mid
     #apply_bc!(integrator.bc,state.x_mid,state.v)
-    state.p̂_mid =
-        integrator.c₀ .* state.v_mid .+ integrator.c₁ .* integrator.sqrtM * randn(state.dim)
+    state.p̂_mid = integrator.c₀ .* state.v_mid .+ integrator.c₁ .* integrator.sqrtM * randn(state.dim)
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.p̂_mid
     #apply_bc!(integrator.bc,state.x,state.v)
-    nostop = forceUpdate!(integrator.force, state.f, state.x)
+    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v = state.p̂_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
 
     return nostop

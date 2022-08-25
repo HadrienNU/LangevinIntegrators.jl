@@ -33,11 +33,11 @@ function InitState(x₀, v₀, integrator::Verlet)
     return VerletState(deepcopy(x₀), deepcopy(v₀), f, similar(v₀), length(x₀))
 end
 
-function UpdateState!(state::VerletState, integrator::Verlet)
+function UpdateState!(state::VerletState, integrator::Verlet; kwargs...)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x = state.x + integrator.Δt * state.v_mid
     #apply_bc!(integrator.bc,state.x,state.v)
-    nostop = forceUpdate!(integrator.force, state.f, state.x)
+    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v = state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
     return nostop
 end

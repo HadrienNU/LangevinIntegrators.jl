@@ -13,10 +13,7 @@ abstract type AbstractConstraints end
 
 
 #Generic function, that mean noPBC
-function apply_bc(
-    bc::ABC,
-    x_i::TF,
-) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+function apply_bc(bc::ABC, x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
     return xi
 end
 
@@ -36,18 +33,12 @@ struct ReflectingBC{TF<:AbstractFloat} <: AbstractBoundaryConditions # Mais ça 
 end
 
 #Generic function, that mean noPBC
-function apply_bc(
-    bc::ABC,
-    x_i::TF,
-) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+function apply_bc(bc::ABC, x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
     return xi
 end
 
 #Generic function, that mean noPBC
-function apply_bc(
-    bc::ABC,
-    x_i::TF,
-) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+function apply_bc(bc::ABC, x_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
     return xi
 end
 

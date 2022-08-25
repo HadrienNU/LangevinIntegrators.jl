@@ -54,9 +54,7 @@ function getsubDict(s::ConfParse, block::String)
     new_dict = Dict()
     for (key, k) in s._data[lowercase(block)]
         if length(k) == 1
-            new_val =
-                tryparse(Float64, first(k)) !== nothing ? parse(Float64, first(k)) :
-                first(k)
+            new_val = tryparse(Float64, first(k)) !== nothing ? parse(Float64, first(k)) : first(k)
         else
             new_val = k
         end
@@ -107,8 +105,7 @@ function read_conf(file::String)
         hidden_dict = getsubDict(conf, "init_hidden")
         if haskey(hidden_dict, "file") && split(hidden_dict["file"], ".")[2] == "npz" #If init_cond from .npz
             data = np.load(hidden_dict["file"], allow_pickle = true)
-            init_conds_args["hidden"] =
-                Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
+            init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
         else
             init_conds_args["hidden"] = hidden_dict
         end
@@ -152,10 +149,7 @@ function read_integrator_conf(file::String)
                 knots = parse.(Float64, physics_conf["splines_knots"])
                 ForceFromSplines(k, knots, coeffs)
             else
-                force = ForceFromBasis(
-                    physics_conf["force"][1],
-                    reshape(coeffs, (1, length(coeffs))),
-                )
+                force = ForceFromBasis(physics_conf["force"][1], reshape(coeffs, (1, length(coeffs))))
             end
         end
     elseif haskey(physics_conf, "potential")
@@ -179,28 +173,14 @@ function read_integrator_conf(file::String)
         temp = retrieve(conf, "sampling", "temperature", Float64, 1.0)
         γ = retrieve(conf, "physics", "friction", Float64, 1.0)
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
-        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(
-            force,
-            1.0 / temp,
-            γ,
-            mass,
-            Δt,
-        )
+        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(force, 1.0 / temp, γ, mass, Δt)
     elseif integrator_type == "verlet"
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
         integrator = Verlet(force, mass, Δt)
     elseif integrator_type in ["em_hidden", "hidden_em", "euler_hidden", "hidden_euler"]
-        integrator = read_integrator_hidden_npz(
-            retrieve(conf, "physics", "hidden");
-            integrator_type = "EM",
-            force = force,
-        )
+        integrator = read_integrator_hidden_npz(retrieve(conf, "physics", "hidden"); integrator_type = "EM", force = force)
     elseif integrator_type in ["aboba_hidden", "hidden_aboba"]
-        integrator = read_integrator_hidden_npz(
-            retrieve(conf, "physics", "hidden");
-            integrator_type = "aboba",
-            force = force,
-        )
+        integrator = read_integrator_hidden_npz(retrieve(conf, "physics", "hidden"); integrator_type = "aboba", force = force)
     end
 
     return integrator
@@ -208,9 +188,9 @@ end
 
 
 function set_from_conf(file::String)
-    params,init_conf=read_conf(file)
-    integrator=read_integrator_conf(file)
-    return integrator,params,init_conf
+    params, init_conf = read_conf(file)
+    integrator = read_integrator_conf(file)
+    return integrator, params, init_conf
 end
 
 
@@ -223,14 +203,14 @@ puis une function read_npz qui selectionne hidden ou gle selon le nom des key da
 function set_hidden_from_npz(file::String; kwargs...)
     integrator = read_integrator_hidden_npz(file; kwargs...)
 
-    n_steps = get(kwargs,:n_steps, 10^4)
-    n_trajs = get(kwargs,:n_trajs, 10^4)
+    n_steps = get(kwargs, :n_steps, 10^4)
+    n_trajs = get(kwargs, :n_trajs, 10^4)
 
     params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs)
 
     # The information about the initial conditions
     init_conds_args = Dict()
-    init_conds_args["position"] = get(kwargs,:init_position, Dict("type" => "Cste"))
+    init_conds_args["position"] = get(kwargs, :init_position, Dict("type" => "Cste"))
     data = np.load(hidden_dict["file"], allow_pickle = true)
     init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
 
@@ -248,7 +228,7 @@ function read_integrator_hidden_npz(file::String; integrator_type = "EM", kwargs
     Δt = get(kwargs, :dt, get(data, :dt)[]) # To allow changing the time step
 
     force = get(kwargs, :force, nothing)
-    force = force == nothing ? force_from_dict(get(data, :force), get(data, :basis)[]) : force
+    force = isnothing(force) ? force_from_dict(get(data, :force), get(data, :basis)[]) : force
     if dim_h > 0
         if lowercase(integrator_type) in ["em", "euler"]
             integrator = EM_Hidden(force, get(data, :A), get(data, :C), Δt, dim)
@@ -266,11 +246,7 @@ function force_from_dict(coeffs, args)
     force = ForceFromPotential("Flat")
     basis_type = get(args, :basis_type)
     if basis_type == "bsplines"
-        force = ForceFromScipySplines(
-            get(args, :bsplines)[1][3],
-            get(args, :bsplines)[1][1],
-            coeffs,
-        )
+        force = ForceFromScipySplines(get(args, :bsplines)[1][3], get(args, :bsplines)[1][1], coeffs)
     elseif basis_type == "linear"
         coeffs_taylor = zeros(Float64, (1, 2))
         coeffs_taylor[1, :] = [get(args, :mean)[1], coeffs[1, 1]]
@@ -279,15 +255,8 @@ function force_from_dict(coeffs, args)
         #
         # elseif basis_type == "bins"
         #
-    elseif basis_type == "free_energy_kde" ||
-           basis_type == "free_energy" ||
-           basis_type == "free_energy_histogram"
-        force = ForceFromScipySplines(
-            get(args, :fe_spline)[3],
-            get(args, :fe_spline)[1],
-            -1 * coeffs[1, 1] .* get(args, :fe_spline)[2];
-            der = 1,
-        )
+    elseif basis_type == "free_energy_kde" || basis_type == "free_energy" || basis_type == "free_energy_histogram"
+        force = ForceFromScipySplines(get(args, :fe_spline)[3], get(args, :fe_spline)[1], -1 * coeffs[1, 1] .* get(args, :fe_spline)[2]; der = 1)
     else
         throw(ArgumentError("Unsupported basis type"))
     end

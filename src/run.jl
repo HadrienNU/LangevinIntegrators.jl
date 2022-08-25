@@ -4,11 +4,7 @@ run.jl
 Launch the trajectories
 =#
 
-function generate_initial_conditions(
-    integrator::S;
-    params = TrajsParams(),
-    init_conds_args = Dict(),
-) where {S<:AbstractIntegrator}
+function generate_initial_conditions(integrator::S; params = TrajsParams(), init_conds_args = Dict()) where {S<:AbstractIntegrator}
     init_conds = initialize_initcond(integrator, init_conds_args)
     state = InitState(integrator) # To get the type of the state
     init_states = Vector{typeof(state)}(undef, params.n_trajs)
@@ -26,31 +22,27 @@ evolve in time one trajectory starting at state and integrated by integrator
 * state   - Initial State
 * integrator    - Friction matrix
 """
-function run_trajectory!(
-    state::IS,
-    integrator::S;
-    params = TrajsParams(),
-    kwargs...,
-) where {IS<:AbstractState,S<:AbstractIntegrator}
-    n = 1
-    nostop = 0
+function run_trajectory!(state::IS, integrator::S; params = TrajsParams(), kwargs...) where {IS<:AbstractState,S<:AbstractIntegrator}
+    n = 0
     # Ici ik faut faire un init_fix
-    # for fix in integrator.force.fixes
-    #     init_fix(fix)
-    # end
+    for fix in integrator.force.fixes
+        init_fix(fix)
+    end
+    #Update initially force
+    nostop = forceUpdate!(integrator.force, state.f, state.x; step = n)
     while n < params.n_steps && nostop == 0
-        nostop = UpdateState!(state, integrator)
+        n += 1
+        nostop = UpdateState!(state, integrator; step = n)
         for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
             if (mod(n, observer.n_save_iters) == 0)
                 run_obs(observer, n * integrator.Δt, state; kwargs) # Compute observables and dump data if required
             end
         end
-        n += 1
     end
     # Et là un end_fix
-    # for fix in integrator.force.fixes
-    #     close_fix(fix)
-    # end
+    for fix in integrator.force.fixes
+        close_fix(fix)
+    end
     for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
         end_obs_traj(observer; end_time = n * integrator.Δt, stoppingCriterion = nostop) # Close file if needed
     end
@@ -60,17 +52,8 @@ end
 """
 For launching a bunch of trajectories. For distributed computing see examples
 """
-function run_trajectories(
-    integrator::S;
-    params = TrajsParams(),
-    init_conds_args = Dict(),
-    kwargs...,
-) where {S<:AbstractIntegrator}
-    init_states = generate_initial_conditions(
-        integrator;
-        params = params,
-        init_conds_args = init_conds_args,
-    )
+function run_trajectories(integrator::S; params = TrajsParams(), init_conds_args = Dict(), kwargs...) where {S<:AbstractIntegrator}
+    init_states = generate_initial_conditions(integrator; params = params, init_conds_args = init_conds_args)
     #To make the system threadsafe, we have to copy the integrator into nthreads copy, and provide one copy per thread
     if Threads.nthreads() > 1
         integrators_set = [deepcopy(integrator) for n = 1:Threads.nthreads()]
@@ -80,12 +63,7 @@ function run_trajectories(
     #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
 
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
-        run_trajectory!(
-            init_states[n],
-            integrators_set[Threads.threadid()];
-            params = params,
-            kwargs...,
-        )
+        run_trajectory!(init_states[n], integrators_set[Threads.threadid()]; params = params, kwargs...)
     end
 
     for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
