@@ -286,7 +286,7 @@ end
 
 
 function TrajsParams(obs_dict; kwargs...)
-    obs_list = initialize_observers(obs_dict)
+    obs_list = setup_observers(obs_dict)
     return TrajsParams(get(kwargs, :n_steps, 10^4), get(kwargs, :n_trajs, 1), obs_list)
 end
 

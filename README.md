@@ -49,6 +49,11 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   LangevinIntegrators is able to get parameters from the GLE_AnalysisEM package (https://github.com/HadrienNU/GLE_AnalysisEM)
 
+# Structure of the code
+
+  The flow is as follow, first define a force, via a potential or a basis. If wanted, you can add some fixes to the force to either communicate with plumed, add some extra forces or set tup a stop condition.
+  Set up the integrator with this force and other physical parameters.
+
 # Plumed integration
 
   The integrator can be coupled to Plumed (https://www.plumed.org/). Plumed should be set up a priori in your system.
@@ -58,6 +63,61 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   It have been tested with Plumed v2.5 to 2.7.
 
+
+  As plumed consider to observe a 3D system of N atoms, the coordinate of the system are feeded to plumed as (for a 5D systems)
+
+    (x_1,x_2,x_3) (x_4,x_5,0)
+
+  Then coordinate can be ontained in plumed via the POSITION keyword, using ATOM=1 to get the first three coordinates in x,y,z, and so forth.
+
+
   Note that Plumed add a significant overhead to the run time. So depending of your need that could be a good move to implemented the needed functionnality into a Fix (see fix.jl for examples) or an observers (see observers.jl).
 
+
+# Extend LangevinIntegrators.jl
+
+  ## Extra integrators
+
+  Integrators are in integrators folder. Two struct need to be set up, one for the integrator physical parameters (and that should include a force), that is more a immutable struct and one for current state of the system adpated to the integrator.
+
+  Then evolution in time is provided by
+
+    UpdateState!(state, integrator; kwargs...)
+
+  Initialisation is done via InitState, that take a vector of AbstractInitCond
+
+  ## Extra initial conditions
+
+  Generator of initial conditions are in generate_init_cond.jl, they can be added to get_init_conditions function for automatic conversion betweenn Dict value and struct
+
+  ## Extra potentials
+
+  Simply define a function that take the position as argument.
+
+  ## Extra fix
+
+  Fix derive from AbstractFix
+
+    function init_fix(fix::AbstractFix; kwargs...) #Called at the start of each trajectory
+    end
+
+    function apply_fix!(fix::AbstractFix, x::Array{TF}, f::Array{TF}; kwargs...) where {TF<:AbstractFloat}
+        return 0 # Should return a stop condition, 0 -> continue; if !=0 -> stop iteration
+    end
+
+    function close_fix(fix::AbstractFix) #Called at the end of each trajectory
+    end
+
+  Fixes are not called in the initialization of the force for the first timestep, depending of the integrator.
+
+  ## Extra observers
+
+  Observers are called at regular time during the trajectory, they derive from AbstractObserver. They need to have a field n_save_iters and are passed to function run_obs every n_save_iters steps.
+
 # TODO
+
+  - Test initial conditions
+  - Pass to run trajectories, un vector of struct of AbstractInitCond instead of the vector of Dict with params
+  - Boundary conditions
+  - Implement some extra space, such as a sphere
+  - Test observers

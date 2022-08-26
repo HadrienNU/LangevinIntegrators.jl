@@ -10,7 +10,7 @@ abstract type AbstractStatisticalObs <: AbstractObserver end
 """
 Function to initialize the observers
 """
-function initialize_observers(args)
+function setup_observers(args)
     # Ca prend une liste de dict et ça génère une observable par element de la liste
     #On gère le type avec une suite de if et on leur passe des paramètres
     return empty([], AbstractObserver)
@@ -45,6 +45,10 @@ end
 function TrajectoryFileDump(; n_save_iters = 1, n_step = 1e4)
     file = open(filename, "w")
     return TrajectoryFileDump(n_save_iters, file)
+end
+
+function start_obs_traj(obs::TrajectoryFileDump)
+    file = open(filename, "w")
 end
 
 function run_obs(obs::TrajectoryFileDump, t::Float64, state::AbstractState; kwargs...)
