@@ -75,23 +75,12 @@ function read_conf(file::String)
 
     n_steps = retrieve(conf, "sampling", "nsteps", Int64)
     n_trajs = retrieve(conf, "sampling", "n_trajs", Int64, 1)
-    # Il faut convertir le dict qui a des array de string en Int
-    #The various et of observer that can be defined
-    obs_conf = []
-    if haskey(conf, "dump")
-        dump_dict = getsubDict(conf, "dump")
-        dump_dict["name"] = "dump"
-        push!(obs_conf, dump_dict)
-    end
-    if haskey(conf, "logging")
-        log_dict = getsubDict(conf, "logging")
-        log_dict["name"] = "log"
-        push!(obs_conf, log_dict)
-    end
-    if haskey(conf, "observer")
-        push!(obs_conf, getsubDict(conf, "observer"))
-    end
-    params = TrajsParams(obs_conf; n_steps = n_steps, n_trajs = n_trajs)
+    verbose = retrieve(conf, "sampling", "verbose", Int64, 0)
+
+    # Some informations to save the trajectories
+    dump_dict = haskey(conf, "dump") ? getsubDict(conf, "dump") : Dict()
+    params = TrajsParams(obs_conf; n_steps = n_steps, n_trajs = n_trajs,verbose=verbose, dump_dict...)
+
 
     # The information about the initial conditions
     init_conds_args = Dict()
@@ -206,7 +195,7 @@ function set_hidden_from_npz(file::String; kwargs...)
     n_steps = get(kwargs, :n_steps, 10^4)
     n_trajs = get(kwargs, :n_trajs, 10^4)
 
-    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs)
+    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs, kwargs...)
 
     # The information about the initial conditions
     init_conds_args = Dict()
@@ -267,7 +256,12 @@ end
 struct TrajsParams{AO<:AbstractObserver} # La dedans on stocke les trucs initialisé
     n_steps::Int
     n_trajs::Int
-    #Par défaut le tableaux suivants sont vide
+    # Some infos to save the trajectories
+    n_save_iters::Int
+    save_filename_pattern::Union{String,Nothing}
+
+    verbose::Int
+    #By default the array is empty
     observers::Array{AO}
 end
 
@@ -275,21 +269,16 @@ end
     TrajsParams(;n_steps = 10^4, n_save_iters=1)
 Set options for samplers.
 ### Fields
-* n_steps       - Set the number of iterations of the sampler
+* n_steps       - Set the number of iterations of the integrator
+* n_trajs       - Set the number of trajectories to run
 * n_save_iters  - Set the frequency at which iterations are saved.  If
                   n_save_iters=1, every iteration is saved.  If n_save_iters=n_steps,
                   only the final iteration is saved.
 """
-function TrajsParams(; n_steps = 10^4, n_trajs = 1)
-    return TrajsParams(n_steps, n_trajs, empty([], AbstractObserver))
+function TrajsParams(; n_steps = 10^4, n_trajs = 1, n_save_iters=nothing, save_filename_pattern = nothing, verbose=0, kwargs...)
+    return TrajsParams(n_steps, n_trajs, isnothing(n_save_iters) ? n_steps : n_save_iters, save_filename_pattern, verbose, empty([], AbstractObserver))
 end
 
-
-function TrajsParams(obs_dict; kwargs...)
-    obs_list = setup_observers(obs_dict)
-    return TrajsParams(get(kwargs, :n_steps, 10^4), get(kwargs, :n_trajs, 1), obs_list)
-end
-
-function addObserver(params::TrajsParams; kwargs...)
-    push!(params.constraints, new_obs)
+function addObserver(params::TrajsParams,new_obs ; kwargs...)
+    push!(params.observers, new_obs)
 end
