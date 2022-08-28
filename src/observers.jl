@@ -24,7 +24,7 @@ struct TrajectoryMemoryDump <: AbstractDump
     save_index::Int64
 end
 
-function TrajectoryMemoryDump(; n_save_iters = 1, n_step = 1e4)
+function TrajectoryMemoryDump(n_save_iters = 1; n_step = 1e4,kwargs...)
     n_save = floor(Int, n_step / n_save_iters)
     traj = Array{typeof(state.x[1])}(undef, size(state.x)[1])
     time = Array{Float64}(1:n_save)
@@ -39,12 +39,11 @@ end
 
 struct TrajectoryFileDump <: AbstractDump
     n_save_iters::Int
+    file_pattern::String
     file::IOStream
-end
-
-function TrajectoryFileDump(; n_save_iters = 1, n_step = 1e4)
-    file = open(filename, "w")
-    return TrajectoryFileDump(n_save_iters, file)
+    function TrajectoryFileDump(n_save_iters,file_pattern; kwargs...)
+        return TrajectoryFileDump(n_save_iters,file_pattern, stdout)
+    end
 end
 
 function start_obs_traj(obs::TrajectoryFileDump)

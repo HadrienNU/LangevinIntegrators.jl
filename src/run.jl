@@ -24,6 +24,9 @@ evolve in time one trajectory starting at state and integrated by integrator
 """
 function run_trajectory!(state::IS, integrator::S; params = TrajsParams(), kwargs...) where {IS<:AbstractState,S<:AbstractIntegrator}
     n = 0
+    for observer in params.observers# On itere sur tous les Observer, qui sont soit des analyse statistique, soit des dump de la traj (en memoire ou en fichier),
+        start_obs_traj(observer; kwargs) # Initialization of the observers, (opening file)
+    end
     # Ici ik faut faire un init_fix
     for fix in integrator.force.fixes
         init_fix(fix)
