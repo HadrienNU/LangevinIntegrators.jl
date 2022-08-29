@@ -117,4 +117,3 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
   - Pass to run trajectories, un vector of struct of AbstractInitCond instead of the vector of Dict with params
   - Boundary conditions
   - Implement some extra space, such as a sphere
-  - Test observers

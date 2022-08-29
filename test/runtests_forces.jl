@@ -60,7 +60,7 @@ end
     addFix!(force,fix_lwall)
 
     for fix in force.fixes
-        init_fix(fix)
+        LangevinIntegrators.init_fix(fix)
     end
 
     f= [0.0]
@@ -78,7 +78,7 @@ end
     @test stop_cond== false
 
     for fix in force.fixes
-        close_fix(fix)
+        LangevinIntegrators.close_fix(fix)
     end
 
     force = ForceFromPotential("Flat")
