@@ -59,10 +59,6 @@ function init_fix(fix::AbstractFix; kwargs...) # Différent du constructeur au s
     return fix
 end
 
-function apply_fix!(fix::AbstractFix, x::Array{TF}, f::Array{TF}; kwargs...) where {TF<:AbstractFloat}
-    return 0
-end
-
 #Write a getter for the extra energy of the fixes, so when the force is asked to provide the energy it can iterate over the fixes and compute the nergy
 
 function close_fix(fix::AbstractFix)

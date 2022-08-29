@@ -59,6 +59,10 @@ end
     addFix!(force,fix_uwall)
     addFix!(force,fix_lwall)
 
+    for fix in force.fixes
+        init_fix(fix)
+    end
+
     f= [0.0]
 
     stop_cond=LangevinIntegrators.forceUpdate!(force, f, [0.0])
@@ -72,6 +76,10 @@ end
     stop_cond=LangevinIntegrators.forceUpdate!(force, f, [-2.0])
     @test f ≈ [2.0]
     @test stop_cond== false
+
+    for fix in force.fixes
+        close_fix(fix)
+    end
 
     force = ForceFromPotential("Flat")
     fix_quad=Quadratic([1.0], [1.0])
