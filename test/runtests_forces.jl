@@ -49,3 +49,35 @@
     @test force_eval(force, [1.0])[1] ≈ -9.0294072
     @test force_eval(force, [2.0])[1] ≈ 49.3164884
 end
+
+@testset "Fixes" begin
+    force = ForceFromPotential("Flat")
+
+    fix_uwall= UWall(2,[1.0], [1.0])
+    fix_lwall=LWall(2, [-1.0], [1.0])
+
+    addFix!(force,fix_uwall)
+    addFix!(force,fix_lwall)
+
+    f= [0.0]
+
+    stop_cond=LangevinIntegrators.forceUpdate!(force, f, [0.0])
+    @test f ≈ [0.0]
+    @test stop_cond== false
+
+    stop_cond=LangevinIntegrators.forceUpdate!(force, f, [2.0])
+    @test f ≈ [-2.0]
+    @test stop_cond== false
+
+    stop_cond=LangevinIntegrators.forceUpdate!(force, f, [-2.0])
+    @test f ≈ [2.0]
+    @test stop_cond== false
+
+    force = ForceFromPotential("Flat")
+    fix_quad=Quadratic([1.0], [1.0])
+    addFix!(force,fix_quad)
+
+    stop_cond=LangevinIntegrators.forceUpdate!(force, f, [0.0])
+    @test f ≈ [2.0]
+    @test stop_cond== false
+end

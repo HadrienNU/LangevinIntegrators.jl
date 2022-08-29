@@ -45,10 +45,6 @@ function retrieve(s::ConfParse, block::String, key::String, t::Type, default)
     end
 end
 
-function check_str2(a)
-    return
-end
-
 
 function getsubDict(s::ConfParse, block::String)
     new_dict = Dict()
@@ -61,6 +57,10 @@ function getsubDict(s::ConfParse, block::String)
         new_dict[key] = new_val
     end
     return new_dict
+end
+
+function transform_dict_into_kwargs(dict)
+    return Dict(Symbol(k)=>v for (k,v) in dict)
 end
 
 function read_conf(file::String)
@@ -79,7 +79,7 @@ function read_conf(file::String)
 
     # Some informations to save the trajectories
     dump_dict = haskey(conf, "dump") ? getsubDict(conf, "dump") : Dict()
-    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs,verbose=verbose, dump_dict...)
+    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs, verbose=verbose, transform_dict_into_kwargs(dump_dict)...)
 
 
     # The information about the initial conditions
@@ -192,15 +192,12 @@ puis une function read_npz qui selectionne hidden ou gle selon le nom des key da
 function set_hidden_from_npz(file::String; kwargs...)
     integrator = read_integrator_hidden_npz(file; kwargs...)
 
-    n_steps = get(kwargs, :n_steps, 10^4)
-    n_trajs = get(kwargs, :n_trajs, 10^4)
-
-    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs, kwargs...)
+    params = TrajsParams(; kwargs...)
 
     # The information about the initial conditions
     init_conds_args = Dict()
     init_conds_args["position"] = get(kwargs, :init_position, Dict("type" => "Cste"))
-    data = np.load(hidden_dict["file"], allow_pickle = true)
+    data = np.load(file, allow_pickle = true)
     init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
 
     return integrator, params, init_conds_args

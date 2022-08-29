@@ -100,12 +100,12 @@ struct Gaussian_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     dim::Int64
 end
 
-function Gaussian_InitCond(mean::TF, std::TF) where {TF<:AbstractFloat}
+function Uniform_InitCond(mean::TF, std::TF) where {TF<:AbstractFloat}
     return Uniform_InitCond([mean], [high], 1)
 end
 
 function Gaussian_InitCond(mean::TF, std::TF, dim) where {TF<:AbstractFloat}
-    return Uniform_InitCond([mean], [std], 1)
+    return Gaussian_InitCond([mean], [std], 1)
 end
 
 # struct PMF_Init <: AbstractRandomInitCond where{TF<:AbstractFloat}

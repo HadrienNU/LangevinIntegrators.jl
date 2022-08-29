@@ -32,7 +32,7 @@ end
 
 function apply_fix!(fix::Wall, x::Array{TF}, f::Array{TF}) where {TF<:AbstractFloat}
     uscaled = x .- fix.at # Dire que si c'est négatif ou positif selon dir, on met à zero
-    uscaled[dir*uscaled.>0.0] .= 0.0 #selon la direction on met à zero les composantes positives ou négatives
+    uscaled[fix.dir*uscaled.>0.0] .= 0.0 #selon la direction on met à zero les composantes positives ou négatives
     f .+= -fix.exponent * fix.strenght .* uscaled .^ (fix.exponent - 1)
     return false
 end
@@ -46,7 +46,7 @@ end
 
 
 function Quadratic(at::Array{TF}, strenght::Array{TF}) where {TF<:AbstractFloat}
-    return polynomialForce(1, at::Array{TF}, strenght::Array{TF}, 0.0)
+    return PolynomialForce(2, at::Array{TF}, strenght::Array{TF}, 0.0)
 end
 
 function apply_fix!(fix::PolynomialForce, x::Array{TF}, f::Array{TF}) where {TF<:AbstractFloat}

@@ -39,6 +39,11 @@
     @test cond_arr[3].std == 1.0
 
 
+    integrator, params, init_conds_args= set_from_conf("test_params.ini")
+
+    @test params.n_steps == 5000
+    @test params.n_trajs == 1
+
 end
 
 @testset "NPZread" begin
@@ -66,6 +71,12 @@ end
 
     @test force_eval(int_linear.force, [0.0])[1] ≈ 0.0
     @test force_eval(int_linear.force, [1.0])[1] ≈ -1.00027734
+
+
+    integrator, params, init_conds_args= set_hidden_from_npz("test_linear_force.npz")
+
+    @test integrator.Δt ≈ 0.005
+    @test init_conds_args["hidden"]["mean"] ≈ [0.19713836]
 
 end
 
