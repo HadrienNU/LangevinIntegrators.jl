@@ -18,7 +18,7 @@ mutable struct FPT_calc <: AbstractStatisticalObs
     FPT_calc() = new(empty([], Bool), empty([], Float64))
 end
 
-function obs_end_traj!(observer::FPT_calc, state <: AbstractState; end_time, stoppingCriterion)
+function obs_end_traj!(observer::FPT_calc, state::AbstractState; end_time, stoppingCriterion)
     push!(observer.reached,(stoppingCriterion != 0))
     push!(observer.fpt,end_time)
 end
