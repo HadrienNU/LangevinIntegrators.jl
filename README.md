@@ -43,7 +43,8 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
     std=1.0
 
     [dump] ; How to output the trajectories
-
+    n_save_iters=50  ; Frequency of save
+    save_filename_pattern = trajectory_*.dat ; * are replaced by the id of the traj
 
 
 
@@ -68,7 +69,7 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
     (x_1,x_2,x_3) (x_4,x_5,0)
 
-  Then coordinate can be ontained in plumed via the POSITION keyword, using ATOM=1 to get the first three coordinates in x,y,z, and so forth.
+  Then coordinate can be obtained in plumed via the POSITION keyword, using ATOM=1 to get the first three coordinates in x,y,z, and so forth.
 
 
   Note that Plumed add a significant overhead to the run time. So depending of your need that could be a good move to implemented the needed functionnality into a Fix (see fix.jl for examples) or an observers (see observers.jl).
@@ -88,7 +89,7 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   ## Extra initial conditions
 
-  Generator of initial conditions are in generate_init_cond.jl, they can be added to get_init_conditions function for automatic conversion betweenn Dict value and struct
+  Generator of initial conditions are in generate_init_cond.jl, they can be added to get_init_conditions function for automatic conversion between Dict value and struct
 
   ## Extra potentials
 
@@ -115,3 +116,4 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   - Pass to run trajectories, un vector of struct of AbstractInitCond instead of the vector of Dict with params
   - Implement some extra space, such as a sphere
+  - Implement integrator with kernel
