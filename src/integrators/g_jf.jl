@@ -8,6 +8,7 @@ struct GJF{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     a::TF
     b::TF
     σ::TF
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -23,12 +24,12 @@ Set up the G-JF integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     a = (1 - 0.5 * γ * Δt) / (1 + 0.5 * γ * Δt)
     b = 1 / (1 + 0.5 * γ * Δt)
     σ = sqrt(2 * γ * Δt / β)
     sqrtM = sqrt.(M)
-    return GJF(force, β, γ, M, Δt, sqrtM, a, b, σ)
+    return GJF(force, β, γ, M, Δt, sqrtM, a, b, σ, bc)
 end
 
 mutable struct GJFState{TF<:AbstractFloat} <: AbstractInertialState
@@ -57,7 +58,7 @@ function UpdateState!(state::GJFState, integrator::GJF; kwargs...)
     state.x =
         state.x .+ integrator.b * integrator.Δt .* state.v .+ 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f .+
         0.5 * integrator.b * integrator.Δt / integrator.sqrtM * integrator.σ * state.ξ
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f_new, state.x; kwargs...)
 
     state.v =

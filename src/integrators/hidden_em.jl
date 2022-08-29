@@ -8,6 +8,7 @@ struct EM_Hidden{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <: Hidde
     friction_hh::Array{TF}
     dim::Int64
     dim_tot::Int64
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -20,7 +21,7 @@ Set up the EM_Hidden integrator for underdamped Langevin with hidden variables.
 * Δt    - Time step
 """
 #Evidemment à changer
-function EM_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int) where {FP<:AbstractForce,TF<:AbstractFloat}
+function EM_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
     dim_tot = size(A)[1]
     friction = A * Δt
     C_sym = 0.5 .* (C .+ C') #C should be symmetric
@@ -34,6 +35,7 @@ function EM_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int) whe
         friction[(1+dim):dim_tot, (1+dim):dim_tot],
         dim,
         dim_tot,
+        bc
     )
 end
 
@@ -61,7 +63,7 @@ end
 function UpdateState!(state::HiddenEMState, integrator::EM_Hidden; kwargs...)
 
     @. state.x = state.x + integrator.Δt * state.v
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory

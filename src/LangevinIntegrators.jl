@@ -55,7 +55,9 @@ export addFix!
 include("generate_initcond.jl")
 export initialize_initcond
 
-
+include("integrators/boundary_conditions.jl")
+export SeparateSpace
+export noBC, PBC, ReflectingBC
 
 
 include("integrators/overdamped_em.jl")

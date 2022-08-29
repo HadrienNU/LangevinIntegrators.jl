@@ -1,6 +1,25 @@
 
 @testset "Boundary conditions" begin # Voir si on peut faire une matrice de test
 
+    force = ForceFromPotential("Harmonic",2)
+    bcs = SeparateSpace([noBC(),PBC(-3.0,2.0)])
+    integrator = EM(force, 1.0, 1e-3, bcs)
+    state = InitState!([5.0,3.0], integrator)
+
+    LangevinIntegrators.apply_space!(bcs,state.x)
+
+    @test state.x ≈ [5.0,-2.0]
+
+    force = ForceFromPotential("Harmonic",3)
+    bcs = SeparateSpace([noBC(),PBC(-2.0,2.0),ReflectingBC(-1.0,1.0)])
+    integrator = Verlet(force, 1.0, 1e-3, bcs)
+    state = InitState!([0.5,5.5,3.5],[1.0,2.0,3.0], integrator)
+
+    LangevinIntegrators.apply_space!(bcs,state.x,state.v)
+
+    @test state.x ≈ [0.5,1.5,1.0]
+    @test state.v ≈ [1.0,2.0,-3.0]
+
 end
 
 @testset "integrators_overdamped" begin

@@ -13,7 +13,13 @@ struct Verlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     force::FP
     M::TM
     Δt::TF
+    bc::Union{AbstractSpace,Nothing}
 end
+
+function Verlet(force::FP, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    return Verlet(force, M, Δt, bc)
+end
+
 
 mutable struct VerletState{TF<:AbstractFloat} <: AbstractInertialState
     x::Vector{TF}
@@ -36,7 +42,7 @@ end
 function UpdateState!(state::VerletState, integrator::Verlet; kwargs...)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x = state.x + integrator.Δt * state.v_mid
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x, state.v_mid)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v = state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
     return nostop

@@ -8,6 +8,7 @@ struct ABOBA_Hidden{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <: Hi
     friction_hh::Matrix{TF}
     dim::Int64
     dim_tot::Int64
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -23,7 +24,7 @@ Set up the ABOBA_Hidden integrator for underdamped Langevin with hidden variable
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function ABOBA_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int) where {FP<:AbstractForce,TF<:AbstractFloat}
+function ABOBA_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
     dim_tot = size(A)[1]
     friction = exp(-1 * Δt * A)
     C_sym = 0.5 .* (C .+ C')
@@ -37,6 +38,7 @@ function ABOBA_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int) 
         friction[(1+dim):dim_tot, (1+dim):dim_tot],
         dim,
         dim_tot,
+        bc
     )
 end
 
@@ -66,7 +68,7 @@ end
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
-    #apply_bc!(integrator.bc,state.x_mid,state.v)
+    apply_space!(integrator.bc,state.x_mid,state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
@@ -77,7 +79,7 @@ function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs.
 
     @. state.v = state.p̂_mid + 0.5 * integrator.Δt * state.f_mid
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
 
     return nostop
 end

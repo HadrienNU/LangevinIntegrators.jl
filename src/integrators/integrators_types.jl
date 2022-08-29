@@ -20,37 +20,38 @@ abstract type AbstractMemoryHiddenState <: AbstractInertialState end
 
 # InitState from other State
 
-function InitState!(s::AbstractOverdampedState, integrator::OverdampedIntegrator)
-    return InitState!(s.x, integrator)
-end
-
-function InitState(s::AbstractOverdampedState, integrator::OverdampedIntegrator)
-    return InitState(deepcopy(s.x), integrator)
-end
+# En vrai il faudrait plutôt définir l'opérateur de copie
+# function InitState!(s::AbstractOverdampedState, integrator::OverdampedIntegrator)
+#     return InitState!(s.x, integrator)
+# end
+#
+# function InitState(s::AbstractOverdampedState, integrator::OverdampedIntegrator)
+#     return InitState(deepcopy(s.x), integrator)
+# end
 
 function InitState(integrator::OverdampedIntegrator; dim = 1)
     return InitState!(zeros(dim), integrator)
 end
-
-function InitState!(s::AbstractInertialState, integrator::InertialIntegrator)
-    return InitState!(s.x, s.v, integrator)
-end
-
-function InitState(s::AbstractInertialState, integrator::InertialIntegrator)
-    return InitState(deepcopy(s.x), deepcopy(s.v), integrator)
-end
+#
+# function InitState!(s::AbstractInertialState, integrator::InertialIntegrator)
+#     return InitState!(s.x, s.v, integrator)
+# end
+#
+# function InitState(s::AbstractInertialState, integrator::InertialIntegrator)
+#     return InitState(deepcopy(s.x), deepcopy(s.v), integrator)
+# end
 
 function InitState(integrator::InertialIntegrator; dim = 1)
     return InitState!(zeros(dim), zeros(dim), integrator)
 end
-
-function InitState!(s::AbstractMemoryHiddenState, integrator::HiddenIntegrator)
-    return InitState!(s.x, s.v, s.h, integrator)
-end
-
-function InitState(s::AbstractMemoryHiddenState, integrator::HiddenIntegrator)
-    return InitState(deepcopy(s.x), deepcopy(s.v), deepcopy(s.h), integrator)
-end
+#
+# function InitState!(s::AbstractMemoryHiddenState, integrator::HiddenIntegrator)
+#     return InitState!(s.x, s.v, s.h, integrator)
+# end
+#
+# function InitState(s::AbstractMemoryHiddenState, integrator::HiddenIntegrator)
+#     return InitState(deepcopy(s.x), deepcopy(s.v), deepcopy(s.h), integrator)
+# end
 
 function InitState(integrator::HiddenIntegrator; dim = 1)
     return InitState!(zeros(dim), zeros(dim), zeros(integrator.dim_tot - dim), integrator)

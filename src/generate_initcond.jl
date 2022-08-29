@@ -67,16 +67,12 @@ struct Constant_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     dim::Int64
 end
 
-function Constant_InitCond(val::TF) where {TF<:AbstractFloat}
-    return Constant_InitCond([val], 1)
-end
-
-function Constant_InitCond(val::TF, dim) where {TF<:AbstractFloat}
+function Constant_InitCond(val::TF, dim::Int=1) where {TF<:AbstractFloat}
     return Constant_InitCond([val], 1)
 end
 
 struct Array_InitCond{TF<:AbstractFloat} <: AbstractInitCond
-    val::Matrix{TF}
+    val::Vector{Vector{TF}}
     dim::Int64
 end
 
@@ -86,11 +82,7 @@ struct Uniform_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     dim::Int64
 end
 
-function Uniform_InitCond(low::TF, high::TF) where {TF<:AbstractFloat}
-    return Uniform_InitCond([low], [high], 1)
-end
-
-function Uniform_InitCond(low::TF, high::TF, dim) where {TF<:AbstractFloat}
+function Uniform_InitCond(low::TF, high::TF, dim::Int=1) where {TF<:AbstractFloat}
     return Uniform_InitCond([low], [high], 1)
 end
 
@@ -100,11 +92,7 @@ struct Gaussian_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     dim::Int64
 end
 
-function Uniform_InitCond(mean::TF, std::TF) where {TF<:AbstractFloat}
-    return Uniform_InitCond([mean], [high], 1)
-end
-
-function Gaussian_InitCond(mean::TF, std::TF, dim) where {TF<:AbstractFloat}
+function Gaussian_InitCond(mean::TF, std::TF, dim::Int=1) where {TF<:AbstractFloat}
     return Gaussian_InitCond([mean], [std], 1)
 end
 
@@ -155,11 +143,11 @@ function generate_initcond(init_cond::Constant_InitCond; kwargs...)
 end
 
 function generate_initcond(init_cond::Array_InitCond; id = 1, kwargs...)
-    return init_cond.val[1+(id-1)%val.size[1], :]
+    return init_cond.val[1+(id-1)%(size(init_cond.val)[1])]
 end
 
 function generate_initcond(init_cond::Uniform_InitCond; kwargs...)
-    return low .+ (high .- low) .* rand(init_cond.dim)
+    return init_cond.low .+ (init_cond.high .- init_cond.low) .* rand(init_cond.dim)
 end
 
 

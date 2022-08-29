@@ -7,6 +7,7 @@ struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     c₀::TF
     c₁::TF
     sqrtM::TM
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -22,12 +23,12 @@ Set up the BAOAB integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
 
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
     sqrtM = sqrt.(M) / M
-    return BAOAB(force, β, γ, M, Δt, c₀, c₁, sqrtM)
+    return BAOAB(force, β, γ, M, Δt, c₀, c₁, sqrtM, bc)
 end
 
 mutable struct BAOABState{TF<:AbstractFloat} <: AbstractInertialState
@@ -54,10 +55,10 @@ function UpdateState!(state::BAOABState, integrator::BAOAB; kwargs...)
 
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x_mid = state.x .+ 0.5 * integrator.Δt * state.v_mid
-    #apply_bc!(integrator.bc,state.x_mid,state.v)
+    apply_space!(integrator.bc,state.x_mid,state.v)
     state.p̂_mid = integrator.c₀ .* state.v_mid .+ integrator.c₁ .* integrator.sqrtM * randn(state.dim)
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.p̂_mid
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v = state.p̂_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
 

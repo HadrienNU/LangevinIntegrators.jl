@@ -106,4 +106,46 @@ end
     state = InitState(integrator, cond_arr)
     @test state.x ≈ [1.0]
     @test state isa LangevinIntegrators.AbstractMemoryHiddenState
+
+
+    #Various Initial conditions
+    constant_cond = LangevinIntegrators.Constant_InitCond(5.0)
+    uniform_cond = LangevinIntegrators.Uniform_InitCond(-1.0,1.0)
+    integrator = Verlet(force, 1.0, 1e-3)
+
+    state = InitState(integrator, [constant_cond,uniform_cond])
+    @test state.x ≈ [5.0]
+    @test state.v[1] >= -1.0 && state.v[1] <= 1.0
+
+    @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> -1.0,"high"=>1.0)).low == uniform_cond.low
+    @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> "-1.0","high"=>"1.0")).high == uniform_cond.high
+    array_cond=LangevinIntegrators.Array_InitCond([[5.0],[2.0]],1)
+
+    @test LangevinIntegrators.generate_initcond(array_cond; id = 1) ≈ [5.0]
+    @test LangevinIntegrators.generate_initcond(array_cond; id = 2) ≈ [2.0]
+    @test LangevinIntegrators.generate_initcond(array_cond; id = 3) ≈ [5.0]
 end
+
+# @testset "InitState" begin
+#     force = ForceFromPotential("Harmonic")
+#     integrator = EM(force, 1.0, 1e-3)
+#     state=InitState([2.0],integrator)
+#
+#     @test InitState(state,integrator).x == state.x
+#     @test InitState!(state,integrator).x == state.x
+#
+#     integrator = Verlet(force, 1.0, 1e-3)
+#
+#     state=InitState([2.0],[1.0],integrator)
+#
+#     @test InitState(state,integrator).v == state.v
+#     @test InitState!(state,integrator).x == state.x
+#
+#     integrator = EM_Hidden(force, [[1.0, 1.0] [-1.0, 2.0]], [[1.0, 0.0] [0.0, 1.0]], 1e-3, 1)
+#
+#     state=InitState(integrator)
+#
+#     @test InitState(state,integrator).x == state.x
+#     @test InitState!(state,integrator).v == state.v
+#
+# end

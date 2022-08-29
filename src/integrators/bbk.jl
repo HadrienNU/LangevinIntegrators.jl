@@ -5,6 +5,7 @@ struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     M::TM
     Δt::TF
     σ::TF
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -20,9 +21,9 @@ Set up the BBK integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BBK(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BBK(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     σ = sqrt(γ * Δt / β) / M
-    return BBK(force, β, γ, M, Δt, σ)
+    return BBK(force, β, γ, M, Δt, σ, bc)
 end
 
 mutable struct BBKState{TF<:AbstractFloat} <: AbstractInertialState
@@ -47,7 +48,7 @@ function UpdateState!(state::BBKState, integrator::BBK; kwargs...)
 
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .- 0.5 * integrator.Δt .* integrator.γ * state.v .+ integrator.σ * randn(state.dim)
     @. state.x = state.x + integrator.Δt * state.v_mid
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + integrator.σ * randn(state.dim)) / (1 + 0.5 * integrator.Δt * integrator.γ)
 

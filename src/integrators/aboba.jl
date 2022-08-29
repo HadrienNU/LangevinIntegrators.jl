@@ -7,6 +7,7 @@ struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     c₀::TF
     c₁::TF
     sqrtM::TM
+    bc::Union{AbstractSpace,Nothing}
 end
 
 """
@@ -22,12 +23,12 @@ Set up the ABOBA integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function ABOBA(force::FP, β::TF, γ::TF, M::TM, Δt::TF) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function ABOBA(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
 
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
     sqrtM = sqrt.(M) / M
-    return ABOBA(force, β, γ, M, Δt, c₀, c₁, sqrtM)
+    return ABOBA(force, β, γ, M, Δt, c₀, c₁, sqrtM, bc)
 end
 
 mutable struct ABOBAState{TF<:AbstractFloat} <: AbstractInertialState
@@ -55,14 +56,14 @@ end
 function UpdateState!(state::ABOBAState, integrator::ABOBA; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
-    #apply_bc!(integrator.bc,state.x_mid,state.v)
+    apply_space!(integrator.bc,state.x_mid,state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     # Au passage il faudra rajouter ici un terme de métrique quand il est présent
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid
     state.p̂_mid = integrator.c₀ .* state.v_mid + integrator.c₁ .* integrator.sqrtM * randn(state.dim)
     state.v = state.p̂_mid .+ 0.5 * integrator.Δt / integrator.M * state.f_mid
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
-    #apply_bc!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc,state.x,state.v)
 
     return nostop
 end
