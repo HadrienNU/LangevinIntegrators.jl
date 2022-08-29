@@ -24,7 +24,7 @@ end
 
 
 function ForceFromPotential(potential::String, ndim = 1::Int)
-    x₀ = Vector{Float64}(undef, ndim)
+    x₀ = zeros(ndim) #Vector{Float64}(undef, ndim)
     V = getfield(LangevinIntegrators, Symbol(potential)) # Eventuellement créer un sous module avec juste les potentials
     cfg = ForwardDiff.GradientConfig(V, x₀)
     return ForceFromPotential((gradV, x) -> ForwardDiff.gradient!(gradV, V, x, cfg), V, ndim, Vector{AbstractFix}(undef, 0))

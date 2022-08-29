@@ -79,7 +79,7 @@ function read_conf(file::String)
 
     # Some informations to save the trajectories
     dump_dict = haskey(conf, "dump") ? getsubDict(conf, "dump") : Dict()
-    params = TrajsParams(obs_conf; n_steps = n_steps, n_trajs = n_trajs,verbose=verbose, dump_dict...)
+    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs,verbose=verbose, dump_dict...)
 
 
     # The information about the initial conditions

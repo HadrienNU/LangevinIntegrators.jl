@@ -8,7 +8,7 @@ using DelimitedFiles
 
     include("runtests_forces.jl")
 
-    include("runtests_integrator.jl")
+    include("runtests_integrators.jl")
 
 
     @testset "run_multiple_trajectories" begin
