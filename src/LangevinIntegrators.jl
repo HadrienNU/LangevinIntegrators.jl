@@ -93,7 +93,7 @@ export read_conf, read_integrator_conf, read_integrator_hidden_npz
 export TrajsParams
 
 include("save.jl")
-export TrajectorySave
+export TrajectorySave, TrajectorySaveInertial, TrajectorySaveOnlyHidden, TrajectorySaveHidden,
 
 
 include("run.jl")

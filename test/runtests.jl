@@ -43,21 +43,60 @@ using DelimitedFiles
     end
 
 
-    # @testset "observers" begin # And then a matrix over the integrator
-    #
-    #     init_conds_args = Dict("position" => Dict("type" => "Cste"), "velocity" => Dict("type" => "Cste"))
-    #     force = ForceFromPotential("Harmonic")
-    #     params = TrajsParams(; n_steps = 10^3)
-    #
-    #     integrator = EM(force, 1.0, 0.001)
-    #     init_conds = initialize_initcond(integrator, init_conds_args)
-    #
-    #     state = InitState(integrator, init_conds)
-    #     time, stop = run_trajectory!(state, integrator; params = params)
-    #
-    #     # @test isfile("trajectory.dat")
-    #     # rm("trajectory.dat")
-    # end
+    @testset "save" begin
+        params = TrajsParams(; n_steps = 10^3, n_trajs = 3, n_save_iters=49, save_filename_pattern = "trajectory_*.dat") # Ajouter des paramètres pour sauvegarder les trajectoires
+        init_conds_args = Dict("position" => Dict("type" => "Cste"), "velocity" => Dict("type" => "Cste"))
+
+        force = ForceFromPotential("Harmonic")
+        integrator = Verlet(force, 1.0, 0.001)
+
+        trajs=run_trajectories(integrator; params = params, init_conds_args = init_conds_args, buffer_size = 7, save_velocity = true)
+        list_files=filter(s -> occursin(r"trajectory_.*.dat",s),readdir())
+
+        @test length(list_files) == params.n_trajs
+        for n in 1:length(list_files)
+            @test trajs[n] isa TrajectorySaveInertial
+            data=readdlm(list_files[n])
+            @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
+            @test data[end,2:3] ≈ trajs[n].xt[trajs[n].save_index,:]
+            @test data[end,3:4] ≈ trajs[n].vt[trajs[n].save_index,:]
+            rm(list_files[n]) # clean behind test
+        end
+
+
+        init_conds_args = Dict("position" => Dict("type" => "Cste"), "velocity" => Dict("type" => "Cste"))
+
+        force = ForceFromPotential("Harmonic")
+        integrator = ABOBA_Hidden(force, [[1.0, 1.0] [-1.0, 2.0]], [[1.0, 0.0] [0.0, 1.0]], 1e-3, 1)
+
+        trajs=run_trajectories(integrator; params = params, init_conds_args = init_conds_args, buffer_size = 7, save_velocity = true, save_hidden=true)
+        list_files=filter(s -> occursin(r"trajectory_.*.dat",s),readdir())
+
+        @test length(list_files) == params.n_trajs
+        for n in 1:length(list_files)
+            @test trajs[n] isa TrajectorySaveHidden
+            data=readdlm(list_files[n])
+            @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
+            @test data[end,2:3] ≈ trajs[n].xt[trajs[n].save_index,:]
+            @test data[end,3:4] ≈ trajs[n].vt[trajs[n].save_index,:]
+            @test data[end,4:end] ≈ trajs[n].ht[trajs[n].save_index,:]
+            rm(list_files[n]) # clean behind test
+        end
+
+        trajs=run_trajectories(integrator; params = params, init_conds_args = init_conds_args, buffer_size = 7, save_velocity = false, save_hidden=true)
+        list_files=filter(s -> occursin(r"trajectory_.*.dat",s),readdir())
+
+        @test length(list_files) == params.n_trajs
+        for n in 1:length(list_files)
+            @test trajs[n] isa TrajectorySaveOnlyHidden
+            data=readdlm(list_files[n])
+            @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
+            @test data[end,2:3] ≈ trajs[n].xt[trajs[n].save_index,:]
+            @test data[end,3:end] ≈ trajs[n].ht[trajs[n].save_index,:]
+            rm(list_files[n]) # clean behind test
+        end
+    end
+
 
     include("plumed_tests.jl")
 
