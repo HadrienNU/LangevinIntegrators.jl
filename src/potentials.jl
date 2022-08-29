@@ -1,18 +1,18 @@
 #Implement more potential
 
-function Flat(X)
+function Flat(x::AbstractArray)
     return 0.0
 end
 
-function Harmonic(X)
-    return 0.5 * X[1]^2
+function Harmonic(x::AbstractArray)
+    return 0.5 * x[1]^2
 end
 
-function DoubleWell(X)
-    return (X[1]^2 - 1)^2
+function DoubleWell(x)
+    return (x[1]^2 - 1)^2
 end
 
-function Muller(x)
+function Muller(x::AbstractArray)
 
     aa = @SVector [-1, -1, -6.5, 0.7]
     bb = @SVector [0.0, 0.0, 11.0, 0.6]

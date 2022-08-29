@@ -96,7 +96,7 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
 
   ## Extra fix
 
-  Fix derive from AbstractFix
+  Fix derive from AbstractFix. There should be typically implemented when wanted function is not in plumed or you want to speed up code and then implment things that are in plumed such as the committor function.
 
     function init_fix(fix::AbstractFix; kwargs...) #Called at the start of each trajectory
     end
@@ -108,11 +108,8 @@ A package to generate trajectories from a (generalized) Langevin equation. This 
     function close_fix(fix::AbstractFix) #Called at the end of each trajectory
     end
 
-  Fixes are not called in the initialization of the force for the first timestep, depending of the integrator.
+  Fixes are not called in the initialization of the force for the first timestep, except for ABOBA type integrator.
 
-  ## Extra observers
-
-  Observers are called at regular time during the trajectory, they derive from AbstractObserver. They need to have a field n_save_iters and are passed to function run_obs every n_save_iters steps.
 
 # TODO
 

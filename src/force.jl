@@ -15,8 +15,8 @@ end
 
 # TODO: add a function to get current potential energy
 
-struct ForceFromPotential{F<:Function,G<:Function} <: AbstractForce
-    gradV!::F
+struct ForceFromPotential{G<:Function} <: AbstractForce
+    cfg::ForwardDiff.GradientConfig
     V::G # On stocke aussi la valeur du potential
     ndim::Int
     fixes::Array{AbstractFix} # List of fix to apply
@@ -25,14 +25,14 @@ end
 
 function ForceFromPotential(potential::String, ndim = 1::Int)
     x₀ = zeros(ndim) #Vector{Float64}(undef, ndim)
-    V = getfield(LangevinIntegrators, Symbol(potential)) # Eventuellement créer un sous module avec juste les potentials
+    V = getfield(LangevinIntegrators, Symbol(potential)) # Eventuellement créer un sous module avec juste les potentials pour ne pas chercher partout
     cfg = ForwardDiff.GradientConfig(V, x₀)
-    return ForceFromPotential((gradV, x) -> ForwardDiff.gradient!(gradV, V, x, cfg), V, ndim, Vector{AbstractFix}(undef, 0))
+    return ForceFromPotential(cfg, V, ndim, Vector{AbstractFix}(undef, 0))
 end
 
 #La fonction qui calcule la force a actualiser pour n'avoir que forceUpdate! from basis
 function forceUpdate!(force::ForceFromPotential, f::Vector{TF}, x::Vector{TF}; kwargs...) where {TF<:AbstractFloat}
-    force.gradV!(f, x)
+    ForwardDiff.gradient!(f, force.V, x, force.cfg)
     f .*= -1
     stop_condition = false
     if get(kwargs, :applyFix, true)
@@ -87,7 +87,7 @@ struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
 end
 
 function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}) where {TF<:AbstractFloat}
-    if ndims(coeffs) >= 2
+    if ndims(coeffs) >= 2 #TODO change for a Vector of vector
         ndim = size(coeffs)[1]
         nb_coeffs = size(coeffs)[2]
     else
@@ -132,7 +132,7 @@ struct ForceFromScipySplines{TF<:AbstractFloat} <: AbstractForceFromBasis  # use
     fixes::Array{AbstractFix} # List of fix to apply
 end
 function ForceFromScipySplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) where {TF<:AbstractFloat}
-    if ndims(coeffs) >= 2
+    if ndims(coeffs) >= 2 #TODO change for a Vector of vector
         ndim = size(coeffs)[1]
     else
         ndim = 1
@@ -163,11 +163,15 @@ function forceUpdate(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:Abst
     return f
 end
 
+function force_eval(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:AbstractFloat} # When we just want a single point evaluation
+    return force_eval(force,[x])[1]
+end
+
 # A function to plot value of the force for comparison with python code
-function force_eval(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:AbstractFloat}
+function force_eval(force::FP, x::Vector{Vector{TF}}) where {FP<:AbstractForce,TF<:AbstractFloat} # Evaluate over a bunch of point
     f = similar(x)
     for (n, val) in enumerate(x)
-        f[n] = forceUpdate(force, [val])[1]
+        f[n] = forceUpdate(force, val)
     end
     return f
 end

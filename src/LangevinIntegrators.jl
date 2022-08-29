@@ -26,13 +26,12 @@ using StaticArrays
 
 using LinearAlgebra
 
+using DelimitedFiles
+
 #Integrators
 include("integrators/integrators_types.jl")
 export InitState
 export InitState!
-
-
-include("observers.jl")
 
 include("fixes.jl")
 include("plumed.jl") # Find a way to make this optionnal, using Require?
@@ -91,11 +90,14 @@ export set_from_conf, set_hidden_from_npz
 export read_conf, read_integrator_conf, read_integrator_hidden_npz
 export TrajsParams
 
+include("save.jl")
+export TrajectorySave
+
 
 include("run.jl")
 export generate_initial_conditions
 export run_trajectory!
 export run_trajectories
-
+export run_fpt
 
 end

@@ -253,7 +253,7 @@ function force_from_dict(coeffs, args)
 end
 
 
-struct TrajsParams{AO<:AbstractObserver} # La dedans on stocke les trucs initialisé
+struct TrajsParams # La dedans on stocke les trucs initialisé
     n_steps::Int
     n_trajs::Int
     # Some infos to save the trajectories
@@ -261,8 +261,6 @@ struct TrajsParams{AO<:AbstractObserver} # La dedans on stocke les trucs initial
     save_filename_pattern::Union{String,Nothing}
 
     verbose::Int
-    #By default the array is empty
-    observers::Array{AO}
 end
 
 """
@@ -274,11 +272,9 @@ Set options for samplers.
 * n_save_iters  - Set the frequency at which iterations are saved.  If
                   n_save_iters=1, every iteration is saved.  If n_save_iters=n_steps,
                   only the final iteration is saved.
+* save_filename_pattern - The pattern for saving the trajectories. If this include a *, that will be replaced by the id of the traj.
+* verbose       - Verbose argument
 """
 function TrajsParams(; n_steps = 10^4, n_trajs = 1, n_save_iters=nothing, save_filename_pattern = nothing, verbose=0, kwargs...)
-    return TrajsParams(n_steps, n_trajs, isnothing(n_save_iters) ? n_steps : n_save_iters, save_filename_pattern, verbose, empty([], AbstractObserver))
-end
-
-function addObserver(params::TrajsParams,new_obs ; kwargs...)
-    push!(params.observers, new_obs)
+    return TrajsParams(n_steps, n_trajs, isnothing(n_save_iters) ? n_steps : n_save_iters, save_filename_pattern, verbose)
 end

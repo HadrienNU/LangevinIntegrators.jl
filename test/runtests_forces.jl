@@ -19,8 +19,8 @@
     @test force_eval(force, [1.0])[1] ≈ 0.0
 
     force=ForceFromPotential("Muller", 2)
-    @test force_eval(force,[0.0,0.0]) ≈ [-120.44528523713869, -108.79148986312214]
-    @test force_eval(force,[-0.70,1.25]) ≈ [ 32.34319126842259, -146.34307531443176]
+    @test force_eval(force,[0.0,0.0]) ≈ [120.44528523713869, 108.79148986312214]
+    @test force_eval(force,[-0.70,1.25]) ≈ [-32.34319126842259, 146.34307531443176]
 
     #Forces from ApproxFun
     force = ForceFromBasis("Taylor", [0.0 -2.0])

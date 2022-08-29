@@ -41,7 +41,7 @@ end
     @test state.x != [0.0]
 
     integrator = Verlet(force, 1.0, 1e-3)
-    state = InitState!([0.0], [0.0], integrator)
+    state = InitState!([0.0], [2.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
@@ -53,7 +53,7 @@ end
     force = ForceFromPotential("Harmonic")
 
     integrator = EM_Hidden(force, [[1.0, 1.0] [-1.0, 2.0]], [[1.0, 0.0] [0.0, 1.0]], 1e-3, 1)
-    state = InitState!([0.0], [0.0], [0.0], integrator)
+    state = InitState!([0.0], [1.0], [0.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
