@@ -62,4 +62,11 @@ using LangevinIntegrators.Plumed
     rm("plumed.log")
     rm("bck.0.plumed.log")
     rm("bck.1.plumed.log")
+
+
+
+    force = ForceFromPotential("Harmonic")
+    integrator = EM(force, 1.0, 0.001)
+    addPlumed!(integrator,"test_plumed_committor.dat", "plumed.log")
+    @test length(integrator.force.fixes) == 1
 end

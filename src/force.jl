@@ -13,6 +13,10 @@ function addFix!(force::FP, fix::AbstractFix) where {FP<:AbstractForce}
     return force
 end
 
+function addFix!(integrator::AbstractIntegrator,fix::AbstractFix) # Add it to the integrator
+    addFix!(integrator.force, fix)
+end
+
 # TODO: add a function to get current potential energy
 
 struct ForceFromPotential{G<:Function} <: AbstractForce
