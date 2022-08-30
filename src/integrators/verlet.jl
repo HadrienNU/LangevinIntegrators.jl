@@ -14,8 +14,8 @@ struct Verlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     M::TM
     Δt::TF
     bc::Union{AbstractSpace,Nothing}
-    function Verlet(force::FP, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM} where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-        return new(force, M, Δt, bc)
+    function Verlet(force::FP, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+        new{FP,TF,TM}(force, M, Δt, bc)
     end
 end
 
