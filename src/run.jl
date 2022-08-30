@@ -60,7 +60,7 @@ function run_trajectories(integrator::S; params = TrajsParams(), init_conds_args
         integrators_set = [integrator]
     end
     #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
-    save_trajs = Array{TrajectorySave}(undef,params.n_trajs)
+    save_trajs = Array{AbstractSave}(undef,params.n_trajs)
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
         save_trajs[n] = TrajectorySave(params.n_save_iters, params.save_filename_pattern, n, params.n_steps, init_states[n]; kwargs...)
         run_trajectory!(init_states[n], integrators_set[Threads.threadid()], save_trajs[n]; params = params, id_traj=n, kwargs...)
