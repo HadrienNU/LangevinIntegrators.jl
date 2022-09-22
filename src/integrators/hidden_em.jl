@@ -62,10 +62,9 @@ end
 
 function UpdateState!(state::HiddenEMState, integrator::EM_Hidden; kwargs...)
 
+    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
-    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-
     gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
     friction_h = -integrator.friction_hv * state.v .- integrator.friction_hh * state.h
     state.v = state.v .- integrator.friction_vv * state.v .- integrator.friction_vh * state.h .+ integrator.Δt .* state.f .+ gauss[1:integrator.dim]
