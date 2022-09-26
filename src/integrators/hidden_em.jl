@@ -47,16 +47,19 @@ mutable struct HiddenEMState{TF<:AbstractFloat} <: AbstractMemoryHiddenState
     f::Vector{TF}
     dim::Int64
     # friction_h::Vector{TF}
+    function HiddenEMState(x₀, v₀, h₀, f)
+        return new(x₀, v₀, h₀, f, length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, h₀, integrator::EM_Hidden)
     f = forceUpdate(integrator.force, x₀)
-    return HiddenEMState(x₀, v₀, h₀, f, length(x₀))
+    return HiddenEMState(x₀, v₀, h₀, f)
 end
 
 function InitState(x₀, v₀, h₀, integrator::EM_Hidden)
     f = forceUpdate(integrator.force, x₀)
-    return HiddenEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f, length(x₀))
+    return HiddenEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f)
 end
 
 

@@ -39,26 +39,39 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v::Vector{TF}
     f::Vector{TF}
     f_new::Vector{TF}
-    x_t::Vector{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
-    W_t::Vector{Vector{TF}} # Utiliser un Circular buffer à la place?
+    x_t::Queue{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
+    noise_n::Queue{Vector{TF}}
     dim::Int64
+    function GJFKernelState(x₀, v₀, f, x_t)
+        return new(x₀, v₀, f, copy(f), x_t, init_randn_correlated(length(integrator.σ_corr)) , length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::Kernel_GJF)
     f = forceUpdate(integrator.force, x₀)
-    return GJFKernelState(x₀, v₀, f, copy(f), similar(f), length(x₀))
+    x_t=Queue{typeof(v₀)}()
+    for n=1:length(integrator.kernel) # Check if this is the right size
+        push!(x_t, zeros(state.dim))
+    end
+    push!(x_t, deepcopy(x₀))
+    return GJFKernelState(x₀, v₀, f, x_t)
 end
 
 function InitState(x₀, v₀, integrator::Kernel_GJF)
     f = forceUpdate(integrator.force, x₀)
-    return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, copy(f), similar(f), length(x₀))
+    x_t=Queue{typeof(v₀)}()
+    for n=1:length(integrator.kernel) # Check if this is the right size
+        push!(x_t, zeros(state.dim))
+    end
+    push!(x_t, deepcopy(x₀))
+    return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t)
 end
 
 function UpdateState!(state::GJFKernelState, integrator::Kernel_GJF; kwargs...)
 
     state.ξ = randn(state.dim) # To replace with correlated noise
 
-    mem_int = corr_mem(state.x_t[1:] - state.x_t[:-1] , integrator.kernel) # Check limit to give, les  limites sont pas bonnes pour x_t
+    mem_int = corr_mem(state.x_t[2:end] - state.x_t[1:(end-1)] , integrator.kernel) # Check limit to give, les  limites sont pas bonnes pour x_t
 
     state.x =
         state.x .+ integrator.b * integrator.Δt .* state.v .+ 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f

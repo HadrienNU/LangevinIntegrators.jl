@@ -34,20 +34,30 @@ mutable struct KernelEMState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v::Vector{TF}
     h::Vector{TF}
     f::Vector{TF}
-    v_t::Vector{Vector{TF}} # Trajectory of v to compute the kernel # Utiliser un Circular buffer à la place?
-    noise_t::Vector{Vector{TF}} # Utiliser un Circular buffer à la place?
+    v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
+    noise_n::Queue{Vector{TF}}
     dim::Int64
     # friction_h::Vector{TF}
 end
 
 function InitState!(x₀, v₀, h₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    return KernelEMState(x₀, v₀, h₀, f, length(x₀))
+    v_t=Queue{typeof(v₀)}()
+    for n=1:length(integrator.kernel) # Check if this is the right size
+        push!(v_t, zeros(state.dim))
+    end
+    noise=init_randn_correlated(length(integrator.σ_corr))
+    return KernelEMState(x₀, v₀, h₀, f, v_t , noise,length(x₀))
 end
 
 function InitState(x₀, v₀, h₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    return KernelEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f, length(x₀))
+    v_t=Queue{typeof(v₀)}()
+    for n=1:length(integrator.kernel) # Check if this is the right size
+        push!(v_t, zeros(state.dim))
+    end
+    noise=init_randn_correlated(length(integrator.σ_corr))
+    return KernelEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f, v_t , noise, length(x₀))
 end
 
 

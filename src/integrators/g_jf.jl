@@ -39,16 +39,19 @@ mutable struct GJFState{TF<:AbstractFloat} <: AbstractInertialState
     f_new::Vector{TF}
     ξ::Vector{TF}
     dim::Int64
+    function GJFState(x₀, v₀, f)
+        return new(x₀, v₀, f, copy(f), similar(f), length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::GJF)
     f = forceUpdate(integrator.force, x₀)
-    return GJFState(x₀, v₀, f, copy(f), similar(f), length(x₀))
+    return GJFState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::GJF)
     f = forceUpdate(integrator.force, x₀)
-    return GJFState(deepcopy(x₀), deepcopy(v₀), f, copy(f), similar(f), length(x₀))
+    return GJFState(deepcopy(x₀), deepcopy(v₀), f)
 end
 
 function UpdateState!(state::GJFState, integrator::GJF; kwargs...)

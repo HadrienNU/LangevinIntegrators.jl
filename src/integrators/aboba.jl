@@ -39,18 +39,21 @@ mutable struct ABOBAState{TF<:AbstractFloat} <: AbstractInertialState
     p̂_mid::Vector{TF}
     f_mid::Vector{TF}
     dim::Int64
+    function ABOBAState(x₀, v₀, f)
+        return new(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    end
 end
 
 #TODO initialize velocity
 
 function InitState!(x₀, v₀, integrator::ABOBA)
     f = forceUpdate(integrator.force, x₀)
-    return ABOBAState(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    return ABOBAState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::ABOBA)
     f = forceUpdate(integrator.force, x₀)
-    return ABOBAState(deepcopy(x₀), deepcopy(v₀), similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    return ABOBAState(deepcopy(x₀), deepcopy(v₀), f)
 end
 
 function UpdateState!(state::ABOBAState, integrator::ABOBA; kwargs...)

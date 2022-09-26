@@ -32,16 +32,19 @@ mutable struct BBKState{TF<:AbstractFloat} <: AbstractInertialState
     v_mid::Vector{TF}
     f::Vector{TF}
     dim::Int64
+    function BBKState(x₀, v₀, f)
+        return new(x₀, v₀, similar(v₀), f, length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::BBK)
     f = forceUpdate(integrator.force, x₀)
-    return BBKState(x₀, v₀, similar(v₀), f, length(x₀))
+    return BBKState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::BBK)
     f = forceUpdate(integrator.force, x₀)
-    return BBKState(deepcopy(x₀), deepcopy(v₀), similar(v₀), f, length(x₀))
+    return BBKState(deepcopy(x₀), deepcopy(v₀), f)
 end
 
 function UpdateState!(state::BBKState, integrator::BBK; kwargs...)

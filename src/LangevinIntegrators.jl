@@ -23,6 +23,7 @@ using ApproxFun # Various basis function
 using BSplineKit # Bsplines function
 
 using StaticArrays
+using DataStructures
 
 using LinearAlgebra
 

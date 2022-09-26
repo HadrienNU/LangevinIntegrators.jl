@@ -39,16 +39,19 @@ mutable struct BAOABState{TF<:AbstractFloat} <: AbstractInertialState
     p̂_mid::Vector{TF}
     f::Vector{TF}
     dim::Int64
+    function BAOABState(x₀, v₀, f)
+        return new(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::BAOAB)
     f = forceUpdate(integrator.force, x₀)
-    return BAOABState(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    return BAOABState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::BAOAB)
     f = forceUpdate(integrator.force, x₀)
-    return BAOABState(deepcopy(x₀), deepcopy(v₀), similar(x₀), similar(x₀), similar(x₀), f, length(x₀))
+    return BAOABState(deepcopy(x₀), deepcopy(v₀), f)
 end
 
 function UpdateState!(state::BAOABState, integrator::BAOAB; kwargs...)
