@@ -37,8 +37,8 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
     noise_n::Queue{Vector{TF}} # Utiliser un Circular buffer à la place?
     dim::Int64
-    function BBKKernelState(x₀, v₀, f, v_t, noise)
-        return new(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀))
+    function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀)) # TODO: import v_t as a vector and fill the queue by zeros and given v_t
     end
 end
 

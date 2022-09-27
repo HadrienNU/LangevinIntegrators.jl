@@ -39,8 +39,8 @@ mutable struct BAOABState{TF<:AbstractFloat} <: AbstractInertialState
     p̂_mid::Vector{TF}
     f::Vector{TF}
     dim::Int64
-    function BAOABState(x₀, v₀, f)
-        return new(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    function BAOABState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
     end
 end
 

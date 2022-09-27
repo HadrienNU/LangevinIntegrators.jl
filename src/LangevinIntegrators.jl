@@ -60,6 +60,8 @@ include("integrators/boundary_conditions.jl")
 export SeparateSpace
 export noBC, PBC, ReflectingBC
 
+include("integrators/correlated_noise.jl")
+
 
 include("integrators/overdamped_em.jl")
 export EM

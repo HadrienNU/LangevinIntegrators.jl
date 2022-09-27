@@ -51,8 +51,8 @@ mutable struct HiddenABOBAState{TF<:AbstractFloat} <: AbstractMemoryHiddenState
     p̂_mid::Vector{TF}
     f_mid::Vector{TF}
     dim::Int64
-    function HiddenABOBAState(x₀, v₀, h₀,f)
-        return new(x₀, v₀, h₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+    function HiddenABOBAState(x₀::Vector{TF}, v₀::Vector{TF}, h₀::Vector{TF},f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, h₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
     end
 end
 

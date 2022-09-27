@@ -29,8 +29,8 @@ mutable struct EMState{TF<:AbstractFloat} <: AbstractOverdampedState
     x::Vector{TF}
     f::Vector{TF}
     dim::Int64
-    function EMState(x₀, f)
-        return new(x₀, f, length(x₀))
+    function EMState(x₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, f, length(x₀))
     end
 end
 

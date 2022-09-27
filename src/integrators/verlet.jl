@@ -28,8 +28,8 @@ mutable struct VerletState{TF<:AbstractFloat} <: AbstractInertialState
     f::Vector{TF}
     v_mid::Vector{TF}
     dim::Int64
-    function VerletState(x₀, v₀, f)
-        return new(x₀, v₀, f, similar(v₀), length(x₀))
+    function VerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, f, similar(v₀), length(x₀))
     end
 end
 

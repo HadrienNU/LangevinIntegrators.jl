@@ -42,8 +42,8 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     x_t::Queue{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
     noise_n::Queue{Vector{TF}}
     dim::Int64
-    function GJFKernelState(x₀, v₀, f, x_t, noise)
-        return new(x₀, v₀, f, copy(f), x_t, noise, length(x₀))
+    function GJFKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, x_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, f, copy(f), x_t, noise, length(x₀))
     end
 end
 

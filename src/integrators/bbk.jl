@@ -32,8 +32,8 @@ mutable struct BBKState{TF<:AbstractFloat} <: AbstractInertialState
     v_mid::Vector{TF}
     f::Vector{TF}
     dim::Int64
-    function BBKState(x₀, v₀, f)
-        return new(x₀, v₀, similar(v₀), f, length(x₀))
+    function BBKState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, length(x₀))
     end
 end
 

@@ -37,8 +37,8 @@ mutable struct KernelEMState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     noise_n::Queue{Vector{TF}}
     dim::Int64
     # friction_h::Vector{TF}
-    function KernelEMState(x₀, v₀, f, v_t, noise)
-        return new(x₀, v₀, f, v_t , noise, length(x₀))
+    function KernelEMState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, f, v_t , noise, length(x₀))
     end
 end
 

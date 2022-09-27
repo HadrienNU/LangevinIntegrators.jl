@@ -47,8 +47,8 @@ mutable struct HiddenEMState{TF<:AbstractFloat} <: AbstractMemoryHiddenState
     f::Vector{TF}
     dim::Int64
     # friction_h::Vector{TF}
-    function HiddenEMState(x₀, v₀, h₀, f)
-        return new(x₀, v₀, h₀, f, length(x₀))
+    function HiddenEMState(x₀::Vector{TF}, v₀::Vector{TF}, h₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, h₀, f, length(x₀))
     end
 end
 
