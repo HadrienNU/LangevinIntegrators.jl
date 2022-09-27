@@ -28,16 +28,19 @@ mutable struct VerletState{TF<:AbstractFloat} <: AbstractInertialState
     f::Vector{TF}
     v_mid::Vector{TF}
     dim::Int64
+    function VerletState(x₀, v₀, f)
+        return new(x₀, v₀, f, similar(v₀), length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::Verlet)
     f = forceUpdate(integrator.force, x₀)
-    return VerletState(x₀, v₀, f, similar(v₀), length(x₀))
+    return VerletState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::Verlet)
     f = forceUpdate(integrator.force, x₀)
-    return VerletState(deepcopy(x₀), deepcopy(v₀), f, similar(v₀), length(x₀))
+    return VerletState(deepcopy(x₀), deepcopy(v₀), f)
 end
 
 function UpdateState!(state::VerletState, integrator::Verlet; kwargs...)

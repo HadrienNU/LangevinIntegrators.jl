@@ -37,6 +37,9 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
     noise_n::Queue{Vector{TF}} # Utiliser un Circular buffer à la place?
     dim::Int64
+    function BBKKernelState(x₀, v₀, f, v_t, noise)
+        return new(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀))
+    end
 end
 
 function InitState!(x₀, v₀, integrator::BBK_Kernel)
@@ -46,7 +49,7 @@ function InitState!(x₀, v₀, integrator::BBK_Kernel)
         push!(v_t, zeros(state.dim))
     end
     noise=init_randn_correlated(length(integrator.σ_corr))
-    return BBKKernelState(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀))
+    return BBKKernelState(x₀, v₀, f, v_t, noise)
 end
 
 function InitState(x₀, v₀, integrator::BBK_Kernel)
@@ -56,7 +59,7 @@ function InitState(x₀, v₀, integrator::BBK_Kernel)
         push!(v_t, zeros(state.dim))
     end
     noise=init_randn_correlated(length(integrator.σ_corr))
-    return BBKKernelState(deepcopy(x₀), deepcopy(v₀), similar(v₀), f,similar(f) , v_t , noise, length(x₀))
+    return BBKKernelState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)
 end
 
 function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)

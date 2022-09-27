@@ -29,17 +29,20 @@ mutable struct EMState{TF<:AbstractFloat} <: AbstractOverdampedState
     x::Vector{TF}
     f::Vector{TF}
     dim::Int64
+    function EMState(x₀, f)
+        return new(x₀, f, length(x₀))
+    end
 end
 
 
 function InitState!(x₀, integrator::EM)
     f = forceUpdate(integrator.force, x₀)
-    return EMState(x₀, copy(f), length(x₀))
+    return EMState(x₀, f)
 end
 
 function InitState(x₀, integrator::EM)
     f = forceUpdate(integrator.force, x₀)
-    return EMState(deepcopy(x₀), copy(f), length(x₀))
+    return EMState(deepcopy(x₀), f)
 end
 
 

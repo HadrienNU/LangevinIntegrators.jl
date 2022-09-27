@@ -42,8 +42,8 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     x_t::Queue{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
     noise_n::Queue{Vector{TF}}
     dim::Int64
-    function GJFKernelState(x₀, v₀, f, x_t)
-        return new(x₀, v₀, f, copy(f), x_t, init_randn_correlated(length(integrator.σ_corr)) , length(x₀))
+    function GJFKernelState(x₀, v₀, f, x_t, noise)
+        return new(x₀, v₀, f, copy(f), x_t, noise, length(x₀))
     end
 end
 
@@ -54,6 +54,7 @@ function InitState!(x₀, v₀, integrator::Kernel_GJF)
         push!(x_t, zeros(state.dim))
     end
     push!(x_t, deepcopy(x₀))
+    noise=init_randn_correlated(length(integrator.σ_corr))
     return GJFKernelState(x₀, v₀, f, x_t)
 end
 
@@ -64,7 +65,8 @@ function InitState(x₀, v₀, integrator::Kernel_GJF)
         push!(x_t, zeros(state.dim))
     end
     push!(x_t, deepcopy(x₀))
-    return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t)
+    noise=init_randn_correlated(length(integrator.σ_corr))
+    return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t, noise)
 end
 
 function UpdateState!(state::GJFKernelState, integrator::Kernel_GJF; kwargs...)
