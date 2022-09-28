@@ -5,6 +5,7 @@ struct BBK_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
     σ_corr::Union{Vector{TF},Vector{Matrix{TF}}}
     M::TM
     Δt::TF
+    dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
 
@@ -36,7 +37,7 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     diss_f::Vector{TF} # Dissipative force
     v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
     noise_n::Queue{Vector{TF}} # Utiliser un Circular buffer à la place?
-    dim::Int64
+
     function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀)) # TODO: import v_t as a vector and fill the queue by zeros and given v_t
     end

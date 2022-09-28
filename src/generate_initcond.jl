@@ -29,24 +29,26 @@ Note si il n'y as pas ce qu'il faut ça va échouer silenciement, il faut mettre
 function initialize_initcond(integrator, args; verbose = 0)
     # En vrai ça se contente de savoir si on doit générer, 1 2 ou 3 init_cond et ça appelle get_init_conditions qui les crée
     # Ca permet de définir des valeurs par défauts si rien n'est donné
-    intcond_pos = get_init_conditions(get(args, "position", Dict("type" => "Cste")))
+    # Get dimension of the system for default value
+    intcond_pos = get_init_conditions(get(args, "position", Dict("type" => "Cste")), integrator.dim)
+
     if integrator isa OverdampedIntegrator
         if integrator isa HiddenOverdampedIntegrator
-            initcond_hidden = get_init_conditions(args["hidden"])
+            initcond_hidden = get_init_conditions(args["hidden"], integrator.dim_tot-integrator.dim)
             return [intcond_pos, initcond_hidden]
         elseif integrator isa KernelOverdampedIntegrator
-            initcond_mem = get_init_conditions(args["memory"])
+            initcond_mem = get_init_conditions(args["memory"], integrator.dim)
             return [intcond_pos, initcond_mem]
         end
         return [intcond_pos]
     else
-        initcond_velocity = get_init_conditions(get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0))) # à remplacer la la maxelliene
+        initcond_velocity = get_init_conditions(get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0)), integrator.dim) # à remplacer la la maxelliene
         if integrator isa HiddenIntegrator
-            initcond_hidden = get_init_conditions(get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)))
+            initcond_hidden = get_init_conditions(get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)), integrator.dim_tot-integrator.dim)
 
             return [intcond_pos, initcond_velocity, initcond_hidden]
         elseif integrator isa KernelIntegrator
-            initcond_mem = get_init_conditions(get(args, "memory", Dict("type" => "Cste")))
+            initcond_mem = get_init_conditions(get(args, "memory", Dict("type" => "Cste")), integrator.dim)
             return [intcond_pos, initcond_velocity, initcond_mem]
         end
         if integrator isa InertialIntegrator
@@ -65,35 +67,47 @@ abstract type AbstractRandomInitCond <: AbstractInitCond end
 struct Constant_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Array{TF}
     dim::Int64
+    function Constant_InitCond(val::Array{TF}) where {TF<:AbstractFloat}
+        new{TF}(val,length(val))
+    end
 end
 
 function Constant_InitCond(val::TF, dim::Int=1) where {TF<:AbstractFloat}
-    return Constant_InitCond([val], 1)
+    return Constant_InitCond([val])
 end
 
 struct Array_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Vector{Vector{TF}}
     dim::Int64
+    function Array_InitCond(vals::Vector{Vector{TF}}) where {TF<:AbstractFloat}
+        new{TF}(vals,length(vals[1]))
+    end
 end
 
 struct Uniform_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     low::Array{TF}
     high::Array{TF}
     dim::Int64
+    function Uniform_InitCond(low::Array{TF},high::Array{TF}) where {TF<:AbstractFloat}
+        new{TF}(low,high,length(low))
+    end
 end
 
 function Uniform_InitCond(low::TF, high::TF, dim::Int=1) where {TF<:AbstractFloat}
-    return Uniform_InitCond([low], [high], 1)
+    return Uniform_InitCond([low], [high])
 end
 
 struct Gaussian_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     mean::Array{TF}
     std::TF
     dim::Int64
+    function Gaussian_InitCond(mean::Array{TF}, std::TF) where {TF<:AbstractFloat}
+        new{TF}(mean,std,length(mean))
+    end
 end
 
 function Gaussian_InitCond(mean::TF, std::TF, dim::Int=1) where {TF<:AbstractFloat}
-    return Gaussian_InitCond([mean], [std], 1)
+    return Gaussian_InitCond([mean], [std])
 end
 
 # struct PMF_Init <: AbstractRandomInitCond where{TF<:AbstractFloat}
@@ -105,11 +119,10 @@ end
 #Et les constructeurs de ces machins vont prendre l'intégrateur et les params en arguments, du moins un sous-ensemble des params comme ça on passe params["init_position"], params["init_velocity"]
 # En vrai on va juste avoir un grand constructeur qui va s'appellait init_conditions qui retournera selon un if la bonne chose
 
-function get_init_conditions(args::Dict)
+function get_init_conditions(args::Dict, dim = 1)
     type = get(args, "type", "Constant")
-    dim = get(args, "dim", 1)
     if lowercase(type) in ["cste", "constant"]
-        return Constant_InitCond(get(args, "val", zeros(dim)), dim)
+        return Constant_InitCond(get(args, "val", zeros(dim)))
     elseif lowercase(type) in ["uniform", "random"]
         low = get(args, "low", zeros(dim))
         if (low isa Number)
@@ -123,7 +136,7 @@ function get_init_conditions(args::Dict)
         else
             high = parse.(Float64, high)
         end
-        return Uniform_InitCond(low, high, dim)
+        return Uniform_InitCond(low, high)
     elseif lowercase(type) in ["gaussian", "normal"]
         mean = get(args, "mean", zeros(dim))
         if (mean isa Number)
@@ -132,7 +145,7 @@ function get_init_conditions(args::Dict)
             mean = parse.(Float64, mean)
         end
         std = get(args, "std", 1.0)
-        return Gaussian_InitCond(mean, std, dim)
+        return Gaussian_InitCond(mean, std)
     else
         @warn "Unknwon initializer"
     end

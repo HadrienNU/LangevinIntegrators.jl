@@ -81,7 +81,6 @@ function read_conf(file::String)
     dump_dict = haskey(conf, "dump") ? getsubDict(conf, "dump") : Dict()
     params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs, verbose=verbose, transform_dict_into_kwargs(dump_dict)...)
 
-
     # The information about the initial conditions
     init_conds_args = Dict()
     if haskey(conf, "init_position")
@@ -115,7 +114,12 @@ function read_integrator_conf(file::String)
         throw(ArgumentError("The config file should have a sampling section"))
     elseif !haskey(conf, "physics")
         throw(ArgumentError("The config file should have a physics section"))
+    elseif !haskey(conf, "space")
+        throw(ArgumentError("The config file should have a space section"))
     end
+
+    #Dimensionality information on the system
+    dim = retrieve(conf, "space", "ndim", Int64)
 
     #Ensuite on crée la structure qui tient la force,
     physics_conf = getsubDict(conf, "physics")
@@ -143,9 +147,9 @@ function read_integrator_conf(file::String)
         end
     elseif haskey(physics_conf, "potential")
         if typeof(physics_conf["potential"]) == String
-            force = ForceFromPotential(physics_conf["potential"])
+            force = ForceFromPotential(physics_conf["potential"],dim)
         else
-            force = ForceFromPotential(physics_conf["potential"][1])
+            force = ForceFromPotential(physics_conf["potential"][1],dim)
         end
     else
         force = nothing
@@ -157,15 +161,15 @@ function read_integrator_conf(file::String)
     Δt = retrieve(conf, "sampling", "dt", Float64)
     if integrator_type in ["em", "euler"]
         temp = retrieve(conf, "sampling", "temperature", Float64, 1.0)
-        integrator = EM(force, 1.0 / temp, Δt)
+        integrator = EM(force, 1.0 / temp, Δt, dim)
     elseif integrator_type in ["aboba", "baoab", "bbk", "gjf"]
-        temp = retrieve(conf, "sampling", "temperature", Float64, 1.0)
+        temp = retrieve(conf, "physics", "temperature", Float64, 1.0)
         γ = retrieve(conf, "physics", "friction", Float64, 1.0)
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
-        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(force, 1.0 / temp, γ, mass, Δt)
+        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(force, 1.0 / temp, γ, mass, Δt, dim)
     elseif integrator_type == "verlet"
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
-        integrator = Verlet(force, mass, Δt)
+        integrator = Verlet(force, mass, Δt, dim)
     elseif integrator_type in ["em_hidden", "hidden_em", "euler_hidden", "hidden_euler"]
         integrator = read_integrator_hidden_npz(retrieve(conf, "physics", "hidden"); integrator_type = "EM", force = force)
     elseif integrator_type in ["aboba_hidden", "hidden_aboba"]

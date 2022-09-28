@@ -5,7 +5,7 @@ function Flat(x::AbstractArray)
 end
 
 function Harmonic(x::AbstractArray)
-    return 0.5 * x[1]^2
+    return 0.5 * dot(x,x)
 end
 
 function DoubleWell(x)

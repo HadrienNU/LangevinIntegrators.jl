@@ -119,7 +119,7 @@ end
 
     @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> -1.0,"high"=>1.0)).low == uniform_cond.low
     @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> "-1.0","high"=>"1.0")).high == uniform_cond.high
-    array_cond=LangevinIntegrators.Array_InitCond([[5.0],[2.0]],1)
+    array_cond=LangevinIntegrators.Array_InitCond([[5.0],[2.0]])
 
     @test LangevinIntegrators.generate_initcond(array_cond; id = 1) ≈ [5.0]
     @test LangevinIntegrators.generate_initcond(array_cond; id = 2) ≈ [2.0]

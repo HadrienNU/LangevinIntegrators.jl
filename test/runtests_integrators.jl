@@ -3,7 +3,7 @@
 
     force = ForceFromPotential("Harmonic",2)
     bcs = SeparateSpace([noBC(),PBC(-3.0,2.0)])
-    integrator = EM(force, 1.0, 1e-3, bcs)
+    integrator = EM(force, 1.0, 1e-3, 2, bcs)
     state = InitState!([5.0,3.0], integrator)
 
     LangevinIntegrators.apply_space!(bcs,state.x)
@@ -12,7 +12,7 @@
 
     force = ForceFromPotential("Harmonic",3)
     bcs = SeparateSpace([noBC(),PBC(-2.0,2.0),ReflectingBC(-1.0,1.0)])
-    integrator = Verlet(force, 1.0, 1e-3, bcs)
+    integrator = Verlet(force, 1.0, 1e-3, 3,bcs)
     state = InitState!([0.5,5.5,3.5],[1.0,2.0,3.0], integrator)
 
     LangevinIntegrators.apply_space!(bcs,state.x,state.v)

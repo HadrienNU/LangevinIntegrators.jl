@@ -7,6 +7,7 @@ struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
     c₀::TF
     c₁::TF
     sqrtM::TM
+    dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
 
@@ -23,12 +24,12 @@ Set up the BAOAB integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
 
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
     sqrtM = sqrt.(M) / M
-    return BAOAB(force, β, γ, M, Δt, c₀, c₁, sqrtM, bc)
+    return BAOAB(force, β, γ, M, Δt, c₀, c₁, sqrtM, dim, bc)
 end
 
 mutable struct BAOABState{TF<:AbstractFloat} <: AbstractInertialState
@@ -38,18 +39,23 @@ mutable struct BAOABState{TF<:AbstractFloat} <: AbstractInertialState
     v_mid::Vector{TF}
     p̂_mid::Vector{TF}
     f::Vector{TF}
-    dim::Int64
     function BAOABState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f, length(x₀))
+        return new{TF}(x₀, v₀, similar(x₀), similar(v₀), similar(v₀), f)
     end
 end
 
 function InitState!(x₀, v₀, integrator::BAOAB)
+    if integrator.dim != length(x₀)
+        throw(ArgumentError("Mismatch of dimension in state initialization"))
+    end
     f = forceUpdate(integrator.force, x₀)
     return BAOABState(x₀, v₀, f)
 end
 
 function InitState(x₀, v₀, integrator::BAOAB)
+    if integrator.dim != length(x₀)
+        throw(ArgumentError("Mismatch of dimension in state initialization"))
+    end
     f = forceUpdate(integrator.force, x₀)
     return BAOABState(deepcopy(x₀), deepcopy(v₀), f)
 end
@@ -59,7 +65,7 @@ function UpdateState!(state::BAOABState, integrator::BAOAB; kwargs...)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x_mid = state.x .+ 0.5 * integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x_mid,state.v)
-    state.p̂_mid = integrator.c₀ .* state.v_mid .+ integrator.c₁ .* integrator.sqrtM * randn(state.dim)
+    state.p̂_mid = integrator.c₀ .* state.v_mid .+ integrator.c₁ .* integrator.sqrtM * randn(integrator.dim)
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.p̂_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)

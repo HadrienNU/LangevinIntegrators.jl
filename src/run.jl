@@ -7,9 +7,10 @@ Launch the trajectories
 
 function generate_initial_conditions(integrator::S; params = TrajsParams(), init_conds_args = Dict()) where {S<:AbstractIntegrator}
     init_conds = initialize_initcond(integrator, init_conds_args)
-    state = InitState(integrator) # To get the type of the state
+    state = InitState(integrator, init_conds; id = 1) # To get the type of the state
     init_states = Vector{typeof(state)}(undef, params.n_trajs)
-    for n = 1:params.n_trajs
+    init_states[1] = state
+    for n = 2:params.n_trajs
         init_states[n] = InitState(integrator, init_conds; id = n)
     end
     return init_states
