@@ -3,6 +3,7 @@ struct EM_Kernel{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <: Kerne
     Δt::TF
     kernel::Union{Vector{TF},Vector{Matrix{TF}}}
     σ_corr::Union{Vector{TF},Vector{Matrix{TF}}}
+    dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
 
@@ -16,16 +17,10 @@ Set up the EM_Kernel integrator for underdamped Langevin with hidden variables.
 * Δt    - Time step
 """
 #Evidemment à changer
-function EM_Kernel(force::FP, kernel::Union{Vector{TF},Vector{Matrix{TF}}}, Δt::TF, dim::Int, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
-
+function EM_Kernel(force::FP,  β::TF, kernel::Union{Vector{TF},Vector{Matrix{TF}}}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
+    noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
     #σ_corr, doit inclure le Δt
-    return EM_Kernel(
-        force,
-        Δt,
-        kernel,
-        noise_fdt,
-        bc
-    )
+    return EM_Kernel(force, Δt, kernel, noise_fdt, dim,  bc)
 end
 
 

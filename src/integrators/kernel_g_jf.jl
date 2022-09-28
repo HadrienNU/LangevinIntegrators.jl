@@ -8,6 +8,7 @@ struct Kernel_GJF{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
     sqrtM::TM
     a::Union{TF,Matrix{TF}}
     b::Union{TF,Matrix{TF}}
+    dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
 
@@ -26,12 +27,13 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function Kernel_GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function Kernel_GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     a = (1 - 0.5 * γ * Δt) / (1 + 0.5 * γ * Δt)
     b = 1 / (1 + 0.5 * γ * Δt)
     σ = sqrt(2 * γ * Δt / β)
     sqrtM = sqrt.(M)
-    return Kernel_GJF(force, β, γ, M, Δt, sqrtM, a, b, σ, bc)
+    noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
+    return Kernel_GJF(force, β, kernel, noise_fdt M, Δt, sqrtM, a, b, dim, bc)
 end
 
 mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState

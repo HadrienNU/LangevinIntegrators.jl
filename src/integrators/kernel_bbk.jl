@@ -24,9 +24,10 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BBK_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-    σ = sqrt(γ * Δt / β) / M
-    return BBK_Kernel(force, β, γ, M, Δt, σ, bc)
+function BBK_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
+
+    return BBK_Kernel(force, β, kernel, noise_fdt, M, Δt, dim, bc)
 end
 
 mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
