@@ -1,4 +1,4 @@
-struct Kernel_GJF{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
+struct GJF_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
     force::FP
     β::TF
     kernel::Union{Vector{TF},Vector{Matrix{TF}}}
@@ -12,7 +12,7 @@ struct Kernel_GJF{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
 end
 
 """
-    Kernel_GJF(force, β, γ, M, Δt)
+    GJF_Kernel(force, β, γ, M, Δt)
 
 Set up the G-JF integrator for inertial Langevin.
 
@@ -26,11 +26,11 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function Kernel_GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJF_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     a = (1 - 0.5 * kernel[1] * Δt) / (1 + 0.5 * kernel[1] * Δt)
     b = 1 / (1 + 0.5 * kernel[1] * Δt)
     noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
-    return Kernel_GJF(force, β, kernel, noise_fdt, M, Δt, a, b, dim, bc)
+    return GJF_Kernel(force, β, kernel, noise_fdt, M, Δt, a, b, dim, bc)
 end
 
 mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
@@ -46,7 +46,7 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     end
 end
 
-function InitState!(x₀, v₀, integrator::Kernel_GJF)
+function InitState!(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
     x_t=Deque{typeof(v₀)}()
     push!(x_t, x₀)
@@ -54,7 +54,7 @@ function InitState!(x₀, v₀, integrator::Kernel_GJF)
     return GJFKernelState(x₀, v₀, f, x_t)
 end
 
-function InitState(x₀, v₀, integrator::Kernel_GJF)
+function InitState(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
     x_t=Deque{typeof(x₀)}()
     push!(x_t, deepcopy(x₀))
@@ -62,7 +62,7 @@ function InitState(x₀, v₀, integrator::Kernel_GJF)
     return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t, noise)
 end
 
-function UpdateState!(state::GJFKernelState, integrator::Kernel_GJF; kwargs...)
+function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)
 

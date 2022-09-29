@@ -85,6 +85,31 @@ end
 
 end
 
+
+@testset "integrators_kernel" begin
+    force = ForceFromPotential("Harmonic")
+    time=LinRange(0,500*1e-3, 500)
+    kernel= [time[i]*reshape([-20.0],1,1) for i in 1:length(time)]
+    integrator = BBK_Kernel(force, 1.0, kernel, 1.0, 1e-3)
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = GJF_Kernel(force, 1.0, kernel, 1.0, 1e-3)
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = EM_Kernel(force, 1.0, kernel, 1.0, 1e-3)
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+end
+
 @testset "run_trajectory overdamped $int_struct" for int_struct in [EM] # And then a matrix over the integrator
 
     init_conds_args = Dict("position" => Dict("type" => "Cste"), "velocity" => Dict("type" => "Cste"))

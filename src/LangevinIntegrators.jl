@@ -86,6 +86,12 @@ include("integrators/hidden_aboba.jl")
 export ABOBA_Hidden
 
 #MemoryKernel
+include("integrators/kernel_em.jl")
+export EM_Kernel
+include("integrators/kernel_bbk.jl")
+export BBK_Kernel
+include("integrators/kernel_g_jf.jl")
+export GJF_Kernel
 
 
 export UpdateState!
