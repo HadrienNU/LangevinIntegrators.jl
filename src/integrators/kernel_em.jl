@@ -28,42 +28,44 @@ mutable struct KernelEMState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     x::Vector{TF}
     v::Vector{TF}
     f::Vector{TF}
-    v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
-    noise_n::Queue{Vector{TF}}
+    v_t::Deque{Vector{TF}} # Trajectory of v to compute the kernel
+    noise_n::Deque{Vector{TF}}
     dim::Int64
     # friction_h::Vector{TF}
-    function KernelEMState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
+    function KernelEMState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, f, v_t , noise, length(x₀))
     end
 end
 
 function InitState!(x₀, v₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Queue{typeof(v₀)}()
-    for n=1:length(integrator.kernel) # Check if this is the right size
-        push!(v_t, zeros(state.dim))
-    end
-    noise=init_randn_correlated(length(integrator.σ_corr))
+    v_t=Deque{typeof(v₀)}()
+    push!(v_t, v₀)
+    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
     return KernelEMState(x₀, v₀, h₀, f, v_t, noise)
 end
 
 function InitState(x₀, v₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Queue{typeof(v₀)}()
-    for n=1:length(integrator.kernel) # Check if this is the right size
-        push!(v_t, zeros(state.dim))
-    end
-    noise=init_randn_correlated(length(integrator.σ_corr))
+    v_t=Deque{typeof(v₀)}()
+    push!(v_t, deepcopy(v₀))
+    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
     return KernelEMState(deepcopy(x₀), deepcopy(v₀), f, v_t)
 end
 
 
 
 function UpdateState!(state::KernelEMState, integrator::EM_Kernel; kwargs...)
-    mem_int= corr_mem(state.v_t,integrator.kernel)
+    mem_int= sum(integrator.kernel[1:length(state.v_t)].*state.v_t)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
     state.v = state.v .+integrator.Δt / integrator.M * state.f .+ integrator.Δt*mem_ker .+ randn_correlated(state,integrator)
+
+    if length(state.v_t) == (length(kernel)) # In that case, we remove thing from start
+        pop!(state.v_t)
+    end
+    pushfirst!(state.v_t, state.v)
+
     return nostop
 end

@@ -36,31 +36,27 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v_mid::Vector{TF}
     f::Vector{TF}
     diss_f::Vector{TF} # Dissipative force
-    v_t::Queue{Vector{TF}} # Trajectory of v to compute the kernel
-    noise_n::Queue{Vector{TF}} # Utiliser un Circular buffer à la place?
+    v_t::Deque{Vector{TF}} # Trajectory of v to compute the kernel
+    noise_n::Deque{Vector{TF}} # Utiliser un Circular buffer à la place?
 
-    function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Queue{Vector{TF}}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀)) # TODO: import v_t as a vector and fill the queue by zeros and given v_t
+    function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀)) # TODO: import v_t as a vector and fill the Deque by zeros and given v_t
     end
 end
 
 function InitState!(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Queue{typeof(v₀)}()
-    for n=1:length(integrator.kernel) # Check if this is the right size
-        push!(v_t, zeros(state.dim))
-    end
-    noise=init_randn_correlated(length(integrator.σ_corr))
+    v_t=Deque{typeof(v₀)}()
+    push!(v_t, v₀)
+    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
     return BBKKernelState(x₀, v₀, f, v_t, noise)
 end
 
 function InitState(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Queue{typeof(v₀)}()
-    for n=1:length(integrator.kernel) # Check if this is the right size
-        push!(v_t, zeros(state.dim))
-    end
-    noise=init_randn_correlated(length(integrator.σ_corr))
+    v_t=Deque{typeof(v₀)}()
+    push!(v_t, deepcopy(v₀))
+    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
     return BBKKernelState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)
 end
 
@@ -69,9 +65,14 @@ function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-
-    state.diss_f = corr_mem(state.v_t, integrator.kernel) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
+    
+    state.diss_f = mem_int= sum(integrator.kernel[2:length(state.v_t)].*state.v_t[2:length(state.v_t)]) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
     state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ integrator.Δt*state.diss_f) / (1 + 0.5 * integrator.Δt * integrator.kernel[0])
+
+    if length(state.v_t) == (length(kernel)) # In that case, we remove thing from start
+        pop!(state.v_t)
+    end
+    pushfirst!(state.v_t, state.v)
 
     return nostop
 end

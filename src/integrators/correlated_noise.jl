@@ -1,7 +1,7 @@
-function init_randn_correlated(vector_size)
-    noise=Queue{typeof(integrator.σ_corr[1])}()
+function init_randn_correlated(vector_size, dim)
+    noise=Deque{typeof(integrator.σ_corr[1])}()
     for n=1:vector_size
-        push!(noise, randn(state.dim))
+        push!(noise, randn(dim))
     end
     return noise
 end
@@ -11,7 +11,7 @@ function randn_correlated(state::AbstractMemoryKernelState, integrator::KernelIn
     # Use fourrier transform to decompose the noise correlation when K(t-t')
     #Add and remove random number
     popfirst!(state.noise_n)
-    push!(state.noise_n, randn(state.dim))
+    push!(state.noise_n, randn(integrator.dim))
     return sum(integrator.σ_corr.*state.noise_n)
 end
 
@@ -19,9 +19,4 @@ end
 function randn_correlated_karhunen_loeve(state::AbstractMemoryKernelState, integrator::KernelIntegrator)
     # Compute the next correlated gaussian noise
     # Use Karhunen–Loève théorem to decompose the noise correlation when K(t,t')
-end
-
-
-function corr_mem(v_t,kernel)
-    #Compute the convolution of v_t and kernel
 end
