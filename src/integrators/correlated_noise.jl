@@ -1,7 +1,7 @@
-function init_randn_correlated(vector_size, dim)
-    noise=Deque{typeof(integrator.σ_corr[1])}()
-    for n=1:vector_size
-        push!(noise, randn(dim))
+function init_randn_correlated(σ_corr::Array{TF}) where {TF<:AbstractFloat}
+    noise=Deque{Vector{TF}}()
+    for n=1:size(σ_corr,3)
+        push!(noise, randn(size(σ_corr,1)))
     end
     return noise
 end
@@ -12,7 +12,7 @@ function randn_correlated(state::AbstractMemoryKernelState, integrator::KernelIn
     #Add and remove random number
     popfirst!(state.noise_n)
     push!(state.noise_n, randn(integrator.dim))
-    return sum(integrator.σ_corr.*state.noise_n)
+    return sum([integrator.σ_corr[:,:,i].*state.noise_n[i] for i in 1:size(integrator.σ_corr,1)])
 end
 
 

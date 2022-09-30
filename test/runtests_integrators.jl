@@ -88,8 +88,7 @@ end
 
 @testset "integrators_kernel" begin
     force = ForceFromPotential("Harmonic")
-    time=LinRange(0,500*1e-3, 500)
-    kernel= [time[i]*reshape([-20.0],1,1) for i in 1:length(time)]
+    kernel= exp.(-20.0*LinRange(0,500*1e-3, 500))
     integrator = BBK_Kernel(force, 1.0, kernel, 1.0, 1e-3)
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)

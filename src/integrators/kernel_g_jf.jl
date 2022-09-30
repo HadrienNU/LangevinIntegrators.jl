@@ -27,10 +27,19 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * Δt    - Time step
 """
 function GJF_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-    a = (1 - 0.5 * kernel[1] * Δt) / (1 + 0.5 * kernel[1] * Δt)
-    b = 1 / (1 + 0.5 * kernel[1] * Δt)
-    noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
-    return GJF_Kernel(force, β, kernel, noise_fdt, M, Δt, a, b, dim, bc)
+    if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
+        throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
+    end
+    ker_mat=reshape(kernel,dim,dim, :)
+
+    a = (1 .- 0.5 * ker_mat[:,:,1] * Δt) *inv( (1 .+ 0.5 * ker_mat[:,:,1] * Δt))
+    b = inv(1 .+ 0.5 * ker_mat[:,:,1] * Δt)
+    if dim==1
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,3))))
+    else
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,3))))# note quand Kernel est une matrix il faut faire le cholesky
+    end
+    return GJF_Kernel(force, β, ker_mat, noise_fdt, M, Δt, a, b, dim, bc)
 end
 
 mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
@@ -40,9 +49,8 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     f_new::Vector{TF}
     x_t::Deque{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
     noise_n::Deque{Vector{TF}}
-    dim::Int64
     function GJFKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, x_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, f, copy(f), x_t, noise, length(x₀))
+        return new{TF}(x₀, v₀, f, copy(f), x_t, noise)
     end
 end
 
@@ -50,7 +58,7 @@ function InitState!(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
     x_t=Deque{typeof(v₀)}()
     push!(x_t, x₀)
-    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
+    noise=init_randn_correlated(integrator.σ_corr)
     return GJFKernelState(x₀, v₀, f, x_t)
 end
 
@@ -58,7 +66,7 @@ function InitState(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
     x_t=Deque{typeof(x₀)}()
     push!(x_t, deepcopy(x₀))
-    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
+    noise=init_randn_correlated(integrator.σ_corr)
     return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t, noise)
 end
 
@@ -66,7 +74,7 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)
 
-    mem_int = sum(integrator.kernel[2:(length(state.x_t)-1)].*(state.x_t[2:length(state.x_t)] - state.x_t[1:(length(state.x_t)-1)]))
+    mem_int = sum([integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1)])
 
     state.x =
         state.x .+ integrator.b * integrator.Δt .* state.v .+ 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f
@@ -81,7 +89,7 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.f = state.f_new
 
-    if length(state.x_t) == (length(kernel)+1) # In that case, we remove thing from start
+    if length(state.x_t) == (size(kernel,3)+1) # In that case, we remove thing from start
         pop!(state.x_t)
     end
     pushfirst!(state.x_t, state.x)

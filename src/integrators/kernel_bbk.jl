@@ -1,10 +1,11 @@
 struct BBK_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
     force::FP
     β::TF
-    kernel::Union{Vector{TF},Vector{Matrix{TF}}}
-    σ_corr::Union{Vector{TF},Vector{Matrix{TF}}}
+    kernel::Array{TF}
+    σ_corr::Array{TF}
     M::TM
     Δt::TF
+    invK::Union{TF,Matrix{TF}}
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -12,7 +13,7 @@ end
 """
     BBK_Kernel(force, β, γ, M, Δt)
 
-Set up the BBK_Kernel integrator for inertial Langevin.
+Set up the BBK_Kernel integrator for generalized Langevin.
 
 Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ Martin Hanke,*,§ and Friederike Schmid*,†
 
@@ -24,10 +25,14 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BBK_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-    noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(kernel)))) # note quand Kernel est une matrix il faut faire le cholesky
-
-    return BBK_Kernel(force, β, kernel, noise_fdt, M, Δt, dim, bc)
+function BBK_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
+        throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
+    end
+    ker_mat=reshape(kernel,dim,dim, :)
+    invK = inv(1 .+ 0.5 * Δt * ker_mat[:,:,1])
+    noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(ker_mat,3)))) # note quand Kernel est une matrix il faut faire le cholesky
+    return BBK_Kernel(force, β, ker_mat, noise_fdt, M, Δt, invK, dim, bc)
 end
 
 mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
@@ -40,7 +45,7 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     noise_n::Deque{Vector{TF}} # Utiliser un Circular buffer à la place?
 
     function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise, length(x₀)) # TODO: import v_t as a vector and fill the Deque by zeros and given v_t
+        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise) # TODO: import v_t as a vector and fill the Deque by zeros and given v_t
     end
 end
 
@@ -48,7 +53,7 @@ function InitState!(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
     v_t=Deque{typeof(v₀)}()
     push!(v_t, v₀)
-    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
+    noise=init_randn_correlated(integrator.σ_corr)
     return BBKKernelState(x₀, v₀, f, v_t, noise)
 end
 
@@ -56,20 +61,19 @@ function InitState(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
     v_t=Deque{typeof(v₀)}()
     push!(v_t, deepcopy(v₀))
-    noise=init_randn_correlated(length(integrator.σ_corr), integrator.dim)
+    noise=init_randn_correlated(integrator.σ_corr)
     return BBKKernelState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)
 end
 
 function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
-    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f.+ 0.5*integrator.kernel[0]*state.v)
+    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f.+ 0.5*integrator.kernel[:,:,1]*state.v)
     @. state.x = state.x + integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    
-    state.diss_f = mem_int= sum(integrator.kernel[2:length(state.v_t)].*state.v_t[2:length(state.v_t)]) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
-    state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ integrator.Δt*state.diss_f) / (1 + 0.5 * integrator.Δt * integrator.kernel[0])
+    state.diss_f = mem_int= sum([integrator.kernel[:,:,i].*state.v_t[i] for i in 2:length(state.v_t)]) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
+    state.v = integrator.invK * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ integrator.Δt*state.diss_f)
 
-    if length(state.v_t) == (length(kernel)) # In that case, we remove thing from start
+    if length(state.v_t) == (size(kernel,3)) # In that case, we remove thing from start
         pop!(state.v_t)
     end
     pushfirst!(state.v_t, state.v)
