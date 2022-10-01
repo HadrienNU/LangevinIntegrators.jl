@@ -59,7 +59,7 @@ end
 
 
 function UpdateState!(state::KernelEMState, integrator::EM_Kernel; kwargs...)
-    mem_int= sum([integrator.kernel[:,:,i].*state.v_t[i] for i in 1:length(state.v_t)])
+    mem_int= sum(integrator.kernel[:,:,i].*state.v_t[i] for i in 1:length(state.v_t); init=zeros(integrator.dim))
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)

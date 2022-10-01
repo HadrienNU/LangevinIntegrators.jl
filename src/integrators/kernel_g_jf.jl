@@ -74,7 +74,7 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)
 
-    mem_int = sum([integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1)])
+    mem_int = sum(integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1); init=zeros(integrator.dim))
 
     state.x =
         state.x .+ integrator.b * integrator.Δt .* state.v .+ 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f

@@ -70,7 +70,7 @@ function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.diss_f = mem_int= sum([integrator.kernel[:,:,i].*state.v_t[i] for i in 2:length(state.v_t)]) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
+    state.diss_f = mem_int= sum(integrator.kernel[:,:,i].*state.v_t[i] for i in 2:length(state.v_t); init=zeros(integrator.dim)) .+ integrator.σ *  randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
     state.v = integrator.invK * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ integrator.Δt*state.diss_f)
 
     if length(state.v_t) == (size(kernel,3)) # In that case, we remove thing from start
