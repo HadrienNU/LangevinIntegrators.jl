@@ -47,16 +47,16 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v::Vector{TF}
     f::Vector{TF}
     f_new::Vector{TF}
-    x_t::Deque{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
-    noise_n::Deque{Vector{TF}}
-    function GJFKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, x_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
+    x_t::Vector{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
+    noise_n::Vector{Vector{TF}}
+    function GJFKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, x_t, noise::Vector{Vector{TF}}) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, f, copy(f), x_t, noise)
     end
 end
 
 function InitState!(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    x_t=Deque{typeof(v₀)}()
+    x_t=Vector{typeof(v₀)}()
     push!(x_t, x₀)
     noise=init_randn_correlated(integrator.σ_corr)
     return GJFKernelState(x₀, v₀, f, x_t)
@@ -64,7 +64,7 @@ end
 
 function InitState(x₀, v₀, integrator::GJF_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    x_t=Deque{typeof(x₀)}()
+    x_t=Vector{typeof(x₀)}()
     push!(x_t, deepcopy(x₀))
     noise=init_randn_correlated(integrator.σ_corr)
     return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t, noise)

@@ -32,17 +32,17 @@ mutable struct KernelEMState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     x::Vector{TF}
     v::Vector{TF}
     f::Vector{TF}
-    v_t::Deque{Vector{TF}} # Trajectory of v to compute the kernel
-    noise_n::Deque{Vector{TF}}
+    v_t::Vector{Vector{TF}} # Trajectory of v to compute the kernel
+    noise_n::Vector{Vector{TF}}
     # friction_h::Vector{TF}
-    function KernelEMState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
+    function KernelEMState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Vector{Vector{TF}}) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, f, v_t , noise)
     end
 end
 
 function InitState!(x₀, v₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Deque{typeof(v₀)}()
+    v_t=Vector{typeof(v₀)}()
     push!(v_t, v₀)
     noise=init_randn_correlated(integrator.σ_corr)
     return KernelEMState(x₀, v₀, h₀, f, v_t, noise)
@@ -50,7 +50,7 @@ end
 
 function InitState(x₀, v₀, integrator::EM_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Deque{typeof(v₀)}()
+    v_t=Vector{typeof(v₀)}()
     push!(v_t, deepcopy(v₀))
     noise=init_randn_correlated(integrator.σ_corr)
     return KernelEMState(deepcopy(x₀), deepcopy(v₀), f, v_t)

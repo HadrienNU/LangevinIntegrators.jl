@@ -41,17 +41,17 @@ mutable struct BBKKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v_mid::Vector{TF}
     f::Vector{TF}
     diss_f::Vector{TF} # Dissipative force
-    v_t::Deque{Vector{TF}} # Trajectory of v to compute the kernel
-    noise_n::Deque{Vector{TF}} # Utiliser un Circular buffer à la place?
+    v_t::Vector{Vector{TF}} # Trajectory of v to compute the kernel
+    noise_n::Vector{Vector{TF}} # Utiliser un Circular buffer à la place?
 
-    function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Deque{Vector{TF}}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise) # TODO: import v_t as a vector and fill the Deque by zeros and given v_t
+    function BBKKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, v_t, noise::Vector{Vector{TF}}) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, similar(f) , v_t , noise) # TODO: import v_t as a vector and fill the Vector by zeros and given v_t
     end
 end
 
 function InitState!(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Deque{typeof(v₀)}()
+    v_t=Vector{typeof(v₀)}()
     push!(v_t, v₀)
     noise=init_randn_correlated(integrator.σ_corr)
     return BBKKernelState(x₀, v₀, f, v_t, noise)
@@ -59,7 +59,7 @@ end
 
 function InitState(x₀, v₀, integrator::BBK_Kernel)
     f = forceUpdate(integrator.force, x₀)
-    v_t=Deque{typeof(v₀)}()
+    v_t=Vector{typeof(v₀)}()
     push!(v_t, deepcopy(v₀))
     noise=init_randn_correlated(integrator.σ_corr)
     return BBKKernelState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)

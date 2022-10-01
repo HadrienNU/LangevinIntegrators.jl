@@ -1,9 +1,5 @@
 function init_randn_correlated(σ_corr::Array{TF}) where {TF<:AbstractFloat}
-    noise=Deque{Vector{TF}}()
-    for n=1:size(σ_corr,3)
-        push!(noise, randn(size(σ_corr,1)))
-    end
-    return noise
+    return Vector{Vector{TF}}([randn(size(σ_corr,1)) for i in 1:size(σ_corr,3)])
 end
 
 function randn_correlated(state::AbstractMemoryKernelState, integrator::KernelIntegrator)
