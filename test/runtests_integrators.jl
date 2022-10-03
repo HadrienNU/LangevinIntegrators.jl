@@ -90,19 +90,25 @@ end
     force = ForceFromPotential("Harmonic")
     kernel= exp.(-20.0*LinRange(0,500*1e-3, 500))
     integrator = BBK_Kernel(force, 1.0, kernel, 1.0, 1e-3)
-    state = InitState!([0.0], [0.0], integrator)
+    state = InitState!([0.0], [1.0], integrator)
+    UpdateState!(state, integrator)
+    UpdateState!(state, integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
     integrator = GJF_Kernel(force, 1.0, kernel, 1.0, 1e-3)
-    state = InitState!([0.0], [0.0], integrator)
+    state = InitState!([0.0], [1.0], integrator)
+    UpdateState!(state, integrator)
+    UpdateState!(state, integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
     integrator = EM_Kernel(force, 1.0, kernel, 1.0, 1e-3)
-    state = InitState!([0.0], [0.0], integrator)
+    state = InitState!([0.0], [1.0], integrator)
+    UpdateState!(state, integrator)
+    UpdateState!(state, integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]

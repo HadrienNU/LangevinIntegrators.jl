@@ -1,8 +1,8 @@
 struct GJF_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
     force::FP
     β::TF
-    kernel::Union{Vector{TF},Vector{Matrix{TF}}}
-    σ_corr::Union{Vector{TF},Vector{Matrix{TF}}}
+    kernel::Array{TF}
+    σ_corr::Array{TF}
     M::TM
     Δt::TF
     a::Union{TF,Matrix{TF}}
@@ -26,7 +26,7 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF_Kernel(force::FP, β::TF, kernel::Vector{Matrix{TF}}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
@@ -47,10 +47,11 @@ mutable struct GJFKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     v::Vector{TF}
     f::Vector{TF}
     f_new::Vector{TF}
+    ξ::Vector{TF}
     x_t::Vector{Vector{TF}} # Trajectory of x to compute the kernel, both array are given by the size of the kernel
     noise_n::Vector{Vector{TF}}
     function GJFKernelState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, x_t, noise::Vector{Vector{TF}}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, f, copy(f), x_t, noise)
+        return new{TF}(x₀, v₀, f, copy(f), similar(f), x_t, noise)
     end
 end
 
@@ -59,7 +60,7 @@ function InitState!(x₀, v₀, integrator::GJF_Kernel)
     x_t=Vector{typeof(v₀)}()
     push!(x_t, x₀)
     noise=init_randn_correlated(integrator.σ_corr)
-    return GJFKernelState(x₀, v₀, f, x_t)
+    return GJFKernelState(x₀, v₀, f, x_t, noise)
 end
 
 function InitState(x₀, v₀, integrator::GJF_Kernel)
@@ -77,19 +78,19 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
     mem_int = sum(integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1); init=zeros(integrator.dim))
 
     state.x =
-        state.x .+ integrator.b * integrator.Δt .* state.v .+ 0.5 * integrator.b * integrator.Δt^2 / integrator.M * state.f
-        .- 0.5 * integrator.b * integrator.Δt * mem_int .+ 0.5 * integrator.b * integrator.Δt/ integrator.M * state.ξ
+        state.x .+ integrator.Δt .* integrator.b *state.v .+ 0.5 * (integrator.Δt^2 / integrator.M) .* integrator.b * state.f
+        .- 0.5 * integrator.Δt * integrator.b * mem_int .+ 0.5 * (integrator.Δt/ integrator.M) .* integrator.b * state.ξ
 
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f_new, state.x; kwargs...)
 
     state.v =
         integrator.a * state.v .+ 0.5 * integrator.Δt / integrator.M * (integrator.a * state.f .+ state.f_new)
-        .- integrator.b * mem_int .+ integrator.b / integrator.M * state.ξ
+        .- integrator.b * mem_int .+ (1/ integrator.M) * integrator.b * state.ξ
 
     state.f = state.f_new
 
-    if length(state.x_t) == (size(kernel,3)+1) # In that case, we remove thing from start
+    if length(state.x_t) == (size(integrator.kernel,3)+1) # In that case, we remove thing from start
         pop!(state.x_t)
     end
     pushfirst!(state.x_t, state.x)

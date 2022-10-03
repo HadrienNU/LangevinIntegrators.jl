@@ -5,8 +5,8 @@ abstract type OverdampedIntegrator <: AbstractIntegrator end
 abstract type HiddenOverdampedIntegrator <: OverdampedIntegrator end
 abstract type KernelOverdampedIntegrator <: OverdampedIntegrator end
 abstract type InertialIntegrator <: AbstractIntegrator end
-abstract type HiddenIntegrator <: AbstractIntegrator end
-abstract type KernelIntegrator <: AbstractIntegrator end
+abstract type HiddenIntegrator <: InertialIntegrator end
+abstract type KernelIntegrator <: InertialIntegrator end
 
 
 abstract type AbstractState end
@@ -64,6 +64,10 @@ function InitState(integrator::OverdampedIntegrator, init_cond::Array; id = 1)
 end
 
 function InitState(integrator::InertialIntegrator, init_cond::Array; id = 1)
+    return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), integrator)
+end
+
+function InitState(integrator::KernelIntegrator, init_cond::Array; id = 1)
     return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), integrator)
 end
 

@@ -8,7 +8,7 @@ function randn_correlated(state::AbstractMemoryKernelState, integrator::KernelIn
     #Add and remove random number
     popfirst!(state.noise_n)
     push!(state.noise_n, randn(integrator.dim))
-    return sum(integrator.σ_corr[:,:,i].*state.noise_n[i] for i in 1:size(integrator.σ_corr,1); init=zeros(integrator.dim))
+    return sum(integrator.σ_corr[:,:,i]*state.noise_n[i] for i in 1:size(integrator.σ_corr,1); init=zeros(integrator.dim))
 end
 
 

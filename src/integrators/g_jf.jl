@@ -39,7 +39,6 @@ mutable struct GJFState{TF<:AbstractFloat} <: AbstractInertialState
     f::Vector{TF}
     f_new::Vector{TF}
     ξ::Vector{TF}
-    dim::Int64
     function GJFState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, f, copy(f), similar(f))
     end
