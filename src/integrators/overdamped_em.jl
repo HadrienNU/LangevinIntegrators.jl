@@ -43,14 +43,6 @@ function InitState!(x₀, integrator::EM)
     return EMState(x₀, f)
 end
 
-function InitState(x₀, integrator::EM)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization"))
-    end
-    f = forceUpdate(integrator.force, x₀)
-    return EMState(deepcopy(x₀), f)
-end
-
 
 function UpdateState!(state::EMState, integrator::EM; kwargs...)
 

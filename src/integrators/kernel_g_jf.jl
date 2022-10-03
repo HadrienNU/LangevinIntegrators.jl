@@ -63,14 +63,6 @@ function InitState!(x₀, v₀, integrator::GJF_Kernel)
     return GJFKernelState(x₀, v₀, f, x_t, noise)
 end
 
-function InitState(x₀, v₀, integrator::GJF_Kernel)
-    f = forceUpdate(integrator.force, x₀)
-    x_t=Vector{typeof(x₀)}()
-    push!(x_t, deepcopy(x₀))
-    noise=init_randn_correlated(integrator.σ_corr)
-    return GJFKernelState(deepcopy(x₀), deepcopy(v₀), f, x_t, noise)
-end
-
 function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)

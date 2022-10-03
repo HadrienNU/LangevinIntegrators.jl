@@ -74,3 +74,21 @@ end
 function InitState(integrator::HiddenIntegrator, init_cond::Array; id = 1)
     return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), generate_initcond(init_cond[3]; id = id), integrator)
 end
+
+#InitState by copy of initial conditions
+
+function InitState(x₀, integrator::OverdampedIntegrator)
+    return InitState!(deepcopy(x₀), integrator)
+end
+
+function InitState(x₀, h₀, integrator::HiddenOverdampedIntegrator)
+    return InitState!(deepcopy(x₀), deepcopy(h₀), integrator)
+end
+
+function InitState(x₀, v₀, integrator::InertialIntegrator)
+    return InitState!(deepcopy(x₀), deepcopy(v₀), integrator)
+end
+
+function InitState(x₀, v₀, h₀, integrator::HiddenIntegrator)
+    return InitState!(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), integrator)
+end

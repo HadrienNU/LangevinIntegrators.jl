@@ -56,11 +56,6 @@ function InitState!(x₀, v₀, h₀, integrator::EM_Hidden)
     return HiddenEMState(x₀, v₀, h₀, f)
 end
 
-function InitState(x₀, v₀, h₀, integrator::EM_Hidden)
-    f = forceUpdate(integrator.force, x₀)
-    return HiddenEMState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f)
-end
-
 
 function UpdateState!(state::HiddenEMState, integrator::EM_Hidden; kwargs...)
 

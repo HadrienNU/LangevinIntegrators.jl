@@ -62,11 +62,6 @@ function InitState!(x₀, v₀, h₀, integrator::ABOBA_Hidden)
     return HiddenABOBAState(x₀, v₀, h₀, f)
 end
 
-function InitState(x₀, v₀, h₀, integrator::ABOBA_Hidden)
-    f = forceUpdate(integrator.force, x₀)
-    return HiddenABOBAState(deepcopy(x₀), deepcopy(v₀), deepcopy(h₀), f)
-end
-
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v

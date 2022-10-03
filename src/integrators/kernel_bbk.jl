@@ -57,14 +57,6 @@ function InitState!(x₀, v₀, integrator::BBK_Kernel)
     return BBKKernelState(x₀, v₀, f, v_t, noise)
 end
 
-function InitState(x₀, v₀, integrator::BBK_Kernel)
-    f = forceUpdate(integrator.force, x₀)
-    v_t=Vector{typeof(v₀)}()
-    push!(v_t, deepcopy(v₀))
-    noise=init_randn_correlated(integrator.σ_corr)
-    return BBKKernelState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)
-end
-
 function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f.+ 0.5*integrator.kernel[:,:,1]*state.v)
     @. state.x = state.x + integrator.Δt * state.v_mid

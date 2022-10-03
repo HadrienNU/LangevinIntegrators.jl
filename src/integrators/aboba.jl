@@ -54,14 +54,6 @@ function InitState!(x₀, v₀, integrator::ABOBA)
     return ABOBAState(x₀, v₀, f)
 end
 
-function InitState(x₀, v₀, integrator::ABOBA)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization"))
-    end
-    f = forceUpdate(integrator.force, x₀)
-    return ABOBAState(deepcopy(x₀), deepcopy(v₀), f)
-end
-
 function UpdateState!(state::ABOBAState, integrator::ABOBA; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v

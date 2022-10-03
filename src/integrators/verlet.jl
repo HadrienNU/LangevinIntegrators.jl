@@ -42,14 +42,6 @@ function InitState!(x₀, v₀, integrator::Verlet)
     return VerletState(x₀, v₀, f)
 end
 
-function InitState(x₀, v₀, integrator::Verlet)
-    f = forceUpdate(integrator.force, x₀)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization"))
-    end
-    return VerletState(deepcopy(x₀), deepcopy(v₀), f)
-end
-
 function UpdateState!(state::VerletState, integrator::Verlet; kwargs...)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x = state.x + integrator.Δt * state.v_mid

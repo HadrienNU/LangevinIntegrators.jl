@@ -48,14 +48,6 @@ function InitState!(x₀, v₀, integrator::EM_Kernel)
     return KernelEMState(x₀, v₀, f, v_t, noise)
 end
 
-function InitState(x₀, v₀, integrator::EM_Kernel)
-    f = forceUpdate(integrator.force, x₀)
-    v_t=Vector{typeof(v₀)}()
-    push!(v_t, deepcopy(v₀))
-    noise=init_randn_correlated(integrator.σ_corr)
-    return KernelEMState(deepcopy(x₀), deepcopy(v₀), f, v_t, noise)
-end
-
 
 
 function UpdateState!(state::KernelEMState, integrator::EM_Kernel; kwargs...)

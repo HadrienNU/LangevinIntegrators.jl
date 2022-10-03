@@ -52,14 +52,6 @@ function InitState!(x₀, v₀, integrator::GJF)
     return GJFState(x₀, v₀, f)
 end
 
-function InitState(x₀, v₀, integrator::GJF)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization"))
-    end
-    f = forceUpdate(integrator.force, x₀)
-    return GJFState(deepcopy(x₀), deepcopy(v₀), f)
-end
-
 function UpdateState!(state::GJFState, integrator::GJF; kwargs...)
 
     state.ξ = randn(integrator.dim)
