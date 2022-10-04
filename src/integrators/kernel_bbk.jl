@@ -30,7 +30,7 @@ function BBK_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
     ker_mat=reshape(kernel,dim,dim, :)
-    invK = inv(1 + 0.5 * Δt * ker_mat[:,:,1])
+    invK = inv(1 .+ 0.5 * Δt * ker_mat[:,:,1])
     noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(ker_mat,3)))) # note quand Kernel est une matrix il faut faire le cholesky
     return BBK_Kernel(force, β, ker_mat, noise_fdt, M, Δt, invK, dim, bc)
 end
