@@ -30,7 +30,7 @@ function BBK_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
     ker_mat=reshape(kernel,dim,dim, :)
-    invK = inv(1 .+ 0.5 * Δt * ker_mat[:,:,1])
+    invK = inv(1 + 0.5 * Δt * ker_mat[:,:,1])
     noise_fdt=sqrt(Δt / β) / M * real.(ifft(sqrt.(fft(ker_mat,3)))) # note quand Kernel est une matrix il faut faire le cholesky
     return BBK_Kernel(force, β, ker_mat, noise_fdt, M, Δt, invK, dim, bc)
 end
@@ -58,12 +58,12 @@ function InitState!(x₀, v₀, integrator::BBK_Kernel)
 end
 
 function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
-    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f.+ 0.5*integrator.kernel[:,:,1]*state.v)
+    state.v_mid = state.v + 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f+ 0.5*integrator.kernel[:,:,1]*state.v)
     @. state.x = state.x + integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.diss_f = sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 2:length(state.v_t); init=zeros(integrator.dim)) .+ randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
-    state.v = integrator.invK * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ integrator.Δt*state.diss_f)
+    state.diss_f = sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 2:length(state.v_t); init=zeros(integrator.dim)) + randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
+    state.v = integrator.invK * (state.v_mid + 0.5 * integrator.Δt / integrator.M * state.f + integrator.Δt*state.diss_f)
 
     if length(state.v_t) == (size(integrator.kernel,3)) # In that case, we remove thing from start
         pop!(state.v_t)
