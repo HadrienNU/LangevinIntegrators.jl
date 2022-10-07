@@ -104,12 +104,12 @@ export TrajsParams
 
 include("save.jl")
 export TrajectorySave, TrajectorySaveInertial, TrajectorySaveOnlyHidden, TrajectorySaveHidden
-
+export TransitionObserver
 
 include("run.jl")
 export generate_initial_conditions
 export run_trajectory!
 export run_trajectories
-export run_fpt
+export run_fpt, run_transitions
 
 end

@@ -89,3 +89,21 @@ function run_fpt(integrator::S; params = TrajsParams(), init_conds_args = Dict()
     end
     return fpt, reached # This is a set of trajectories
 end
+
+
+function run_transitions(integrator::S, x0, x1; params = TrajsParams(), init_conds_args = Dict(), kwargs...) where {S<:LangevinIntegrators.AbstractIntegrator}
+    init_states = generate_initial_conditions(integrator; params = params, init_conds_args = init_conds_args)
+    #To make the system threadsafe, we have to copy the integrator into nthreads copy, and provide one copy per thread
+    if Threads.nthreads() > 1
+        integrators_set = [deepcopy(integrator) for n = 1:Threads.nthreads()]
+    else
+        integrators_set = [integrator]
+    end
+    #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
+    save_trajs = Array{TransitionObserver}(undef,params.n_trajs)
+    Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
+        save_trajs[n] = TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...)
+        run_trajectory!(init_states[n], integrators_set[Threads.threadid()], save_trajs[n]; params = params, id_traj=n, kwargs...)
+    end
+    return save_trajs # This is a set of transition times
+end

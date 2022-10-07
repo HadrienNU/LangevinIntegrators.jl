@@ -196,6 +196,57 @@ function flush_traj(save::TrajectorySaveHidden) # At the end of the traj write t
 end
 
 
+
+
+mutable struct TransitionObserver <: AbstractSave
+    n_save_iters::Int
+    x0::Float64
+    x1::Float64
+    timesAB::Array
+    timesBA::Array
+
+    curr_ind::Int
+    last_ind::Int
+    former_ind::Int
+
+    last_crossing_time::Float64
+    curr_transition_times::Float64
+
+    function TransitionObserver(n_save_iters::Int, x0::Float64,x1::Float64, state::AbstractState; kwargs...)
+        timesAB = Array{Float64,1}()
+        timesBA = Array{Float64,1}()
+
+        ind = state.x[1] <= x0 ? -1 : (state.x[1] >= x1 ? 1 : 0)
+
+        new(n_save_iters, x0, x1, timesAB, timesBA, ind, ind, 0, 0.0, 0.0)
+    end
+end
+
+
+function save_state(save::TransitionObserver, t::Float64, state::AbstractState; kwargs...)
+
+    #D'abord on récupére l'index de l'état actuel
+    save.curr_ind = state.x[1] <= save.x0 ? -1 : (state.x[1] >= save.x1 ? 1 : 0)
+    if save.curr_ind != save.last_ind
+        save.curr_transition_times += t-save.last_crossing_time
+        save.last_crossing_time = t
+        if save.curr_ind != save.former_ind # If we are doing -1 0 1 or 1 0 -1
+            if save.curr_ind == -1
+                append!(save.timesBA,save.curr_transition_times)
+            elseif save.curr_ind == 1
+                append!(save.timesAB,save.curr_transition_times)
+            end
+            save.curr_transition_times = 0.0
+        end
+        save.former_ind = save.last_ind
+        save.last_ind = save.curr_ind
+    end
+end
+
+function flush_traj(save::TransitionObserver) # At the end of the traj write to file the rest of the data
+
+end
+
 #In case, there is no traj_save
 
 function save_state(save::Nothing, t::Float64, state::AbstractState; kwargs...)
