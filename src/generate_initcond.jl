@@ -110,6 +110,20 @@ function Gaussian_InitCond(mean::TF, std::TF, dim::Int=1) where {TF<:AbstractFlo
     return Gaussian_InitCond([mean], [std])
 end
 
+
+struct Histogram_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
+    xaxis::Vector{TF}
+    cdf::Vector{TF}
+    dim::Int64
+    function Histogram_InitCond(bins_center::Array{TF}, histogram::Vector{TF}) where {TF<:AbstractFloat}
+        cdf = cumsum(histogram)
+        insert!(cdf,1,0)
+        cdf = cdf/cdf[end] # To be sure of the normalisation
+        xaxis=insert!(copy(bins_center),1,1.5*bins_center[1]-0.5*bins_center[2])
+        new{TF}(xaxis,cdf,1)
+    end
+end
+
 # struct PMF_Init <: AbstractRandomInitCond where{TF<:AbstractFloat}
 #     mean::Array{TF}
 #     std::TF
@@ -146,6 +160,8 @@ function get_init_conditions(args::Dict, dim = 1)
         end
         std = get(args, "std", 1.0)
         return Gaussian_InitCond(mean, std)
+    elseif lowercase(type) in ["histogram", "pmf","hist"]
+        return Histogram_InitCond(get(args, "bins"), get(args, "hist"))
     else
         @warn "Unknwon initializer"
     end
@@ -166,4 +182,12 @@ end
 
 function generate_initcond(init_cond::Gaussian_InitCond; kwargs...)
     return init_cond.mean .+ init_cond.std .* randn(init_cond.dim)
+end
+
+
+function generate_initcond(init_cond::Histogram_InitCond; kwargs...)
+    a=rand()
+    a == 1.0 && return init_cond.xaxis[end] # To exclude the unlikely case of a ==1.0
+    ind=searchsortedlast(init_cond.cdf,a)
+    return init_cond.xaxis[ind] + ((a-init_cond.cdf[ind])/(init_cond.cdf[ind+1]-init_cond.cdf[ind]))*(init_cond.xaxis[ind+1]-init_cond.xaxis[ind])
 end

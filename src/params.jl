@@ -201,6 +201,7 @@ function set_hidden_from_npz(file::String; kwargs...)
     # The information about the initial conditions
     init_conds_args = Dict()
     init_conds_args["position"] = get(kwargs, :init_position, Dict("type" => "Cste"))
+    init_conds_args["velocity"] = get(kwargs, :init_velocity, Dict("type" => "Gaussian", "mean" => 0.0, "std" => 1.0))
     data = np.load(file, allow_pickle = true)
     init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
 
