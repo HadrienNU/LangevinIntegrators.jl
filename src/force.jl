@@ -90,7 +90,7 @@ struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
     fixes::Array{AbstractFix} # List of fix to apply
 end
 
-function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}) where {TF<:AbstractFloat}
+function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) where {TF<:AbstractFloat}
     if ndims(coeffs) >= 2 #TODO change for a Vector of vector
         ndim = size(coeffs)[1]
         nb_coeffs = size(coeffs)[2]
@@ -103,10 +103,12 @@ function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}) where {TF
     B = BSplineBasis(BSplineOrder(k + 1), knots; augment = Val(false))
     basis = Vector{Spline}(undef, ndim)
     for d = 1:ndim
-        basis[d] = Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)])
+        basis[d] =  BSplineKit.Derivative(der) * Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)])
     end
     return ForceFromSplines(basis, ndim, Vector{AbstractFix}(undef, 0))
 end
+
+
 #
 # struct ForceFromScipySplines <: AbstractForceFromBasis  # use Scipy
 # 	basis::Array#{Splines}
@@ -127,6 +129,9 @@ end
 # end
 
 # Another version
+"""
+Careful ForceFromScipySplines is not threadsafe
+"""
 struct ForceFromScipySplines{TF<:AbstractFloat} <: AbstractForceFromBasis  # use Scipy
     knots::Array{TF}
     coeffs_splines::Array{TF}

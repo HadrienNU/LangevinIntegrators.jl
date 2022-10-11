@@ -237,7 +237,7 @@ function force_from_dict(coeffs, args)
     force = ForceFromPotential("Flat")
     basis_type = get(args, :basis_type)
     if basis_type == "bsplines"
-        force = ForceFromScipySplines(get(args, :bsplines)[1][3], get(args, :bsplines)[1][1], coeffs)
+        force = ForceFromSplines(get(args, :bsplines)[1][3], get(args, :bsplines)[1][1], coeffs)
     elseif basis_type == "linear"
         coeffs_taylor = zeros(Float64, (1, 2))
         coeffs_taylor[1, :] = [get(args, :mean)[1], coeffs[1, 1]]
@@ -247,7 +247,7 @@ function force_from_dict(coeffs, args)
         # elseif basis_type == "bins"
         #
     elseif basis_type == "free_energy_kde" || basis_type == "free_energy" || basis_type == "free_energy_histogram"
-        force = ForceFromScipySplines(get(args, :fe_spline)[3], get(args, :fe_spline)[1], -1 * coeffs[1, 1] .* get(args, :fe_spline)[2]; der = 1)
+        force = ForceFromSplines(get(args, :fe_spline)[3], get(args, :fe_spline)[1], -1 * coeffs[1, 1] .* get(args, :fe_spline)[2]; der = 1)
     else
         throw(ArgumentError("Unsupported basis type"))
     end

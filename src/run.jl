@@ -34,7 +34,9 @@ function run_trajectory!(state::IS, integrator::S, save_traj::Union{AbstractSave
     # nostop = forceUpdate!(integrator.force, state.f, state.x; step = n) # Except that depending of the integrator state.f does not exist
     while n < params.n_steps && nostop == 0
         n += 1
+        # println("Traj $(kwargs[:id_traj]) $(n)")
         nostop = UpdateState!(state, integrator; step = n)
+        # println("Traj $(kwargs[:id_traj]) $(n)")
         if !isnothing(save_traj) && (mod(n, save_traj.n_save_iters) == 0)
             save_state(save_traj, n * integrator.Δt, state; kwargs...) # Compute observables and dump data if required
         end
@@ -100,9 +102,9 @@ function run_transitions(integrator::S, x0, x1; params = TrajsParams(), init_con
         integrators_set = [integrator]
     end
     #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
-    save_trajs = Array{TransitionObserver}(undef,params.n_trajs)
+    save_trajs = [TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...) for n = 1:params.n_trajs]
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
-        save_trajs[n] = TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...)
+        # save_trajs[n] = TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...)
         run_trajectory!(init_states[n], integrators_set[Threads.threadid()], save_trajs[n]; params = params, id_traj=n, kwargs...)
     end
     return save_trajs # This is a set of transition times

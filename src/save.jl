@@ -242,10 +242,13 @@ function save_state(save::TransitionObserver, t::Float64, state::AbstractState; 
         end
         save.former_ind = save.last_ind
         save.last_ind = save.curr_ind
+    elseif save.curr_ind != save.last_ind && t < save.burnout_time
+        save.former_ind = save.last_ind
+        save.last_ind = save.curr_ind
     end
 end
 
-function flush_traj(save::TransitionObserver) # At the end of the traj write to file the rest of the data
+function flush_traj(save::TransitionObserver)
 
 end
 

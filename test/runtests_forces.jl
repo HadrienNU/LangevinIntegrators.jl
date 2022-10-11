@@ -39,15 +39,36 @@
     # @test force_eval(force,[2.0])[1] ≈ 49.3164884 # BSplineKit does not extrapolate TODO
 
     #Forces from Scipy.interpolate
-    force = ForceFromScipySplines(
+    force_scipy = ForceFromScipySplines(
         3,
         [0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],
         [8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538],
     )
 
-    @test force_eval(force, [0.5])[1] ≈ -0.07372447
-    @test force_eval(force, [1.0])[1] ≈ -9.0294072
-    @test force_eval(force, [2.0])[1] ≈ 49.3164884
+    @test force_eval(force_scipy, [0.5])[1] ≈ -0.07372447
+    @test force_eval(force_scipy, [1.0])[1] ≈ -9.0294072
+    @test force_eval(force_scipy, [2.0])[1] ≈ 49.3164884
+
+
+    @test force_eval(force_scipy, [1.0])[1] ≈ force_eval(force, [1.0])[1]
+
+    #Compare result from Scipy and BSplinesKit when suing dervative
+    force = ForceFromSplines(
+        3,
+        [0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],
+        [8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538]; der = 1
+    )
+    #Forces from Scipy.interpolate
+    force_scipy = ForceFromScipySplines(
+        3,
+        [0.163005, 0.163005, 0.163005, 0.163005, 0.622277, 1.081549, 1.081549, 1.081549, 1.081549],
+        [8.80178094 -0.25194201 1.65292369 -8.13424986 -10.49673538]; der =1
+    )
+
+    @test force_eval(force, [0.5])[1] ≈ force_eval(force_scipy, [0.5])[1]
+    @test force_eval(force, [1.0])[1] ≈ force_eval(force_scipy, [1.0])[1]
+
+
 end
 
 @testset "Fixes" begin

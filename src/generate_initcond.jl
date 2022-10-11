@@ -160,8 +160,8 @@ function get_init_conditions(args::Dict, dim = 1)
         end
         std = get(args, "std", 1.0)
         return Gaussian_InitCond(mean, std)
-    elseif lowercase(type) in ["histogram", "pmf","hist"]
-        return Histogram_InitCond(get(args, "bins"), get(args, "hist"))
+    elseif lowercase(type) in ["histogram", "pmf", "hist"]
+        return Histogram_InitCond(args["bins"], args["hist"])
     else
         @warn "Unknwon initializer"
     end
@@ -189,5 +189,5 @@ function generate_initcond(init_cond::Histogram_InitCond; kwargs...)
     a=rand()
     a == 1.0 && return init_cond.xaxis[end] # To exclude the unlikely case of a ==1.0
     ind=searchsortedlast(init_cond.cdf,a)
-    return init_cond.xaxis[ind] + ((a-init_cond.cdf[ind])/(init_cond.cdf[ind+1]-init_cond.cdf[ind]))*(init_cond.xaxis[ind+1]-init_cond.xaxis[ind])
+    return [init_cond.xaxis[ind] + ((a-init_cond.cdf[ind])/(init_cond.cdf[ind+1]-init_cond.cdf[ind]))*(init_cond.xaxis[ind+1]-init_cond.xaxis[ind])]
 end
