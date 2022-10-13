@@ -30,14 +30,14 @@ function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
     if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
-    ker_mat=reshape(kernel,dim,dim, :)
+    ker_mat=reshape(kernel,:,dim,dim)
 
-    a = (1 .- 0.5 * ker_mat[:,:,1] * Δt) *inv( (1 .+ 0.5 * ker_mat[:,:,1] * Δt))
-    b = inv(1 .+ 0.5 * ker_mat[:,:,1] * Δt)
+    a = (1 .- 0.5 * ker_mat[1,:,:] * Δt) *inv( (1 .+ 0.5 * ker_mat[1,:,:] * Δt))
+    b = inv(1 .+ 0.5 * ker_mat[1,:,:] * Δt)
     if dim==1
-        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,3))))
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))
     else
-        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,3))))# note quand Kernel est une matrix il faut faire le cholesky
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))# note quand Kernel est une matrix il faut faire le cholesky
     end
     return GJF_Kernel(force, β, ker_mat, noise_fdt, M, Δt, a, b, dim, bc)
 end
@@ -63,11 +63,20 @@ function InitState!(x₀, v₀, integrator::GJF_Kernel)
     return GJFKernelState(x₀, v₀, f, x_t, noise)
 end
 
+
+
 function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)
 
-    mem_int = sum(integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1); init=zeros(integrator.dim))
+    mem_int = zeros(integrator.dim)
+    for l in 1:integrator.dim, k in 1:integrator.dim
+        for i in 2:(length(state.x_t)-1)
+            @inbounds mem_int[k] += integrator.kernel[i,k,l]*(state.x_t[i][l] - state.x_t[i-1][l])
+        end
+    end
+
+    # mem_int = sum(integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1); init=zeros(integrator.dim))
 
     state.x =
         state.x .+ integrator.Δt .* integrator.b *state.v .+ 0.5 * (integrator.Δt^2 / integrator.M) .* integrator.b * state.f
@@ -82,7 +91,7 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.f = state.f_new
 
-    if length(state.x_t) == (size(integrator.kernel,3)+1) # In that case, we remove thing from start
+    if length(state.x_t) == (size(integrator.kernel,1)+1) # In that case, we remove thing from start
         pop!(state.x_t)
     end
     pushfirst!(state.x_t, state.x)

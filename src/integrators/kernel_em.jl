@@ -22,8 +22,12 @@ function EM_Kernel(force::FP,  β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
     if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
-    ker_mat=reshape(kernel,dim,dim, :)
-    noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,3)))) # note quand Kernel est une matrix il faut faire le cholesky
+    ker_mat=reshape(kernel,:,dim,dim)
+    if dim==1
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))
+    else
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))# note quand Kernel est une matrix il faut faire le cholesky
+    end
     #σ_corr, doit inclure le Δt
     return EM_Kernel(force, ker_mat, noise_fdt, Δt, M, dim,  bc)
 end
@@ -51,13 +55,19 @@ end
 
 
 function UpdateState!(state::KernelEMState, integrator::EM_Kernel; kwargs...)
-    mem_int= sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 1:length(state.v_t); init=zeros(integrator.dim))
+    mem_int = zeros(integrator.dim)
+    for l in 1:integrator.dim, k in 1:integrator.dim
+        for i in 1:length(state.v_t)
+            @inbounds mem_int[k] += integrator.kernel[i,k,l]*state.v_t[i][l]
+        end
+    end
+    # mem_int= sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 1:length(state.v_t); init=zeros(integrator.dim))
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     @. state.x = state.x + integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
     state.v = state.v .+integrator.Δt / integrator.M * state.f .+ integrator.Δt*mem_int .+ (1/ integrator.M) * randn_correlated(state,integrator)
 
-    if length(state.v_t) == (size(integrator.kernel,3)) # In that case, we remove thing from start
+    if length(state.v_t) == (size(integrator.kernel,1)) # In that case, we remove thing from start
         pop!(state.v_t)
     end
     pushfirst!(state.v_t, state.v)

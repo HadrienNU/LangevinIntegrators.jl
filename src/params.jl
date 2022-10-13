@@ -130,7 +130,7 @@ function read_integrator_conf(file::String)
             if ext == "npz"
                 np = pyimport("numpy")
                 data_force = np.load(file, allow_pickle = true)
-                force = force_from_dict(get(data, :force), get(data, :basis)[])
+                force = force_from_dict(get(data_force, :force), get(data_force, :basis)[])
             else
                 throw(ArgumentError("Unable to read force file"))
             end
