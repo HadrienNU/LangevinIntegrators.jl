@@ -35,7 +35,7 @@ function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
     a = (1 .- 0.5 * ker_mat[1,:,:] * Δt) *inv( (1 .+ 0.5 * ker_mat[1,:,:] * Δt))
     b = inv(1 .+ 0.5 * ker_mat[1,:,:] * Δt)
     if dim==1
-        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))
+        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))  #Multiply value at 0 by 2?
     else
         noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))# note quand Kernel est une matrix il faut faire le cholesky
     end
@@ -68,7 +68,6 @@ end
 function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)
-
     mem_int = zeros(integrator.dim)
     for l in 1:integrator.dim, k in 1:integrator.dim
         for i in 2:(length(state.x_t)-1)
@@ -78,16 +77,12 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     # mem_int = sum(integrator.kernel[:,:,i]*(state.x_t[i] - state.x_t[i-1]) for i in 2:(length(state.x_t)-1); init=zeros(integrator.dim))
 
-    state.x =
-        state.x .+ integrator.Δt .* integrator.b *state.v .+ 0.5 * (integrator.Δt^2 / integrator.M) .* integrator.b * state.f
-        .- 0.5 * integrator.Δt * integrator.b * mem_int .+ 0.5 * (integrator.Δt/ integrator.M) .* integrator.b * state.ξ
+    state.x = state.x .+ integrator.Δt .* integrator.b *state.v .+ 0.5 * (integrator.Δt^2 / integrator.M) .* integrator.b * state.f.- 0.5 * integrator.Δt * integrator.b * mem_int .+ 0.5 * (integrator.Δt/ integrator.M) .* integrator.b * state.ξ
 
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f_new, state.x; kwargs...)
 
-    state.v =
-        integrator.a * state.v .+ 0.5 * integrator.Δt / integrator.M * (integrator.a * state.f .+ state.f_new)
-        .- integrator.b * mem_int .+ (1/ integrator.M) * integrator.b * state.ξ
+    state.v = integrator.a * state.v .+ 0.5 * integrator.Δt / integrator.M * (integrator.a * state.f .+ state.f_new).- integrator.b * mem_int .+ (1/ integrator.M) * integrator.b * state.ξ
 
     state.f = state.f_new
 

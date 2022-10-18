@@ -45,7 +45,7 @@ abstract type AbstractBoundaryConditions <: AbstractConstraints end
 
 struct noBC <: AbstractBoundaryConditions end
 
-function apply_bc(bc::noBC, x_i::TF, v_i::TF) where {ABC<:AbstractBoundaryConditions,TF<:AbstractFloat}
+function apply_bc(bc::noBC, x_i::TF, v_i::TF) where {TF<:AbstractFloat}
     return x_i, v_i
 end
 
