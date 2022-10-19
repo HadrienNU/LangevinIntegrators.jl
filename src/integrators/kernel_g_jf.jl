@@ -35,11 +35,7 @@ function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::I
     a = (1 .- 0.5 * ker_mat[1,:,:] * Δt) *inv( (1 .+ 0.5 * ker_mat[1,:,:] * Δt))
     b = inv(1 .+ 0.5 * ker_mat[1,:,:] * Δt)
     if dim==1
-<<<<<<< HEAD
-        noise_fdt=sqrt(M * Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))
-=======
-        noise_fdt=sqrt(Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))  #Multiply value at 0 by 2?
->>>>>>> a627474bdf99d47a3bacf4b3db7f3a0f796d14ac
+        noise_fdt=sqrt(M * Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1)) #Multiply value at 0 by 2?
     else
         noise_fdt=sqrt(M * Δt / β) * real.(ifft(sqrt.(fft(ker_mat,1)),1))# note quand Kernel est une matrix il faut faire le cholesky
     end
