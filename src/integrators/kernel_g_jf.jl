@@ -71,7 +71,7 @@ function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
     mem_int = zeros(integrator.dim)
     for l in 1:integrator.dim, k in 1:integrator.dim
         for i in 2:(length(state.x_t)-1)
-            @inbounds mem_int[k] += integrator.kernel[i,k,l]*(state.x_t[i][l] - state.x_t[i-1][l])
+            @inbounds mem_int[k] -= integrator.kernel[i,k,l]*(state.x_t[i][l] - state.x_t[i-1][l])
         end
     end
 

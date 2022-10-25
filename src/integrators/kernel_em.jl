@@ -58,7 +58,7 @@ function UpdateState!(state::KernelEMState, integrator::EM_Kernel; kwargs...)
     mem_int = zeros(integrator.dim)
     for l in 1:integrator.dim, k in 1:integrator.dim
         for i in 1:length(state.v_t)
-            @inbounds mem_int[k] += integrator.kernel[i,k,l]*state.v_t[i][l]
+            @inbounds mem_int[k] -= integrator.kernel[i,k,l]*state.v_t[i][l]
         end
     end
     # mem_int= sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 1:length(state.v_t); init=zeros(integrator.dim))

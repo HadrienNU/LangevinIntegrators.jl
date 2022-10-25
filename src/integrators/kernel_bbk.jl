@@ -70,7 +70,7 @@ function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
     state.diss_f = zeros(integrator.dim)
     for k in 1:integrator.dim, l in 1:integrator.dim
         for i in 2:size(state.v_t,1)
-            @inbounds state.diss_f[k] += integrator.kernel[i,k,l]*state.v_t[i][l]
+            @inbounds state.diss_f[k] -= integrator.kernel[i,k,l]*state.v_t[i][l]
         end
     end
     state.diss_f +=randn_correlated(state, integrator)

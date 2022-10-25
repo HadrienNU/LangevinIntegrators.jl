@@ -32,8 +32,9 @@ mutable struct BBKState{TF<:AbstractFloat} <: AbstractInertialState
     v::Vector{TF}
     v_mid::Vector{TF}
     f::Vector{TF}
+    ξ::Vector{TF}
     function BBKState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f)
+        return new{TF}(x₀, v₀, similar(v₀), f, randn(length(f)))
     end
 end
 
@@ -47,11 +48,12 @@ end
 
 function UpdateState!(state::BBKState, integrator::BBK; kwargs...)
 
-    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .- 0.5 * integrator.Δt .* integrator.γ * state.v .+ integrator.σ * randn(integrator.dim)
+    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .- 0.5 * integrator.Δt .* integrator.γ * state.v .+ state.ξ
     @. state.x = state.x + integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + integrator.σ * randn(integrator.dim)) / (1 + 0.5 * integrator.Δt * integrator.γ)
+    state.ξ = integrator.σ * randn(integrator.dim)
+    state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + state.ξ) / (1 + 0.5 * integrator.Δt * integrator.γ)
 
     return nostop
 end
