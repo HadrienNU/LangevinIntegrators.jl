@@ -11,8 +11,8 @@ using StatsBase
 let
     force=ForceFromPotential("Harmonic")
 
-    params=TrajsParams(n_steps = 5*10^5, n_trajs = 2, n_save_iters = 1)
-    Δt = 1e-4
+    params=TrajsParams(n_steps = 5*10^5, n_trajs = 10, n_save_iters = 1)
+    Δt = 5e-5
     tps = LinRange(0,div(params.n_steps,2)*Δt,div(params.n_steps,2)+1)
     γ = 1.0
     β = 1.0

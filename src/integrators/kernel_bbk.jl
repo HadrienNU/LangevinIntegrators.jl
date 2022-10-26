@@ -62,20 +62,23 @@ function InitState!(x₀, v₀, integrator::BBK_Kernel)
 end
 
 function UpdateState!(state::BBKKernelState, integrator::BBK_Kernel; kwargs...)
-    state.v_mid = state.v + 0.5 * integrator.Δt / integrator.M * state.f .-integrator.Δt .*( state.diss_f+ 0.5*integrator.kernel[1,:,:]*state.v)
+
+    state.v_mid = state.v + 0.5 * integrator.Δt / integrator.M * state.f + state.diss_f - 0.5*integrator.Δt*integrator.kernel[1,:,:]*state.v
     @. state.x = state.x + integrator.Δt * state.v_mid
+
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
     state.diss_f = zeros(integrator.dim)
     for k in 1:integrator.dim, l in 1:integrator.dim
         for i in 2:size(state.v_t,1)
-            @inbounds state.diss_f[k] -= integrator.kernel[i,k,l]*state.v_t[i][l]
+            @inbounds state.diss_f[k] -= integrator.Δt*integrator.kernel[i,k,l]*state.v_t[i][l]
         end
     end
     state.diss_f +=randn_correlated(state, integrator)
     # state.diss_f = sum(integrator.kernel[:,:,i]*state.v_t[i] for i in 2:length(state.v_t); init=zeros(integrator.dim)) + randn_correlated(state, integrator) # Pour ne calculer l'intégrale qu'une fois, on la stocke puisqu'elle resservira au prochain pas de temps
-    state.v = integrator.invK * (state.v_mid + 0.5 * integrator.Δt / integrator.M * state.f + integrator.Δt*state.diss_f)
+
+    state.v = integrator.invK * (state.v_mid + 0.5 * integrator.Δt / integrator.M * state.f + state.diss_f)
 
     if length(state.v_t) == (size(integrator.kernel,1)) # In that case, we remove thing from start
         pop!(state.v_t)
