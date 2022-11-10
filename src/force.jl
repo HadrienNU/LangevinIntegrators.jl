@@ -166,9 +166,9 @@ end
 
 
 
-function forceUpdate(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:AbstractFloat}
+function forceUpdate(force::FP, x::Vector{TF}; applyFix=false) where {FP<:AbstractForce,TF<:AbstractFloat}
     f = similar(x)
-    forceUpdate!(force, f, x; applyFix = false) # For the initialization or the computation of the force, do not include fix
+    forceUpdate!(force, f, x; applyFix = applyFix) # For the initialization or the computation of the force, do not include fix
     return f
 end
 
@@ -177,10 +177,10 @@ function force_eval(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:Abstr
 end
 
 # A function to plot value of the force for comparison with python code
-function force_eval(force::FP, x::Vector{Vector{TF}}) where {FP<:AbstractForce,TF<:AbstractFloat} # Evaluate over a bunch of point
+function force_eval(force::FP, x::Vector{Vector{TF}}; applyFix=true) where {FP<:AbstractForce,TF<:AbstractFloat} # Evaluate over a bunch of point
     f = similar(x)
     for (n, val) in enumerate(x)
-        f[n] = forceUpdate(force, val)
+        f[n] = forceUpdate(force, val; applyFix=applyFix)
     end
     return f
 end
