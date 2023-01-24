@@ -64,7 +64,7 @@ function InitState!(x₀, v₀, integrator::GJF_Kernel)
 end
 
 
-
+# A passer en forme compacte pour avoir une mid velocity correcte
 function UpdateState!(state::GJFKernelState, integrator::GJF_Kernel; kwargs...)
 
     state.ξ = randn_correlated(state,integrator)

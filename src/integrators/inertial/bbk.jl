@@ -1,4 +1,4 @@
-struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
+struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     force::FP
     β::TF
     γ::TF
@@ -27,26 +27,8 @@ function BBK(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{
     return BBK(force, β, γ, M, Δt, σ, dim, bc)
 end
 
-mutable struct BBKState{TF<:AbstractFloat} <: AbstractInertialState
-    x::Vector{TF}
-    v::Vector{TF}
-    v_mid::Vector{TF}
-    f::Vector{TF}
-    ξ::Vector{TF}
-    function BBKState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, randn(length(f)))
-    end
-end
 
-function InitState!(x₀, v₀, integrator::BBK)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization"))
-    end
-    f = forceUpdate(integrator.force, x₀)
-    return BBKState(x₀, v₀, f)
-end
-
-function UpdateState!(state::BBKState, integrator::BBK; kwargs...)
+function UpdateState!(state::VelocityVerletState, integrator::BBK; kwargs...)
     # state.ξ = integrator.σ * randn(integrator.dim)
     state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .- 0.5 * integrator.Δt .* integrator.γ * state.v .+ state.ξ
     @. state.x = state.x + integrator.Δt * state.v_mid
@@ -54,6 +36,5 @@ function UpdateState!(state::BBKState, integrator::BBK; kwargs...)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.ξ = integrator.σ * randn(integrator.dim)
     state.v = (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + state.ξ) / (1 + 0.5 * integrator.Δt * integrator.γ)
-
     return nostop
 end

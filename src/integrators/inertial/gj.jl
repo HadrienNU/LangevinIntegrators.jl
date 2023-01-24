@@ -1,4 +1,4 @@
-struct GJF{FP<:AbstractForce,TF<:AbstractFloat,TM} <: InertialIntegrator
+struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     force::FP
     β::TF
     γ::TF
@@ -25,34 +25,29 @@ Set up the G-JF integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+
+
+# Function spécifique pour GJF
+function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF,  dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     a = (1 - 0.5 * γ * Δt) / (1 + 0.5 * γ * Δt)
     b = 1 / (1 + 0.5 * γ * Δt)
     σ = sqrt(2 * γ * Δt / β)
     sqrtM = sqrt.(M)
-    return GJF(force, β, γ, M, Δt, sqrtM, a, b, σ, dim, bc)
+    return GJ(force, β, γ, M, Δt, sqrtM, a, b, σ, dim, bc)
 end
 
-mutable struct GJFState{TF<:AbstractFloat} <: AbstractInertialState
-    x::Vector{TF}
-    v::Vector{TF}
-    f::Vector{TF}
-    f_new::Vector{TF}
-    ξ::Vector{TF}
-    function GJFState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, f, copy(f), similar(f))
-    end
+#TODO: Implementer les autres formes de GJ
+function GJ(force::FP, β::TF, γ::TF, M::TM, Δt::TF, type="I", dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    #Faire un switch sur les valeur de type pour avoir les coeffs des autres GJ
+    a = (1 - 0.5 * γ * Δt) / (1 + 0.5 * γ * Δt)
+    b = 1 / (1 + 0.5 * γ * Δt)
+    σ = sqrt(2 * γ * Δt / β)
+    sqrtM = sqrt.(M)
+    return GJ(force, β, γ, M, Δt, sqrtM, a, b, σ, dim, bc)
 end
 
-function InitState!(x₀, v₀, integrator::GJF)
-    if integrator.dim != length(x₀)
-        throw(ArgumentError("Mismatch of dimension in state initialization $(integrator.dim) !=  $(length(x₀))"))
-    end
-    f = forceUpdate(integrator.force, x₀)
-    return GJFState(x₀, v₀, f)
-end
-
-function UpdateState!(state::GJFState, integrator::GJF; kwargs...)
+# A passer en forme compact
+function UpdateState!(state::VelocityVerletState, integrator::GJ; kwargs...)
 
     state.ξ = randn(integrator.dim)
 
