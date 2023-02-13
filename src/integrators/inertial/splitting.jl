@@ -28,7 +28,7 @@ function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Unio
     c₀ = exp(-Δt * γ) / M
     c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
     sqrtM = sqrt.(M) / M
-    return VelocityVerletIntegrator(force, β, γ, M, Δt, c₀, c₁, sqrtM, dim, bc)
+    return BAOAB(force, β, γ, M, Δt, c₀, c₁, sqrtM, dim, bc)
 end
 
 

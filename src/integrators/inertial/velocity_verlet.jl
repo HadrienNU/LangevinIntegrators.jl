@@ -34,7 +34,7 @@ mutable struct VelocityVerletState{TF<:AbstractFloat} <: AbstractInertialState
     end
 end
 
-function InitState!(x₀, v₀, integrator<:VelocityVerletIntegrator)
+function InitState!(x₀, v₀, integrator :: VVI ) where {VVI <: VelocityVerletIntegrator}
     if integrator.dim != length(x₀)
         throw(ArgumentError("Mismatch of dimension in state initialization"))
     end
