@@ -67,7 +67,7 @@ function UpdateState!(state::VelocityVerletState, integrator::GJ; kwargs...)
     state.x = state.x .+ integrator.sc3*integrator.Δt * state.v_mid
 
     apply_space!(integrator.bc,state.x,state.v)
-    nostop = forceUpdate!(integrator.force, state.f_new, state.x; kwargs...)
+    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
     state.v = integrator.c2/integrator.sc1 * state.v_mid +  (integrator.sc3/integrator.sc1 )* integrator.Δt *state.f/integrator.M   + 0.5*integrator.sc3*state.ξ
 
