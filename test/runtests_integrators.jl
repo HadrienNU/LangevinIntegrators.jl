@@ -59,6 +59,12 @@ end
 
     @test state.x != [0.0]
 
+    integrator = OBABO(force, 1.0, 1.0, 1.0, 1e-3)
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
     integrator = Verlet(force, 1.0, 1e-3)
     state = InitState!([0.0], [2.0], integrator)
     UpdateState!(state, integrator)
