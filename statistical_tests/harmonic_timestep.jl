@@ -12,24 +12,25 @@ let
     γ = 1.0
     β = 1.0
     length_trj = 100.0
-    t_range = LinRange(1e-4,1e-1,5)
-    inspectdr()
-
+    t_range = LinRange(1e-3,1e-1,5)
+    # inspectdr()
+    plot(t_range, ones(length(t_range)),xaxis=:log, label="Theory")
     for int_class in [ABOBA,BAOAB,BBK,GJF]
 
-        pos_corr=zeros(size(t_range))
+        var_position=zeros(size(t_range))
+        err_var=zeros(size(t_range))
         for (n,Δt) in enumerate(t_range)
-            params=TrajsParams(n_steps = floor(length_trj/Δt), n_trajs = 250, n_save_iters = floor(length_trj/Δt))
+            params=TrajsParams(n_steps = floor(length_trj/Δt), n_trajs = 250, n_save_iters = floor(0.001*length_trj/Δt))
             println(String(Symbol(int_class))," ", Δt)
 
             integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
             trajs=run_trajectories(integrator; params = params)
             for trj in trajs
-                pos_corr[n] +=(trj.xt[end])^2/(2*params.n_steps*Δt*params.n_trajs) # To change
+                var_position[n] +=sum(trj.xt[1][:,1].^2)/(length(trj.xt[1][:,1])*params.n_trajs-1)
             end
         end
-         plot!(t_range, diff_coeff,label=String(Symbol(int_class)))
+         plot!(t_range, var_position,xaxis=:log,marker=(:circle,1),label=String(Symbol(int_class)))
     end
     xlabel!("Δt")
-    ylabel!("<(x_t-x_0)^2>")
+    ylabel!("<x_t^2>")
 end
