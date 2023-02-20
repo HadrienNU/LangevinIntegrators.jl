@@ -87,7 +87,7 @@ function UpdateState!(state::VelocityVerletState, integrator::OBABO; kwargs...)
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.ξ = integrator.σ .* randn(integrator.dim)
-    state.v = integrator.c₀ * state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ
+    state.v = integrator.c₀ * (state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
 
     return nostop
 end
