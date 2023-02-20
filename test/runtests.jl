@@ -55,11 +55,11 @@ using DelimitedFiles
 
         @test length(list_files) == params.n_trajs
         for n in 1:length(list_files)
-            @test trajs[n] isa TrajectorySaveInertial
+            @test trajs[n] isa TrajectorySave
             data=readdlm(list_files[n])
             @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
-            @test data[end,2:2] ≈ trajs[n].xt[trajs[n].save_index,:]
-            @test data[end,3:3] ≈ trajs[n].vt[trajs[n].save_index,:]
+            @test data[end,2:2] ≈ trajs[n].xt[1][trajs[n].save_index,:]
+            @test data[end,3:3] ≈ trajs[n].xt[2][trajs[n].save_index,:]
             rm(list_files[n]) # clean behind test
         end
 
@@ -74,12 +74,12 @@ using DelimitedFiles
 
         @test length(list_files) == params.n_trajs
         for n in 1:length(list_files)
-            @test trajs[n] isa TrajectorySaveHidden
+            @test trajs[n] isa TrajectorySave
             data=readdlm(list_files[n])
             @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
-            @test data[end,2:2] ≈ trajs[n].xt[trajs[n].save_index,:]
-            @test data[end,3:3] ≈ trajs[n].vt[trajs[n].save_index,:]
-            @test data[end,4:end] ≈ trajs[n].ht[trajs[n].save_index,:]
+            @test data[end,2:2] ≈ trajs[n].xt[1][trajs[n].save_index,:]
+            @test data[end,3:3] ≈ trajs[n].xt[2][trajs[n].save_index,:]
+            @test data[end,4:end] ≈ trajs[n].xt[3][trajs[n].save_index,:]
             rm(list_files[n]) # clean behind test
         end
 
@@ -88,11 +88,25 @@ using DelimitedFiles
 
         @test length(list_files) == params.n_trajs
         for n in 1:length(list_files)
-            @test trajs[n] isa TrajectorySaveOnlyHidden
+            @test trajs[n] isa TrajectorySave
             data=readdlm(list_files[n])
             @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
-            @test data[end,2:2] ≈ trajs[n].xt[trajs[n].save_index,:]
-            @test data[end,3:end] ≈ trajs[n].ht[trajs[n].save_index,:]
+            @test data[end,2:2] ≈ trajs[n].xt[1][trajs[n].save_index,:]
+            @test data[end,3:end] ≈ trajs[n].xt[2][trajs[n].save_index,:]
+            rm(list_files[n]) # clean behind test
+        end
+
+
+        trajs=run_trajectories(integrator; params = params, init_conds_args = init_conds_args, buffer_size = 7, to_save=[:x,:h])
+        list_files=filter(s -> occursin(r"trajectory_.*.dat",s),readdir())
+
+        @test length(list_files) == params.n_trajs
+        for n in 1:length(list_files)
+            @test trajs[n] isa TrajectorySave
+            data=readdlm(list_files[n])
+            @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
+            @test data[end,2:2] ≈ trajs[n].xt[1][trajs[n].save_index,:]
+            @test data[end,3:end] ≈ trajs[n].xt[2][trajs[n].save_index,:]
             rm(list_files[n]) # clean behind test
         end
     end
