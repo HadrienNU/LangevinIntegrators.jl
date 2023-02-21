@@ -18,6 +18,7 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.7'
+      - run: pip install numpy scipy
       - name: Install dependencies
         run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.instantiate()'
       - name: Build and deploy
