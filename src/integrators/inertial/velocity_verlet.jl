@@ -22,7 +22,7 @@ struct VelocityVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletI
     end
 end
 
-function Verlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing)  # Equivalence of Verlet and VelocityVerlet
+function Verlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing)  where {FP<:AbstractForce,TF<:AbstractFloat,TM}  # Equivalence of Verlet and VelocityVerlet
     return VelocityVerlet(force, M, Δt, dim, bc)
 end
 
