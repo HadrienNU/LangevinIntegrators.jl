@@ -47,6 +47,36 @@ end
 
     @test state.x != [0.0]
 
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3,"II")
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3,"III")
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3,"IV")
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3,"V")
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3,"VI")
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
     integrator = ABOBA(force, 1.0, 1.0, 1.0, 1e-3)
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
@@ -59,13 +89,25 @@ end
 
     @test state.x != [0.0]
 
-    integrator = Verlet(force, 1.0, 1e-3)
+    integrator = OBABO(force, 1.0, 1.0, 1.0, 1e-3)
+    state = InitState!([0.0], [0.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
+
+    integrator = VelocityVerlet(force, 1.0, 1e-3)
     state = InitState!([0.0], [2.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
     #Comme Verlet est déterministe on peut faire des test sur la valeur
     # @test state.x ≈
+
+    integrator = PositionVerlet(force, 1.0, 1e-3)
+    state = InitState!([0.0], [2.0], integrator)
+    UpdateState!(state, integrator)
+
+    @test state.x != [0.0]
 end
 
 @testset "integrators_hidden" begin

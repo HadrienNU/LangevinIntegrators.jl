@@ -94,7 +94,7 @@ end
     @test state isa LangevinIntegrators.AbstractOverdampedState
 
     #Underdamped
-    integrator = Verlet(force, 1.0, 1e-3)
+    integrator = VelocityVerlet(force, 1.0, 1e-3)
     @test state.x ≈ [1.0]
     cond_arr = initialize_initcond(integrator, init_conds_args)
     state = InitState(integrator, cond_arr)
@@ -111,7 +111,7 @@ end
     #Various Initial conditions
     constant_cond = LangevinIntegrators.Constant_InitCond(5.0)
     uniform_cond = LangevinIntegrators.Uniform_InitCond(-1.0,1.0)
-    integrator = Verlet(force, 1.0, 1e-3)
+    integrator = VelocityVerlet(force, 1.0, 1e-3)
 
     state = InitState(integrator, [constant_cond,uniform_cond])
     @test state.x ≈ [5.0]
@@ -134,7 +134,7 @@ end
 #     @test InitState(state,integrator).x == state.x
 #     @test InitState!(state,integrator).x == state.x
 #
-#     integrator = Verlet(force, 1.0, 1e-3)
+#     integrator = VelocityVerlet(force, 1.0, 1e-3)
 #
 #     state=InitState([2.0],[1.0],integrator)
 #

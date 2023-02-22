@@ -18,7 +18,7 @@ let
     β = 1.0
     γ=kernel[1]
     ω = sqrt(1-γ^2/4)
-    inspectdr()
+    # inspectdr()
     plot(tps,exp.(-0.5*γ*tps).*(cos.(ω*tps)-0.5*γ/ω*sin.(ω*tps))/β, label="Theory")
     for int_class in [BBK_Kernel,GJF_Kernel,EM_Kernel]
         println(String(Symbol(int_class)))

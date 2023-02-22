@@ -5,9 +5,6 @@ The code to save the generated trajectories
 =#
 
 # The code to save the trajectory, either in an array, or in a file
-# For now only save the position
-# To save more, maybe juste create one struct per type of state and save everything that we can
-# If more specific saving is needed for performance reasons, then we can just define a custom save taylord for this
 # TODO: write also a xyz file format type save, that could be used if file_pattern end with xyz
 
 abstract type AbstractSave end
@@ -15,21 +12,29 @@ abstract type AbstractSave end
 mutable struct TrajectorySave <: AbstractSave
     n_save_iters::Int
     time::Array
-    xt::Array
+    xt::Array{Array}
     save_index::Int
-    # to_save::Array{Range} # Variable that say what to save, by defaut only save position
+    to_save::Array{Symbol} # Variable that say what to save, by defaut only save position
 
     buffer_size::Int # Par défaut on va dire que toute la traj est mise dans le fichier en une seule fois
     file::Union{IOStream,Nothing} # When nothing, we don't save to file
-    function TrajectorySave(n_save_iters::Int, filename::Union{String,Nothing}, buffer_size::Int, state::AbstractState)
+    function TrajectorySave(n_save_iters::Int, filename::Union{String,Nothing}, buffer_size::Int, state::AbstractState, to_save::Array{Symbol})
         file = isnothing(filename) ? nothing : open(filename, "w")
         time = Array{Float64}(1:buffer_size)
-        xt = Array{typeof(state.x[1])}(undef, (buffer_size , size(state.x)[1]))
-        new(n_save_iters, time, xt, 0, buffer_size, file)
+        xt = Array{Array{typeof(state.x[1])}}(undef,length(to_save))
+        for (i,s) in enumerate(to_save)
+            xt[i] = Array{typeof(state.x[1])}(undef, (buffer_size , size(getfield(state,s),1)))
+        end
+        if  !isnothing(file) # Write symbol name in top of the file
+            write(file,join(vcat(["t"],[string(s) for s in to_save],["\n"]),"\t"))
+        end
+        new(n_save_iters, time, xt, 0, to_save,buffer_size, file)
     end
 end
 
-function TrajectorySave(n_save_iters::Int, file_pattern::Union{String,Nothing}, id_traj::Int, n_step::Int, state::AbstractState; kwargs...)
+#To change, add a vector of Symbol that are the list of field to save, we can just add to the vector in the order wanted the field to save
+
+function TrajectorySave(n_save_iters::Int, file_pattern::Union{String,Nothing}, id_traj::Int, n_step::Int, state::AbstractState; to_save::Union{Nothing,Array} = nothing, kwargs...)
     n_save = fld(n_step , n_save_iters) # max number of step to save
     if isnothing(file_pattern)
         filename=nothing
@@ -38,28 +43,34 @@ function TrajectorySave(n_save_iters::Int, file_pattern::Union{String,Nothing}, 
         filename = replace(file_pattern,"*"=>id_traj)
         buffer_size = get(kwargs,:buffer_size, n_save)
     end
-    # Then we can select the save struct based on kwargs
-    save_velocity = typeof(state) <: AbstractInertialState && get(kwargs,:save_velocity, false)
-    save_hidden =  (typeof(state)<: AbstractOverdampedMemoryHiddenState || typeof(state)<: AbstractMemoryHiddenState) && get(kwargs,:save_hidden, false)
 
-    if save_velocity && save_hidden
-        return TrajectorySaveHidden(n_save_iters, filename, buffer_size, state)
-    elseif save_velocity && !save_hidden
-        return TrajectorySaveInertial(n_save_iters, filename, buffer_size, state)
-    elseif save_hidden
-        return TrajectorySaveOnlyHidden(n_save_iters, filename, buffer_size, state)
+    # Create array of symbol with the list of field to save
+    if isnothing(to_save)
+        to_save = [:x]
+        if get(kwargs,:save_velocity, false)
+            push!(to_save,:v)
+        end
+        if get(kwargs,:save_hidden, false)
+            push!(to_save,:h)
+        end
     end
-    return TrajectorySave(n_save_iters, filename, buffer_size, state)
+    to_save_symbol = [Symbol(s) for s in to_save if Symbol(s) in propertynames(state)] # Conversion to symbol after checking  that the field exist in the state
+    if isempty(to_save_symbol)
+        println("TrajectorySave: no field are marked to be saved. Please check options")
+    end
+    return TrajectorySave(n_save_iters, filename, buffer_size, state, to_save_symbol)
 end
 
 
 function save_state(save::TrajectorySave, t::Float64, state::AbstractState; kwargs...)
     save.save_index += 1
-    save.xt[save.save_index, :] .= deepcopy(state.x)
+    for (i,s) in enumerate(save.to_save)
+        save.xt[i][save.save_index,: ] = deepcopy(getfield(state,s))
+    end
     save.time[save.save_index] = t
     # On peut faire quelque pour enregistrer dans un fichier tous les nb pas de temps, on remet alors save_index à 1
     if  !isnothing(save.file) && save.save_index >= save.buffer_size
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:]))
+        writedlm(save.file, hcat(save.time[1:save.save_index],[xfield[1:save.save_index,:] for xfield in save.xt]...))
         save.save_index = 0
     end
 
@@ -67,135 +78,10 @@ end
 
 function flush_traj(save::TrajectorySave) # At the end of the traj write to file the rest of the data
     if !isnothing(save.file)
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:]))
+        writedlm(save.file, hcat(save.time[1:save.save_index], [xfield[1:save.save_index,:] for xfield in save.xt]...))
         close(save.file)
     end
 end
-
-
-mutable struct TrajectorySaveInertial <: AbstractSave
-    n_save_iters::Int
-    time::Array
-    xt::Array
-    vt::Array
-    save_index::Int
-
-    buffer_size::Int # Par défaut on va dire que toute la traj est mise dans le fichier en une seule fois
-    file::Union{IOStream,Nothing} # When nothing, we don't save to file
-
-    function TrajectorySaveInertial(n_save_iters::Int, filename::Union{String,Nothing}, buffer_size::Int, state::AbstractInertialState)
-        file = isnothing(filename) ? nothing : open(filename, "w")
-        time = Array{Float64}(1:buffer_size)
-        xt = Array{typeof(state.x[1])}(undef, (buffer_size , size(state.x)[1]))
-        vt = Array{typeof(state.v[1])}(undef, (buffer_size , size(state.v)[1]))
-        new(n_save_iters, time, xt, vt, 0, buffer_size, file)
-    end
-end
-
-function save_state(save::TrajectorySaveInertial, t::Float64, state::AbstractState; kwargs...)
-    save.save_index += 1
-    save.xt[save.save_index, :] .= deepcopy(state.x)
-    save.vt[save.save_index, :] .= deepcopy(state.v)
-    save.time[save.save_index] = t
-    # On peut faire quelque pour enregistrer dans un fichier tous les nb pas de temps, on remet alors save_index à 1
-    if  !isnothing(save.file) && save.save_index >= save.buffer_size
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.vt[1:save.save_index,:]))
-        save.save_index = 0
-    end
-
-end
-
-function flush_traj(save::TrajectorySaveInertial) # At the end of the traj write to file the rest of the data
-    if !isnothing(save.file)
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.vt[1:save.save_index,:]))
-        close(save.file)
-    end
-end
-
-
-mutable struct TrajectorySaveOnlyHidden <: AbstractSave
-    n_save_iters::Int
-    time::Array
-    xt::Array
-    ht::Array
-    save_index::Int
-
-    buffer_size::Int # Par défaut on va dire que toute la traj est mise dans le fichier en une seule fois
-    file::Union{IOStream,Nothing} # When nothing, we don't save to file
-
-    function TrajectorySaveOnlyHidden(n_save_iters::Int, filename::Union{String,Nothing}, buffer_size::Int, state::Union{AbstractOverdampedMemoryHiddenState,AbstractMemoryHiddenState})
-        file = isnothing(filename) ? nothing : open(filename, "w")
-        time = Array{Float64}(1:buffer_size)
-        xt = Array{typeof(state.x[1])}(undef, (buffer_size , size(state.x)[1]))
-        ht = Array{typeof(state.h[1])}(undef, (buffer_size , size(state.h)[1]))
-        new(n_save_iters, time, xt, ht, 0, buffer_size, file)
-    end
-end
-
-
-function save_state(save::TrajectorySaveOnlyHidden, t::Float64, state::AbstractState; kwargs...)
-    save.save_index += 1
-    save.xt[save.save_index, :] .= deepcopy(state.x)
-    save.ht[save.save_index, :] .= deepcopy(state.h)
-    save.time[save.save_index] = t
-    # On peut faire quelque pour enregistrer dans un fichier tous les nb pas de temps, on remet alors save_index à 1
-    if  !isnothing(save.file) && save.save_index >= save.buffer_size
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.ht[1:save.save_index,:]))
-        save.save_index = 0
-    end
-
-end
-
-function flush_traj(save::TrajectorySaveOnlyHidden) # At the end of the traj write to file the rest of the data
-    if !isnothing(save.file)
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.ht[1:save.save_index,:]))
-        close(save.file)
-    end
-end
-
-mutable struct TrajectorySaveHidden <: AbstractSave
-    n_save_iters::Int
-    time::Array
-    xt::Array
-    vt::Array
-    ht::Array
-    save_index::Int
-
-    buffer_size::Int # Par défaut on va dire que toute la traj est mise dans le fichier en une seule fois
-    file::Union{IOStream,Nothing} # When nothing, we don't save to file
-
-    function TrajectorySaveHidden(n_save_iters::Int, filename::Union{String,Nothing}, buffer_size::Int, state::AbstractMemoryHiddenState)
-        file = isnothing(filename) ? nothing : open(filename, "w")
-        time = Array{Float64}(1:buffer_size)
-        xt = Array{typeof(state.x[1])}(undef, (buffer_size , size(state.x)[1]))
-        vt = Array{typeof(state.v[1])}(undef, (buffer_size , size(state.v)[1]))
-        ht = Array{typeof(state.h[1])}(undef, (buffer_size , size(state.h)[1]))
-        new(n_save_iters, time, xt, vt, ht, 0, buffer_size, file)
-    end
-end
-
-function save_state(save::TrajectorySaveHidden, t::Float64, state::AbstractState; kwargs...)
-    save.save_index += 1
-    save.xt[save.save_index, :] .= deepcopy(state.x)
-    save.vt[save.save_index, :] .= deepcopy(state.v)
-    save.ht[save.save_index, :] .= deepcopy(state.h)
-    save.time[save.save_index] = t
-    # On peut faire quelque pour enregistrer dans un fichier tous les nb pas de temps, on remet alors save_index à 1
-    if  !isnothing(save.file) && save.save_index >= save.buffer_size
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.vt[1:save.save_index,:], save.ht[1:save.save_index,:]))
-        save.save_index = 0
-    end
-
-end
-
-function flush_traj(save::TrajectorySaveHidden) # At the end of the traj write to file the rest of the data
-    if !isnothing(save.file)
-        writedlm(save.file, hcat(save.time[1:save.save_index], save.xt[1:save.save_index,:], save.vt[1:save.save_index,:], save.ht[1:save.save_index,:]))
-        close(save.file)
-    end
-end
-
-
 
 
 mutable struct TransitionObserver <: AbstractSave

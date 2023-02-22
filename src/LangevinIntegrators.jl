@@ -50,8 +50,8 @@ export force_eval
 
 export addFix!
 
-include("plumed.jl") # Find a way to make this optionnal, using Require?
 
+include("plumed.jl") # Find a way to make this optionnal, using Require?
 
 
 include("generate_initcond.jl")
@@ -64,33 +64,41 @@ export noBC, PBC, ReflectingBC
 include("integrators/correlated_noise.jl")
 
 
-include("integrators/overdamped_em.jl")
+include("integrators/overdamped/overdamped_em.jl")
 export EM
 
 #Inertial
-include("integrators/bbk.jl")
-export BBK
-include("integrators/g_jf.jl")
-export GJF
-include("integrators/aboba.jl")
-export ABOBA
-include("integrators/baoab.jl")
-export BAOAB
-include("integrators/verlet.jl")
+include("integrators/inertial/velocity_verlet.jl")
 export Verlet
+export VelocityVerlet
+include("integrators/inertial/bbk.jl")
+export BBK
+include("integrators/inertial/splitting.jl")
+export BAOAB
+export OBABO
+include("integrators/inertial/gj.jl")
+export GJF
+export GJ
+
+
+include("integrators/inertial/position_verlet.jl")
+export PositionVerlet
+export ABOBA
+
+
 
 #Hidden
-include("integrators/hidden_em.jl")
+include("integrators/hidden/hidden_em.jl")
 export EM_Hidden
-include("integrators/hidden_aboba.jl")
+include("integrators/hidden/hidden_aboba.jl")
 export ABOBA_Hidden
 
 #MemoryKernel
-include("integrators/kernel_em.jl")
+include("integrators/kernel/kernel_em.jl")
 export EM_Kernel
-include("integrators/kernel_bbk.jl")
+include("integrators/kernel/kernel_bbk.jl")
 export BBK_Kernel
-include("integrators/kernel_g_jf.jl")
+include("integrators/kernel/kernel_g_jf.jl")
 export GJF_Kernel
 
 
