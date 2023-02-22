@@ -1,10 +1,10 @@
 module Plumed
+    using CBinding
+
     import LangevinIntegrators: AbstractFix, init_fix, apply_fix!, close_fix
-    import LangevinIntegrators: AbstractIntegrator, AbstractFix, addFix!
+    import LangevinIntegrators: AbstractIntegrator, addFix!
 
     try
-        using CBinding
-
         path_plumed = get(ENV,"PLUMED_INCLUDE_PATH","/usr/local/include")
 
         c`-llibplumed.so -I$(path_plumed)`
