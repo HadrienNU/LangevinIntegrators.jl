@@ -29,23 +29,21 @@ jobs:
           - ubuntu-latest
         arch:
           - x64
+    env:
+      LD_LIBRARY_PATH: /usr/local/lib
     steps:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      # - uses: actions/cache@v1
-      #   env:
-      #     cache-name: cache-artifacts
-      #   with:
-      #     path: ~/.julia/artifacts
-      #     key: runner.os−test−env.cache−name−{{ hashFiles('**/Project.toml') }}
-      #     restore-keys: |
-      #       runner.os−test−
-      #       ${{ env.cache-name }}-
-      #       ${{ runner.os }}-test-
-      #       ${{ runner.os }}-
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            ~/.local/include
+            ~/.local/lib
+          key: global-${{ runner.os }}-${{ matrix.plumed_version }}
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
