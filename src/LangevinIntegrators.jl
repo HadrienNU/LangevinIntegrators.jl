@@ -50,15 +50,9 @@ export force_eval
 
 export addFix!
 
-try
-    include("plumed.jl") # Find a way to make this optionnal, using Require?
-catch e  # Allow to proceed even when plumed is not found
-    @warn("Unable to load plumed extension: ",e)
-    @warn("A empty plumed module have been loaded instead, it has not effect.")
 
-    include("plumed_replacement.jl")
+include("plumed.jl") # Find a way to make this optionnal, using Require?
 
-end
 
 include("generate_initcond.jl")
 export initialize_initcond
