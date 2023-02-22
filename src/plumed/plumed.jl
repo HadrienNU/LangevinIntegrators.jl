@@ -1,8 +1,8 @@
 module Plumed
     using CBinding
 
-    import LangevinIntegrators: AbstractFix, init_fix, apply_fix!, close_fix
-    import LangevinIntegrators: AbstractIntegrator, addFix!
+    import ..LangevinIntegrators: AbstractFix, init_fix, apply_fix!, close_fix
+    import ..LangevinIntegrators: AbstractIntegrator, addFix!
 
     # try
         path_plumed = get(ENV,"PLUMED_INCLUDE_PATH","/usr/local/include")
