@@ -12,8 +12,8 @@ let
     force=ForceFromPotential("Flat")
     γ = 1.0
     β = 1.0
-    length_trj = 100.0
-    t_range = LinRange(1e-3,1e-1,5)
+    n_step = 1e4
+    t_range = LinRange(5e-4,5e-2,5)
     # inspectdr()
     plot(t_range, ones(length(t_range)),xaxis=:log, label="Theory")
     for int_class in [ABOBA,BAOAB,BBK,GJF]
@@ -21,7 +21,7 @@ let
         diff_coeff=zeros(size(t_range))
         err_diff = zeros(size(t_range))
         for (n,Δt) in enumerate(t_range)
-            params=TrajsParams(n_steps = floor(length_trj/Δt), n_trajs = 250, n_save_iters = floor(length_trj/Δt))
+            params=TrajsParams(n_steps = n_step, n_trajs = 1e3, n_save_iters = n_step)
             println(String(Symbol(int_class))," ", Δt)
 
             integrator=int_class(force, β , γ, 1.0, Δt, 1)
