@@ -25,7 +25,7 @@ using DelimitedFiles
         for n in 1:length(list_files)
             data=readdlm(list_files[n])
             @test data[end,1] ≈ trajs[n].time[trajs[n].save_index]
-            @test data[end,2:end] ≈ trajs[n].xt[trajs[n].save_index,:]
+            @test data[end,2:end] ≈ trajs[n].xt[1][trajs[n].save_index,:]
 
             @test trajs[n].buffer_size == 7
             @test trajs[n].save_index == 6
