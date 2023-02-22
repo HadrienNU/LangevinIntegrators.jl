@@ -75,6 +75,7 @@ export EM
 
 #Inertial
 include("integrators/inertial/velocity_verlet.jl")
+export Verlet
 export VelocityVerlet
 include("integrators/inertial/bbk.jl")
 export BBK
