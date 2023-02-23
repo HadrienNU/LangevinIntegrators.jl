@@ -88,19 +88,6 @@ state_kernelgjf=InitState(integrator_kernelgjf, init_conds)
 SUITE["integrator_kernel"]["run_GJF"] = @benchmarkable run_trajectory!($state_kernelgjf, $integrator_kernelgjf; params = $params)
 
 
-
-# Benchmark with plumed
-plumedFix = plumed(joinpath(benchmarkdir, "../test/test_plumed.dat"), "plumed.log", 1, integrator_em.Δt; temperature = 1.0)
-force_plumed=ForceFromPotential("Harmonic")
-addFix!(force_plumed, plumedFix)
-integrator_plumed=EM(force_plumed,1.0,integrator_em.Δt)
-state_em=InitState(integrator_plumed, init_conds_em)
-SUITE["integrator_overdamped"]["run_EM_w_plumed"] = @benchmarkable run_trajectory!($state_em, $integrator_plumed; params = $params)
-params_x10=TrajsParams(;n_steps = 10^6)
-SUITE["integrator_overdamped"]["run_EM_w_plumed_10x"] = @benchmarkable run_trajectory!($state_em, $integrator_plumed; params = $params_x10)
-# rm("plumed.log")
-
-
 integrator_hidden=read_integrator_hidden_npz(joinpath(benchmarkdir, "coeffs_benchmark.npz"))
 
 SUITE["fullset"] = BenchmarkGroup(["run"])
