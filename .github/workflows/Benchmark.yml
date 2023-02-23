@@ -37,13 +37,6 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            ~/.local/include
-            ~/.local/lib
-          key: global-${{ runner.os }}-${{ matrix.plumed_version }}
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1

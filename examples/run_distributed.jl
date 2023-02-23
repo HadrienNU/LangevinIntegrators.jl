@@ -1,9 +1,7 @@
 #=
 run_distributed.jl
 
-An example of distributed computing of the trajectories
-
-In this case, we should implement a dump struct that hold the id of the initial state if we want to save to files
+An example of distributed computing of the trajectories. It should be run with julia -p [nprocs >= 2]
 
 Res hold the return value of run_trajectory!
 init_states is not changed
@@ -20,6 +18,6 @@ let
     run=state->run_trajectory!(state, integrator; params = params)
     res=pmap(run, init_states);
     for n in 1:params.n_trajs
-        println(res[n])
+        println(res)
     end
 end

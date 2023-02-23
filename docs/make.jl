@@ -16,6 +16,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Plumed" => "plumed.md",
     ],
 )
 
