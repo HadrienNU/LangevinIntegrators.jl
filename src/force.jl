@@ -101,7 +101,7 @@ function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) 
     end
     #Note the order of the splines is k+1 with k the degree
     B = BSplineBasis(BSplineOrder(k + 1), knots; augment = Val(false))
-    basis = Vector{Spline}(undef, ndim)
+    basis = Vector{SplineExtrapolation}(undef, ndim)
     for d = 1:ndim
         basis[d] =  BSplineKit.SplineExtrapolations.extrapolate(BSplineKit.Derivative(der) * Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)]), BSplineKit.SplineExtrapolations.Smooth())
     end

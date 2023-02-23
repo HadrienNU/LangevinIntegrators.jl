@@ -22,7 +22,7 @@ jobs:
             ~/.local/include
             ~/.local/lib
           key: global-${{ runner.os }}-v2.7
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           repository: plumed/plumed2
           path: plumed
@@ -42,14 +42,14 @@ jobs:
           ls /usr/local/lib
           echo $LD_LIBRARY_PATH
           ldd /usr/local/lib/libplumed.so
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1.8'
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - name: Install dependencies
-        run: julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.develop(PackageSpec(path=joinpath(pwd(), "plumed_extension/"))) ;Pkg.update(); Pkg.instantiate()'
+        run: julia --project=docs/ -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.develop(PackageSpec(path=joinpath(pwd(), \"plumed_extension/\"))) ; Pkg.update(); Pkg.instantiate()"
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # If authenticating with GitHub Actions token
