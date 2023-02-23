@@ -1,6 +1,5 @@
 using BenchmarkTools
 using LangevinIntegrators
-using LangevinIntegrators.Plumed
 
 #Defining somes benchmark
 

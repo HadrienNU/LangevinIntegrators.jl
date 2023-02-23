@@ -30,6 +30,54 @@ jobs:
           # - v2.5
           # - v2.6
           - v2.7
+    steps:
+      - uses: actions/cache@v3
+      - uses: actions/checkout@v2
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - run: pip install numpy scipy
+      - uses: julia-actions/cache@v1
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info
+
+name: Plumed
+on:
+  push:
+    branches:
+      - main
+    tags: ['*']
+  pull_request:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  test:
+    name: Plumed ${{ matrix.plumed_version }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.7'
+          # - '1.8'
+#          - 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+        plumed_version:
+          # - v2.5
+          # - v2.6
+          - v2.7
     env:
       LD_LIBRARY_PATH: /usr/local/lib
     steps:
@@ -68,13 +116,8 @@ jobs:
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-      # - name: Install PyCall
-      #   run: |
-      #     julia --project --color=yes -e '
-      #       import Pkg; Pkg.add("PyCall")'
-      - uses: julia-actions/julia-runtest@v1
       - name: Run Plumed tests
-        run: julia --project="plumed_extension" -e "using Pkg; Pkg.develop(PackageSpec(path=\".\")); Pkg.update(); Pkg.test()"
+        run: julia --project="plumed_extension" -e "using Pkg; Pkg.develop(PackageSpec(path=joinpath(pwd(), \"..\"))); Pkg.update(); Pkg.test()"  
         shell: bash
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v2
