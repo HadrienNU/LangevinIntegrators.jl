@@ -67,7 +67,7 @@ jobs:
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run Plumed tests
-        run: julia --project="plumed_extension" -e "using Pkg; Pkg.add(\"TOML\"); Pkg.develop(PackageSpec(path=pwd())); Pkg.update(); Pkg.test()"
+        run: julia --project="plumed_extension" -e "using Pkg; Pkg.develop(PackageSpec(path=pwd()));  Pkg.add(\"TOML\");  Pkg.update(); Pkg.test()"
         shell: bash
       - uses: julia-actions/julia-processcoverage@v1
       - uses: codecov/codecov-action@v2
