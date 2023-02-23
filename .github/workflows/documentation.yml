@@ -21,13 +21,13 @@ jobs:
           path: |
             ~/.local/include
             ~/.local/lib
-          key: global-${{ runner.os }}-${{ matrix.plumed_version }}
+          key: global-${{ runner.os }}-v2.7
       - uses: actions/checkout@v2
         with:
           repository: plumed/plumed2
           path: plumed
-          ref: ${{ matrix.plumed_version }}
-      - name: Build Plumed ${{ matrix.plumed_version }}
+          ref: v2.7
+      - name: Build Plumed v2.7
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd plumed
@@ -35,7 +35,7 @@ jobs:
           make -j 4
           make install
           cd ..
-      - name: Plumed ${{ matrix.plumed_version }} location
+      - name: Plumed v2.7 location
         run: |
           sudo cp -ar $HOME/.local/lib/. /usr/local/lib
           sudo cp -ar $HOME/.local/include/. /usr/local/include
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
-          version: '1.7'
+          version: '1.8'
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1
       - name: Install dependencies
