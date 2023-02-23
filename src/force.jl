@@ -103,7 +103,7 @@ function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) 
     B = BSplineBasis(BSplineOrder(k + 1), knots; augment = Val(false))
     basis = Vector{Spline}(undef, ndim)
     for d = 1:ndim
-        basis[d] =  extrapolate(BSplineKit.Derivative(der) * Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)]), BSplineKit.SplineExtrapolations.Smooth())
+        basis[d] =  BSplineKit.SplineExtrapolations.extrapolate(BSplineKit.Derivative(der) * Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)]), BSplineKit.SplineExtrapolations.Smooth())
     end
     return ForceFromSplines(basis, ndim, Vector{AbstractFix}(undef, 0))
 end
