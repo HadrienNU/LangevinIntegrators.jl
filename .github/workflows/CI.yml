@@ -31,7 +31,6 @@ jobs:
           # - v2.6
           - v2.7
     steps:
-      - uses: actions/cache@v3
       - uses: actions/checkout@v2
       - uses: julia-actions/setup-julia@v1
         with:
