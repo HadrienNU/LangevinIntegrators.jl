@@ -22,5 +22,4 @@ makedocs(;
 
 deploydocs(;
     repo="github.com/HadrienNU/LangevinIntegrators.jl",
-    devbranch="integrators",
 )
