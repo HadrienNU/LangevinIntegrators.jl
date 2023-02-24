@@ -1,6 +1,7 @@
-using LangevinIntegrators.Plumed
-# using LangevinIntegrators
-# using Test
+using LangevinIntegrators
+using LangevinIntegratorsPlumedExt
+using DelimitedFiles
+using Test
 
 @testset "Plumed" begin
 

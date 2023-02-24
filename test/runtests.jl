@@ -111,7 +111,4 @@ using DelimitedFiles
         end
     end
 
-
-    include("plumed_tests.jl")
-
 end

@@ -1,0 +1,76 @@
+name: Plumed
+on:
+  push:
+    branches:
+      - main
+    tags: ['*']
+  pull_request:
+concurrency:
+  # Skip intermediate builds: always.
+  # Cancel intermediate builds: only if it is a pull request build.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+jobs:
+  test:
+    name: Plumed ${{ matrix.plumed_version }} - ${{ github.event_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.8'
+#          - 'nightly'
+        os:
+          - ubuntu-latest
+        arch:
+          - x64
+        plumed_version:
+          # - v2.5
+          # - v2.6
+          - v2.7
+    env:
+      LD_LIBRARY_PATH: /usr/local/lib
+    steps:
+      - uses: actions/cache@v3
+        id: cache
+        with:
+          path: |
+            ~/.local/include
+            ~/.local/lib
+          key: global-${{ runner.os }}-plumed-${{ matrix.plumed_version }}
+      - uses: actions/checkout@v3
+        with:
+          repository: plumed/plumed2
+          path: plumed
+          ref: ${{ matrix.plumed_version }}
+      - name: Build Plumed ${{ matrix.plumed_version }}
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          cd plumed
+          ./configure --prefix=$HOME/.local/
+          make -j 4
+          make install
+          cd ..
+      - name: Plumed ${{ matrix.plumed_version }} location
+        run: |
+          sudo cp -ar $HOME/.local/lib/. /usr/local/lib
+          sudo cp -ar $HOME/.local/include/. /usr/local/include
+          ls /usr/local/lib
+          echo $LD_LIBRARY_PATH
+          ldd /usr/local/lib/libplumed.so
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.version }}
+          arch: ${{ matrix.arch }}
+      - run: pip install numpy scipy
+      - uses: julia-actions/cache@v1.2
+      - uses: julia-actions/julia-buildpkg@v1
+      - name: Run Plumed tests
+        run: julia --project="plumed_extension" -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.update(); Pkg.test()"
+        shell: bash
+      - uses: julia-actions/julia-processcoverage@v1
+      - uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: lcov.info

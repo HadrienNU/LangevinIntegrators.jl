@@ -16,10 +16,11 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Plumed" => "plumed.md",
     ],
 )
 
 deploydocs(;
     repo="github.com/HadrienNU/LangevinIntegrators.jl",
-    devbranch="main",
+    devbranch="integrators",
 )

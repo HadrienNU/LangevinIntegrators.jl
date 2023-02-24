@@ -51,9 +51,6 @@ export force_eval
 export addFix!
 
 
-include("plumed.jl") # Find a way to make this optionnal, using Require?
-
-
 include("generate_initcond.jl")
 export initialize_initcond
 

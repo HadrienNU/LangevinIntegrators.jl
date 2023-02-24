@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.7'
+          - '1.8'
 #          - 'nightly'
         os:
           - ubuntu-latest
@@ -32,20 +32,13 @@ jobs:
     env:
       LD_LIBRARY_PATH: /usr/local/lib
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            ~/.local/include
-            ~/.local/lib
-          key: global-${{ runner.os }}-${{ matrix.plumed_version }}
       - run: pip install numpy scipy
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v1.2
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run benchmark
         run: |
@@ -58,7 +51,7 @@ jobs:
             BenchmarkTools.save("output.json", median(results))'
 
       - name: Download previous benchmark data
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
