@@ -15,20 +15,20 @@ jobs:
     env:
       LD_LIBRARY_PATH: /usr/local/lib
     steps:
-      - uses: actions/cache@v3
-        id: cache
-        with:
-          path: |
-            ~/.local/include
-            ~/.local/lib
-          key: global-${{ runner.os }}-v2.7
+      # - uses: actions/cache@v3
+      #   id: cache
+      #   with:
+      #     path: |
+      #       ~/.local/include
+      #       ~/.local/lib
+      #     key: global-${{ runner.os }}-v2.7
       - uses: actions/checkout@v3
         with:
           repository: plumed/plumed2
           path: plumed
           ref: v2.7
       - name: Build Plumed v2.7
-        if: steps.cache.outputs.cache-hit != 'true'
+        # if: steps.cache.outputs.cache-hit != 'true'
         run: |
           cd plumed
           ./configure --prefix=$HOME/.local/
@@ -47,7 +47,7 @@ jobs:
         with:
           version: '1.8'
       - run: pip install numpy scipy
-      - uses: julia-actions/cache@v1
+      # - uses: julia-actions/cache@v1.2
       - name: Install dependencies
         run: julia --project=docs/ -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.develop(PackageSpec(path=joinpath(pwd(), \"plumed_extension/\"))) ; Pkg.update(); Pkg.instantiate()"
       - name: Build and deploy
