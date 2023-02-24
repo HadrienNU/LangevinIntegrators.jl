@@ -38,7 +38,7 @@ jobs:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
       - run: pip install numpy scipy
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v1.2
       - uses: julia-actions/julia-buildpkg@v1
       - name: Run benchmark
         run: |
@@ -51,7 +51,7 @@ jobs:
             BenchmarkTools.save("output.json", median(results))'
 
       - name: Download previous benchmark data
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ./cache
           key: ${{ runner.os }}-benchmark
