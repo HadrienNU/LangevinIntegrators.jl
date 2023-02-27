@@ -19,7 +19,7 @@ let
     for int_class in [ABOBA,BAOAB,BBK,GJF]
 
         var_position=zeros(size(t_range))
-        err_var=zeros(size(t_range)
+        err_var=zeros(size(t_range))
         for (n,Δt) in enumerate(t_range)
             params=TrajsParams(n_steps = 1e6, n_trajs = 250, n_save_iters = 5)
             println(String(Symbol(int_class))," ", Δt)

@@ -13,7 +13,7 @@ let
     n_step = 10
     Δt = 1e-2
 
-    for int_class in [ABOBA,BAOAB,OBABO,BBK,GJF]
+    for int_class in [ABOBA,BAOAB,OBABO,BBK,GJF,VEC]
         params=TrajsParams(n_steps = n_step, n_trajs = 2, n_save_iters = n_step)
         println(String(Symbol(int_class)))
         integrator=int_class(force, β , γ, 1.0, Δt, 1)
