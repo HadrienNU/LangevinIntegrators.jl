@@ -26,7 +26,7 @@ mutable struct TrajectorySave <: AbstractSave
             xt[i] = Array{typeof(state.x[1])}(undef, (buffer_size , size(getfield(state,s),1)))
         end
         if  !isnothing(file) # Write symbol name in top of the file
-            write(file,join(vcat(["t"],[string(s) for s in to_save],["\n"]),"\t"))
+            write(file,join(vcat(["# t"],[string(s) for s in to_save],["\n"]),"\t"))
         end
         new(n_save_iters, time, xt, 0, to_save,buffer_size, file)
     end
