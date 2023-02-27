@@ -53,7 +53,7 @@ function GJ(force::FP, β::TF, γ::TF, M::TM, Δt::TF, type="I", dim::Int64=1, b
     end
     sc1 = sqrt((1+c2)/2)
     sc3  = sqrt((1-c2)/a)
-    σ = sqrt(2 * γ * Δt / β) / M
+    σ = sqrt(2 * γ * Δt / β) / sqrt(M)
     return GJ(force, β, γ, M, Δt, c2, sc1, sc3, σ, dim, bc)
 end
 

@@ -15,10 +15,11 @@ struct VelocityVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletI
     force::FP
     M::TM
     Δt::TF
+    σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
     function VelocityVerlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-        new{FP,TF,TM}(force, M, Δt, dim, bc)
+        new{FP,TF,TM}(force, M, Δt, zero(M), dim, bc)
     end
 end
 
@@ -33,17 +34,19 @@ mutable struct VelocityVerletState{TF<:AbstractFloat} <: AbstractInertialState
     v_mid::Vector{TF}
     f::Vector{TF}
     ξ::Vector{TF}
-    function VelocityVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, randn(length(f)))
+    ξ₂::Vector{TF}
+    function VelocityVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TF) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, σ*randn(length(f)), σ*randn(length(f)))
     end
 end
+
 
 function InitState!(x₀, v₀, integrator :: VVI ) where {VVI <: VelocityVerletIntegrator}
     if integrator.dim != length(x₀)
         throw(ArgumentError("Mismatch of dimension in state initialization"))
     end
     f = forceUpdate(integrator.force, x₀)
-    return VelocityVerletState(x₀, v₀, f)
+    return VelocityVerletState(x₀, v₀, f, integrator.σ)
 end
 
 
