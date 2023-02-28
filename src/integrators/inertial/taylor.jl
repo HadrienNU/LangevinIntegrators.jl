@@ -85,12 +85,12 @@ end
 
 
 function UpdateState!(state::VelocityVerletState, integrator::VEC; kwargs...)
-    state.ξ = integrator.σ * randn(integrator.dim)
-    state.ξ₂ = integrator.σ * randn(integrator.dim)
     state.v_mid = integrator.c₀ * state.v .+ integrator.c₁* state.f  .+ integrator.c₂*state.ξ + integrator.c₃*state.ξ₂
     @. state.x = state.x + integrator.Δt * (state.v_mid + (0.5/sqrt(3))*state.ξ₂)
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
+    state.ξ = integrator.σ * randn(integrator.dim)
+    state.ξ₂ = integrator.σ * randn(integrator.dim)
     state.v = integrator.c₀ * state.v_mid .+ integrator.c₁* state.f  .+ integrator.c₂*state.ξ + integrator.c₃*state.ξ₂
     return nostop
 end
