@@ -68,8 +68,9 @@ export EM
 include("integrators/inertial/velocity_verlet.jl")
 export Verlet
 export VelocityVerlet
-include("integrators/inertial/bbk.jl")
+include("integrators/inertial/taylor.jl")
 export BBK
+export VEC
 include("integrators/inertial/splitting.jl")
 export BAOAB
 export OBABO

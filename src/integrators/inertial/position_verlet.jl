@@ -5,10 +5,11 @@ struct PositionVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: PositionVerletI
     force::FP
     M::TM
     Δt::TF
+    σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
     function PositionVerlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-        new{FP,TF,TM}(force, M, Δt, dim, bc)
+        new{FP,TF,TM}(force, M, Δt, zero(M), dim, bc)
     end
 end
 
@@ -20,8 +21,7 @@ struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat,TM} <: PositionVerletIntegrator
     M::TM
     Δt::TF
     c₀::TF
-    c₁::TF
-    sqrtM::TM
+    σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -41,11 +41,9 @@ Set up the ABOBA integrator for inertial Langevin.
 """
 function ABOBA(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     c₀ = exp(-Δt * γ) / M
-    c₁ = sqrt((1 - exp(-2 * γ * Δt)) / β)
-    sqrtM = sqrt.(M) / M
-    return ABOBA(force, β, γ, M, Δt, c₀, c₁, sqrtM, dim, bc)
+    σ = sqrt((1 - exp(-2 * γ * Δt)) / β) / sqrt(M)
+    return ABOBA(force, β, γ, M, Δt, c₀, σ, dim, bc)
 end
-# En vrai, on doit juste choisir certains coeffs mais après ça tout est le même
 
 mutable struct PositionVerletState{TF<:AbstractFloat} <: AbstractInertialState
     x::Vector{TF}
@@ -53,18 +51,18 @@ mutable struct PositionVerletState{TF<:AbstractFloat} <: AbstractInertialState
     x_mid::Vector{TF}
     f_mid::Vector{TF}
     ξ::Vector{TF}
-    function PositionVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(x₀), f, randn(length(f)))
+    function PositionVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TF) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(x₀), f, σ*randn(length(f)))
     end
 end
 
-#TODO initialize velocity
+
 function InitState!(x₀, v₀, integrator::PVI ) where {PVI <:PositionVerletIntegrator}
     if integrator.dim != length(x₀)
         throw(ArgumentError("Mismatch of dimension in state initialization"))
     end
     f = forceUpdate(integrator.force, x₀)
-    return PositionVerletState(x₀, v₀, f)
+    return PositionVerletState(x₀, v₀, f, integrator.σ)
 end
 
 function UpdateState!(state::PositionVerletState, integrator::PositionVerlet; kwargs...)
@@ -80,15 +78,14 @@ function UpdateState!(state::PositionVerletState, integrator::PositionVerlet; kw
 end
 
 
-# TODO: A récrire en forme compact
 function UpdateState!(state::PositionVerletState, integrator::ABOBA; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
     apply_space!(integrator.bc,state.x_mid,state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     # Au passage il faudra rajouter ici un terme de métrique quand il est présent
-    state.ξ = randn(integrator.dim)
-    state.v =  integrator.c₀ .* (state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid) .+ 0.5 * integrator.Δt / integrator.M * state.f_mid + integrator.c₁ .* integrator.sqrtM * state.ξ
+    state.ξ = integrator.σ *randn(integrator.dim)
+    state.v =  integrator.c₀ .* (state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid) .+ 0.5 * integrator.Δt / integrator.M * state.f_mid +  state.ξ
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
 

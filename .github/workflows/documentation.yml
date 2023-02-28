@@ -47,7 +47,7 @@ jobs:
         with:
           version: '1.8'
       - run: pip install numpy scipy
-      - uses: julia-actions/cache@v1.2
+      # - uses: julia-actions/cache@v1.2
       - name: Install dependencies
         run: julia --project=docs/ -e "using Pkg; Pkg.develop(PackageSpec(path=pwd())); Pkg.develop(PackageSpec(path=joinpath(pwd(), \"plumed_extension/\"))) ; Pkg.update(); Pkg.instantiate()"
       - name: Build and deploy
