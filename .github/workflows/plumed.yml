@@ -63,6 +63,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+          include-all-prereleases: true
       - run: pip install numpy scipy
       - uses: julia-actions/cache@v1.2
       - uses: julia-actions/julia-buildpkg@v1
