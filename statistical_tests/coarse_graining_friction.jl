@@ -28,29 +28,31 @@ let
     force=ForceFromPotential("Flat")
     γ = 1.0
     β = 1.0
-    t_range = LinRange(5e-4,5e-1,6)
-
-    lambda=0.0
+    cg_range = range(1,10)
     init_conds=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
     inspectdr()
 
+
+
     plot()
     # int_class = BBK
-
-    # Δt=1e-3
+    # for (m,Δt) in enumerate(t_range)
+    Δt=1e-3
     for int_class in [BAOAB,OBABO,BBK,GJF,VEC]
-        var_scalar_product=zeros(size(t_range))
-        err_scalar_product=zeros(size(t_range))
-        val_velocity=zeros(size(t_range))
-        err_vel=zeros(size(t_range))
-        val_velocity_mid=zeros(size(t_range))
-        err_vel_mid=zeros(size(t_range))
+        params=TrajsParams(n_steps = 1e5, n_trajs = 150, n_save_iters = 1)
+        println(String(Symbol(int_class))," ", Δt)
+        integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
+        trajs=run_trajectories(integrator; params = params,to_save=["x","v","v_mid"], init_conds_args=init_conds)
 
-        for (n,Δt) in enumerate(t_range)
-            params=TrajsParams(n_steps = 1e5, n_trajs = 150, n_save_iters = 1)
-            println(String(Symbol(int_class))," ", Δt)
-            integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
-            trajs=run_trajectories(integrator; params = params,to_save=["x","v","v_mid"], init_conds_args=init_conds)
+        val_velocity=zeros(size(cg_range))
+        err_vel=zeros(size(cg_range))
+
+        val_velocity_mid=zeros(size(cg_range))
+        err_vel_mid=zeros(size(cg_range))
+
+        var_scalar_product=zeros(size(cg_range))
+        err_scalar_product=zeros(size(cg_range))
+        for (n,cg_step) in enumerate(cg_range)
 
             x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[2][:,1], Δt) for trj in trajs]...)
             val_velocity[n] = mean(x)
@@ -58,14 +60,16 @@ let
             x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[3][:,1], Δt) for trj in trajs]...)
             val_velocity_mid[n] = mean(x)
             err_vel_mid[n] = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
-            x = vcat([scalar_product(trj.xt[1][:,1],lambda, Δt) for trj in trajs]...)
+
+
+            x = vcat([scalar_product(trj.xt[1][1:cg_step:end,1], 0.0, Δt*cg_step) for trj in trajs]...)
             var_scalar_product[n] = mean(x)
             err_scalar_product[n] =quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
         end
-        plot!(t_range, val_velocity, yerr =err_vel ,xaxis=:log, label="Integrator velocity $(String(Symbol(int_class)))")
-        plot!(t_range, val_velocity_mid, yerr =err_vel_mid,xaxis=:log , label="Integrator half step velocity $(String(Symbol(int_class)))")
-        plot!(t_range, var_scalar_product, yerr = err_scalar_product,marker=(:circle,1),xaxis=:log,label="$(String(Symbol(int_class)))" )
+        plot!(cg_range, val_velocity, yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
+        plot!(cg_range, val_velocity_mid, yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
+        plot!(cg_range, var_scalar_product, yerr = err_scalar_product,marker=(:circle,3),label="$(String(Symbol(int_class))) $Δt" )
     end
-    xlabel!("t")
+    xlabel!("n")
     ylabel!("<vₜ aₜ>")
 end
