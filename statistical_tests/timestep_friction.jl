@@ -31,10 +31,13 @@ let
     init_conds=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
     inspectdr()
 
-    int_class = VEC
+
 
     plot()
-    for (m,Δt) in enumerate(t_range)
+    # int_class = BBK
+    # for (m,Δt) in enumerate(t_range)
+    Δt=1e-3
+    for int_class in [BAOAB,BBK,GJF,VEC]
         params=TrajsParams(n_steps = 1e5, n_trajs = 250, n_save_iters = 1)
         println(String(Symbol(int_class))," ", Δt)
         integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
@@ -46,8 +49,8 @@ let
         x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[3][:,1], Δt) for trj in trajs]...)
         val_velocity_mid = mean(x)
         err_vel_mid = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
-        plot!(lambda_range, val_velocity*ones(length(t_range)), yerr =err_vel , label="Integrator velocity $Δt")
-        plot!(lambda_range, val_velocity_mid*ones(length(t_range)), yerr =err_vel_mid , label="Integrator half step velocity $Δt")
+        plot!(lambda_range, val_velocity*ones(length(lambda_range)), yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
+        plot!(lambda_range, val_velocity_mid*ones(length(lambda_range)), yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
 
         var_scalar_product=zeros(size(lambda_range))
         err_scalar_product=zeros(size(lambda_range))
