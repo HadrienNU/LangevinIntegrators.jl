@@ -36,6 +36,7 @@ struct OBABO{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     γ::TF
     M::TM
     Δt::TF
+    cc₂::TF
     c₂::TF
     σ::TF
     dim::Int64
@@ -57,9 +58,10 @@ Set up the OBABO integrator for inertial Langevin.
 * Δt    - Time step
 """
 function OBABO(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    cc₂ = exp(-0.5 * Δt * γ) / M
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(- γ * Δt)) / β)  / sqrt(M)
-    return OBABO(force, β, γ, M, Δt, c₂, σ, dim, bc)
+    return OBABO(force, β, γ, M, Δt, cc₂, c₂, σ, dim, bc)
 end
 
 
@@ -81,12 +83,12 @@ end
 function UpdateState!(state::VelocityVerletState, integrator::OBABO; kwargs...)
 
     state.ξ₂ = integrator.σ .* randn(integrator.dim)
-    state.v_mid = integrator.c₂*state.v .+ 0.5 * integrator.Δt / integrator.M * state.f + state.ξ₂
+    state.v_mid = integrator.cc₂*state.v .+ 0.5 * integrator.Δt / integrator.M * state.f + state.ξ₂
     @. state.x = state.x .+ integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.ξ = integrator.σ .* randn(integrator.dim)
-    state.v = integrator.c₂ * (state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
+    state.v = integrator.cc₂ * (state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
 
     return nostop
 end

@@ -40,9 +40,10 @@ struct VEC{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     M::TM
     Δt::TF
     c₁::TF
-    c₂::TF
+    sc₂::TF
     d₁::TF
     d₂::TF
+    c₂::TF
     σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
@@ -63,12 +64,13 @@ Taken from "Second-order integrators for Langevin equations with holonomic const
 * Δt    - Time step
 """
 function VEC(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-    c₂ = (1 - 0.5 * γ * Δt/ M +  0.125*(γ * Δt)^2/ M)
+    sc₂ = (1 - 0.5 * γ * Δt/ M +  0.125*(γ * Δt)^2/ M)
     c₁ =  0.5 * Δt *(1 - 0.25 * γ * Δt) / M
     d₁ = 0.5 *(1 - 0.25 * γ * Δt)
     d₂ = - 0.25 * γ * Δt/sqrt(3)
+    c₂ = sc₂  *sc₂
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
-    return VEC(force, β, γ, M, Δt, c₁, c₂, d₁, d₂, σ, dim, bc)
+    return VEC(force, β, γ, M, Δt, c₁, sc₂, d₁, d₂, c₂, σ, dim, bc)
 end
 
 
@@ -89,10 +91,10 @@ end
 function UpdateState!(state::VelocityVerletState, integrator::VEC; kwargs...)
     state.ξ = integrator.σ * randn(integrator.dim)
     state.ξ₂ = integrator.σ * randn(integrator.dim)
-    state.v_mid = integrator.c₂ * state.v .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
+    state.v_mid = integrator.sc₂ * state.v .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
     @. state.x = state.x + integrator.Δt * (state.v_mid + (0.5/sqrt(3))*state.ξ₂)
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v = integrator.c₂ * state.v_mid .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
+    state.v = integrator.sc₂ * state.v_mid .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
     return nostop
 end

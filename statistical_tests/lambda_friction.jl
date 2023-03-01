@@ -15,7 +15,7 @@ function scalar_product(xt, lambda,Δt, γ)
     acc = (xt[3:end]-2*xt[2:end-1]+xt[1:end-2])/ (Δt^2)
     ut0 = (xt[2:end-1]-xt[1:end-2])/Δt
     ut = lambda*(xt[3:end]-xt[2:end-1])/Δt+ (1.0 -lambda)*(xt[2:end-1]-xt[1:end-2])/Δt
-    return ut.*acc+γ*ut.*ut0
+    return ut.*acc+γ*ut.*ut
     # return ut.*ut
 end
 
@@ -31,11 +31,11 @@ let
     γ = 1.0
     β = 1.0
     t_range = LinRange(5e-4,5e-2,5)
-    lambda_range = LinRange(0.0,1.0,5)
+    lambda_range = LinRange(-0.5,1.0,7)
     init_conds=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
     inspectdr()
 
-
+    every= 1
 
     plot()
     # int_class = BBK
@@ -61,7 +61,7 @@ let
         var_scalar_product=zeros(size(lambda_range))
         err_scalar_product=zeros(size(lambda_range))
         for (n,lambda) in enumerate(lambda_range)
-            x = vcat([scalar_product(trj.xt[1][:,1],lambda, Δt, c2) for trj in trajs]...)
+            x = vcat([scalar_product(trj.xt[1][1:every:end,1],lambda, every*Δt, c2) for trj in trajs]...)
             var_scalar_product[n] = mean(x)
             err_scalar_product[n] =quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
         end
