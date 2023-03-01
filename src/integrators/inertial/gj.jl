@@ -4,9 +4,9 @@ struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     γ::TF
     M::TM
     Δt::TF
-    c2::TF
+    c₂::TF
     sc1::TF
-    sc3::TF
+    d₁::TF
     σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
@@ -48,24 +48,24 @@ function GJ(force::FP, β::TF, γ::TF, M::TM, Δt::TF, type="I", dim::Int64=1, b
     #Faire un switch sur les valeur de type pour avoir les coeffs des autres GJ
     a = γ * Δt/ M
     if type == "I"
-        c2 = (1 - 0.5* a) / (1 + 0.5 * a)
+        c₂ = (1 - 0.5* a) / (1 + 0.5 * a)
     elseif type == "II"
-        c2 = exp(-a)
+        c₂ = exp(-a)
     elseif type == "III"
-        c2 = 1-a
+        c₂ = 1-a
     elseif type == "IV"
-        c2 = (sqrt(1+4*a)-1)/(2*a)
+        c₂ = (sqrt(1+4*a)-1)/(2*a)
     elseif type == "V"
-        c2 = 1/(1+a)
+        c₂ = 1/(1+a)
     elseif type == "VI"
-        c2 = 1/(1+0.5*a)^2
+        c₂ = 1/(1+0.5*a)^2
     else # Raise an error
         println("Unknown GJ type")
     end
-    sc1 = sqrt((1+c2)/2)
-    sc3  = sqrt((1-c2)/a)
+    sc1 = sqrt((1+c₂)/2)
+    d₁  = sqrt((1-c₂)/a)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
-    return GJ(force, β, γ, M, Δt, c2, sc1, sc3, σ, dim, bc)
+    return GJ(force, β, γ, M, Δt, c₂, sc1, d₁, σ, dim, bc)
 end
 
 # A passer en forme compact
@@ -73,14 +73,14 @@ function UpdateState!(state::VelocityVerletState, integrator::GJ; kwargs...)
 
     state.ξ = integrator.σ *randn(integrator.dim)
 
-    state.v_mid = integrator.sc1 * state.v + 0.5*integrator.sc3 *integrator.Δt*state.f/integrator.M + 0.5*integrator.sc3*state.ξ
+    state.v_mid = integrator.sc1 * state.v + 0.5*integrator.d₁ *integrator.Δt*state.f/integrator.M + 0.5*integrator.d₁*state.ξ
 
-    state.x = state.x .+ integrator.sc3*integrator.Δt * state.v_mid
+    state.x = state.x .+ integrator.d₁*integrator.Δt * state.v_mid
 
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
-    state.v = integrator.c2/integrator.sc1 * state.v_mid +  0.5*(integrator.sc3/integrator.sc1 )* integrator.Δt *state.f/integrator.M  + 0.5*(integrator.sc3/integrator.sc1)*state.ξ
+    state.v = (integrator.c₂ * state.v_mid +  0.5*integrator.d₁* integrator.Δt *state.f/integrator.M  + 0.5*integrator.d₁*state.ξ)/integrator.sc1
 
 
 
