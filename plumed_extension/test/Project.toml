@@ -1,4 +1,5 @@
 [deps]
+LangevinIntegrators = "563ade2f-8390-447b-b9b3-bcdc9d7fe8e5"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
