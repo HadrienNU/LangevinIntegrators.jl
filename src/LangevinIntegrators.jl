@@ -11,10 +11,22 @@ using PyCall
 
 const np = PyNULL()
 const scipy_interpolate = PyNULL()
+const PYLOCK = Ref{ReentrantLock}()
 
 function __init__()
     copy!(np, pyimport("numpy"))
     copy!(scipy_interpolate, pyimport("scipy.interpolate"))
+    PYLOCK[] = ReentrantLock()
+end
+
+# acquire the lock before any code calls Python
+pylock(f::Function) = Base.lock(PYLOCK[]) do
+    prev_gc = GC.enable(false)
+    try
+        return f()
+    finally
+        GC.enable(prev_gc) # recover previous state
+    end
 end
 
 #Package for the force evaluation

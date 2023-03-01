@@ -1,9 +1,9 @@
 abstract type VelocityVerletIntegrator <: InertialIntegrator end
 
 """
-    Verlet(force, M, Δt)
+    VelocityVerlet(force, M, Δt)
 
-Set up the Verlet integrator.
+Set up the velocity Verlet integrator.
 
 ### Fields
 

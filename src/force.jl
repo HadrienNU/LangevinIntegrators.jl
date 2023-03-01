@@ -18,7 +18,15 @@ function addFix!(integrator::AbstractIntegrator,fix::AbstractFix) # Add it to th
 end
 
 # TODO: add a function to get current potential energy
+"""
+ForceFromPotential(potential)
 
+Set up force using the derivative of a potential.
+
+### Fields
+
+* potential   - Potential name, should be the name of a function implemented in LangevinIntegrators
+"""
 struct ForceFromPotential{G<:Function} <: AbstractForce
     cfg::ForwardDiff.GradientConfig
     V::G # On stocke aussi la valeur du potential
@@ -34,7 +42,7 @@ function ForceFromPotential(potential::String, ndim = 1::Int)
     return ForceFromPotential(cfg, V, ndim, Vector{AbstractFix}(undef, 0))
 end
 
-#La fonction qui calcule la force a actualiser pour n'avoir que forceUpdate! from basis
+
 function forceUpdate!(force::ForceFromPotential, f::Vector{TF}, x::Vector{TF}; kwargs...) where {TF<:AbstractFloat}
     ForwardDiff.gradient!(f, force.V, x, force.cfg)
     f .*= -1
@@ -48,7 +56,17 @@ function forceUpdate!(force::ForceFromPotential, f::Vector{TF}, x::Vector{TF}; k
     return stop_condition
 end
 
-#Se baser sur ApproxFun et (BasisMatrices.jl/ BSplineKit.jl) et probablement faire un sous-type selon le package sous jacent
+"""
+ForceFromBasis(potential)
+
+Set up force using a set of basis function from ApproxFun package.
+See https://juliaapproximation.github.io/ApproxFun.jl/latest/usage/spaces/ for a list of available basis
+
+### Fields
+
+* type   - Basis name, should be the name of a space implemented in ApproxFun
+* coeffs - Coefficient of the force in the basis
+"""
 struct ForceFromBasis <: AbstractForceFromBasis #
     basis::Vector{Fun}
     ndim::Int
@@ -83,8 +101,19 @@ function forceUpdate!(force::FB, f::Vector{TF}, x::Vector{TF}, ; kwargs...) wher
     return stop_condition
 end
 
-# The struct is writed to have the same interface than Force from basis to have only one forceUpdate
-struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
+
+"""
+ForceFromSplines(k, knots, coeffs)
+
+Set up force using splines from BSplineKit.
+
+### Fields
+
+* k   - Degree of the splines
+* knots     - Knots
+* coeffs     - Coefficients
+"""
+struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit # The struct is writed to have the same interface than Force from basis to have only one forceUpdate
     basis::Array#{Splines}
     ndim::Int
     fixes::Array{AbstractFix} # List of fix to apply
@@ -130,7 +159,16 @@ end
 
 # Another version
 """
-Careful ForceFromScipySplines is not threadsafe
+ForceFromScipySplines(k, knots, coeffs)
+
+Set up force using splines from scipy.
+This is slower than julia implemenation of splines but allow to use the python implementation if needed.
+
+### Fields
+
+* k   - Degree of the splines
+* knots     - Knots
+* coeffs     - Coefficients
 """
 struct ForceFromScipySplines{TF<:AbstractFloat} <: AbstractForceFromBasis  # use Scipy
     knots::Array{TF}
@@ -152,7 +190,9 @@ end
 
 function forceUpdate!(force::ForceFromScipySplines, f::Vector{TF}, x::Vector{TF}, ; kwargs...) where {TF<:AbstractFloat}
     for d = 1:force.ndim
-        f[d] = scipy_interpolate.splev(x[1], (force.knots, force.coeffs_splines[d, :], force.k), force.der)[]
+        pylock() do # Lock Thread
+            f[d] = scipy_interpolate.splev(x[1], (force.knots, force.coeffs_splines[d, :], force.k), force.der)[]
+        end
     end
     stop_condition = false
     if get(kwargs, :applyFix, true)

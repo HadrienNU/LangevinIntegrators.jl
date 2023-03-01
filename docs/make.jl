@@ -1,4 +1,5 @@
 using LangevinIntegrators
+using LangevinIntegratorsPlumedExt
 using Documenter
 
 DocMeta.setdocmeta!(LangevinIntegrators, :DocTestSetup, :(using LangevinIntegrators); recursive=true)
@@ -16,6 +17,8 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Integrators" => "integrators.md",
+        "Forces and fixes" => "forces.md",
         "Plumed" => "plumed.md",
     ],
 )

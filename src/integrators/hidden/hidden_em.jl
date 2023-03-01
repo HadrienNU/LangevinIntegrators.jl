@@ -20,7 +20,6 @@ Set up the EM_Hidden integrator for underdamped Langevin with hidden variables.
 * C     - diffusion matrix
 * Δt    - Time step
 """
-#Evidemment à changer
 function EM_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
     dim_tot = size(A)[1]
     friction = A * Δt

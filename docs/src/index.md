@@ -6,9 +6,23 @@ CurrentModule = LangevinIntegrators
 
 Documentation for [LangevinIntegrators](https://github.com/HadrienNU/LangevinIntegrators.jl).
 
-```@index
+
+## Initial conditions
+
+
+```@docs
+initialize_initcond
 ```
 
-```@autodocs
-Modules = [LangevinIntegrators]
+## Run the trajectories
+
+```@docs
+TrajsParams
+run_trajectory!
+run_trajectories
+```
+
+## Index
+
+```@index
 ```

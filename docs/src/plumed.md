@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = LangevinIntegratorsPlumedExt
+```
+
 # Plumed for LangevinIntegrators
 
 The integrator can be coupled to Plumed (https://www.plumed.org/). Plumed should be set up a priori in your system.
@@ -20,9 +24,7 @@ Note that Plumed add a significant overhead to the run time. So depending of you
 To use this plumed extension you should have import the LangevinIntegratorsPlumedExt module
 
 
-```@index
-```
 
-```@autodocs
-Modules = [LangevinIntegratorsPlumedExt]
+```@docs
+addPlumed!
 ```

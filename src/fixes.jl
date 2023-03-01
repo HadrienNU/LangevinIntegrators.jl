@@ -1,6 +1,6 @@
 #=
 
-Dans ce fichier on définit un ensemble de fix, de contraintes et de boundary conditions (on pourra toujours bouger les contraintes si on en a trop)
+Dans ce fichier on définit un ensemble de fix (on pourra toujours bouger les contraintes si on en a trop)
 
 Fix: (on pourrait les définir via plumed mais comme ils sont simples ça permet d'éviter d'avoir à gérer plumed en plus)
 	-UWall -> on mets des mur exponentielles pour compenser tout trop sur le fit de la force
@@ -22,10 +22,22 @@ struct Wall{TF<:AbstractFloat} <: AbstractFix
     bias_energy::Float64
 end
 
+"""
+UWall(exponent, at, strenght)
+
+Add an upper wall to the system strenght*(x-at)^exponent if x >= at
+
+"""
 function UWall(exponent, at, strenght)
     return Wall(exponent, at, strenght, -1.0, 0.0)
 end
 
+"""
+LWall(exponent, at, strenght)
+
+Add an lower wall to the system strenght*(x-at)^exponent if x <= at
+
+"""
 function LWall(exponent, at, strenght)
     return Wall(exponent, at, strenght, 1.0, 0.0)
 end
@@ -45,6 +57,13 @@ struct PolynomialForce{TF<:AbstractFloat} <: AbstractFix
 end
 
 
+
+"""
+Quadratic(at, strenght)
+
+Add a quadratic bias to the system
+
+"""
 function Quadratic(at::Array{TF}, strenght::Array{TF}) where {TF<:AbstractFloat}
     return PolynomialForce(2, at::Array{TF}, strenght::Array{TF}, 0.0)
 end
@@ -55,11 +74,11 @@ function apply_fix!(fix::PolynomialForce, x::Array{TF}, f::Array{TF}; kwargs...)
 end
 
 
-function init_fix(fix::AbstractFix; kwargs...) # Différent du constructeur au sesn que c'est appelé au début de chaque traj
+function init_fix(fix::AbstractFix; kwargs...) # Different from the constructor as it is call at the start of each trajectory
     return fix
 end
 
-#Write a getter for the extra energy of the fixes, so when the force is asked to provide the energy it can iterate over the fixes and compute the nergy
+#TODO: Write a getter for the extra energy of the fixes, so when the force is asked to provide the energy it can iterate over the fixes and compute the nergy
 
 function close_fix(fix::AbstractFix)
 
