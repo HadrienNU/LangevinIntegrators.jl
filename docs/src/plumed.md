@@ -1,3 +1,7 @@
+```@meta
+CurrentModule = LangevinIntegratorsPlumedExt
+```
+
 # Plumed for LangevinIntegrators
 
 The integrator can be coupled to Plumed (https://www.plumed.org/). Plumed should be set up a priori in your system.

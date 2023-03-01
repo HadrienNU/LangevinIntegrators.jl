@@ -1,6 +1,6 @@
 #=
 
-Dans ce fichier on définit un ensemble de fix, de contraintes et de boundary conditions (on pourra toujours bouger les contraintes si on en a trop)
+Dans ce fichier on définit un ensemble de fix (on pourra toujours bouger les contraintes si on en a trop)
 
 Fix: (on pourrait les définir via plumed mais comme ils sont simples ça permet d'éviter d'avoir à gérer plumed en plus)
 	-UWall -> on mets des mur exponentielles pour compenser tout trop sur le fit de la force
@@ -55,11 +55,11 @@ function apply_fix!(fix::PolynomialForce, x::Array{TF}, f::Array{TF}; kwargs...)
 end
 
 
-function init_fix(fix::AbstractFix; kwargs...) # Différent du constructeur au sesn que c'est appelé au début de chaque traj
+function init_fix(fix::AbstractFix; kwargs...) # Different from the constructor as it is call at the start of each trajectory
     return fix
 end
 
-#Write a getter for the extra energy of the fixes, so when the force is asked to provide the energy it can iterate over the fixes and compute the nergy
+#TODO: Write a getter for the extra energy of the fixes, so when the force is asked to provide the energy it can iterate over the fixes and compute the nergy
 
 function close_fix(fix::AbstractFix)
 
