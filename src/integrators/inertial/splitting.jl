@@ -56,7 +56,6 @@ Set up the OBABO integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-
 function OBABO(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
     c₀ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(- γ * Δt)) / β)  / sqrt(M)

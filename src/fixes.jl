@@ -22,10 +22,22 @@ struct Wall{TF<:AbstractFloat} <: AbstractFix
     bias_energy::Float64
 end
 
+"""
+UWall(exponent, at, strenght)
+
+Add an upper wall to the system strenght*(x-at)^exponent if x >= at
+
+"""
 function UWall(exponent, at, strenght)
     return Wall(exponent, at, strenght, -1.0, 0.0)
 end
 
+"""
+LWall(exponent, at, strenght)
+
+Add an lower wall to the system strenght*(x-at)^exponent if x <= at
+
+"""
 function LWall(exponent, at, strenght)
     return Wall(exponent, at, strenght, 1.0, 0.0)
 end
@@ -45,6 +57,13 @@ struct PolynomialForce{TF<:AbstractFloat} <: AbstractFix
 end
 
 
+
+"""
+Quadratic(at, strenght)
+
+Add a quadratic bias to the system
+
+"""
 function Quadratic(at::Array{TF}, strenght::Array{TF}) where {TF<:AbstractFloat}
     return PolynomialForce(2, at::Array{TF}, strenght::Array{TF}, 0.0)
 end

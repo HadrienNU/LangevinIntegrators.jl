@@ -113,9 +113,7 @@ Set up force using splines from BSplineKit.
 * knots     - Knots
 * coeffs     - Coefficients
 """
-
-# The struct is writed to have the same interface than Force from basis to have only one forceUpdate
-struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit
+struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit # The struct is writed to have the same interface than Force from basis to have only one forceUpdate
     basis::Array#{Splines}
     ndim::Int
     fixes::Array{AbstractFix} # List of fix to apply

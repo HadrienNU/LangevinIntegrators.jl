@@ -1,6 +1,16 @@
 abstract type PositionVerletIntegrator <: InertialIntegrator end
 
+"""
+    PositionVerlet(force, M, Δt)
 
+Set up the position Verlet integrator.
+
+### Fields
+
+* force   - In place gradient of the potential
+* M     - Mass (either scalar or vector)
+* Δt    - Time step
+"""
 struct PositionVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: PositionVerletIntegrator
     force::FP
     M::TM

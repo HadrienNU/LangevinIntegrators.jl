@@ -160,6 +160,12 @@ module LangevinIntegratorsPlumedExt
         plumed_finalize(fix)
     end
 
+    """
+        addPlumed!(integrator,plumed_input_file::String, plumed_log_file::String="p.log"; temperature=1.0)
+
+    Set up plumed from plumed_input_file script and add it to the integrator as a fix
+
+    """
     function addPlumed!(integrator::AbstractIntegrator,plumed_input_file::String, plumed_log_file::String="p.log"; temperature=1.0)
         addFix!(integrator, plumed(plumed_input_file, plumed_log_file, integrator.dim, integrator.Δt; temperature=temperature))
     end

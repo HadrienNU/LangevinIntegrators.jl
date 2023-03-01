@@ -17,7 +17,6 @@ Set up the EM_Kernel integrator for underdamped Langevin with hidden variables.
 * C     - diffusion matrix
 * Δt    - Time step
 """
-
 function EM_Kernel(force::FP,  β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM}
     if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
