@@ -31,26 +31,25 @@ let
     # int_class = BBK
     # for (m,Δt) in enumerate(t_range)
     Δt=1e-3
-    for int_class in [BAOAB,OBABO,BBK,GJF,VEC]
-        params=TrajsParams(n_steps = 1e5, n_trajs = 15, n_save_iters = 1)
+    for int_class in [BAOAB,OBABO,BBK,GJF,VEC] #
+        params=TrajsParams(n_steps = 1e5, n_trajs = 50, n_save_iters = 1)
         println(String(Symbol(int_class))," ", Δt)
         integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
         trajs=run_trajectories(integrator; params = params,to_save=["x","v","v_mid"], init_conds_args=init_conds)
 
-        var_meanvel=zeros(size(lambda_range),2)
-        err_meanvel=zeros(size(lambda_range),2)
-        var_stdvel=zeros(size(lambda_range),3)
+        var_meanvel=zeros(length(lambda_range),2)
+        err_meanvel=zeros(length(lambda_range),2)
+        var_stdvel=zeros(length(lambda_range),2)
         for (n,lambda) in enumerate(lambda_range)
-            x = vcat([hact(velocity_diff(trj.xt[1][1:end,1],trj.xt[2][1:end,1],lambda, Δt)...) for trj in trajs]...)
+            x = vcat([hcat(velocity_diff(trj.xt[1][1:end,1],trj.xt[2][1:end,1],lambda, Δt)...) for trj in trajs]...)
             var_meanvel[n,:] = mean(x,dims=1)
             cov_mat = cov(x)
-            var_stdvel[n,1]=cov_mat[1,1]
-            var_stdvel[n,2]=cov_mat[1,2]
-            var_stdvel[n,3]=cov_mat[2,2]
+            var_stdvel[n,1]=cov_mat[1,1]/(Δt)
+            var_stdvel[n,2]=cov_mat[1,2]/(Δt)
             err_meanvel[n,:] =quantile(TDist(size(x)[1]-1), 1 - 0.05/2) * std(x,dims=1)/sqrt(size(x)[1])
         end
-         plot!(lambda_range, var_meanvel, yerr = err_meanvel,marker=(:circle,1),label="$(String(Symbol(int_class))) $Δt" )
-         plot!(lambda_range, var_stdvel, marker=(:auto,3),label="$(String(Symbol(int_class))) std" )
+         plot!(lambda_range, var_meanvel[:,1], marker=(:circle,10),label="$(String(Symbol(int_class))) $Δt" )
+         plot!(lambda_range, var_stdvel, marker=(:auto,10),label="$(String(Symbol(int_class))) std" )
     end
     xlabel!("λ")
     ylabel!("<vₜ aₜ>")
