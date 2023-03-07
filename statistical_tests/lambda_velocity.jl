@@ -26,12 +26,12 @@ let
     init_conds=Dict("position"=> Dict("type"=>"Cste"),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
     inspectdr()
 
-
-    plot()
+    plot(lambda_range, 2*(lambda_range.^2 + (1.0 .-lambda_range).^2)./3, label = "Theory")
+    plot!(lambda_range, -2 .*lambda_range.*(1.0 .-lambda_range)./6, label = "Theory")
     # int_class = BBK
     # for (m,Δt) in enumerate(t_range)
     Δt=1e-3
-    for int_class in [BAOAB,OBABO,BBK,GJF,VEC] #
+    for int_class in [BAOAB,OBABO,BBK,GJF,VEC] # 
         params=TrajsParams(n_steps = 1e5, n_trajs = 50, n_save_iters = 1)
         println(String(Symbol(int_class))," ", Δt)
         integrator=int_class(force, β , γ, 1.0, Δt, 1) # Change also initial conidition
