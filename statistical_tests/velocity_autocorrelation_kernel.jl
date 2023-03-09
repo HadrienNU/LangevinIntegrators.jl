@@ -22,7 +22,7 @@ let
     init_conds=Dict("position"=> Dict("type"=>"gaussian", "std"=> 1.0),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
     # inspectdr()
     plot(tps,exp.(-0.5*γ*tps).*(cos.(ω*tps)-0.5*γ/ω*sin.(ω*tps))/β, label="Theory")
-    for int_class in [BBK_Kernel,GJF_Kernel,EM_Kernel]
+    for int_class in [BBK_Kernel,GJF_Kernel]
         println(String(Symbol(int_class)))
         integrator=int_class(force, β , kernel, 1.0, Δt, 1)
 

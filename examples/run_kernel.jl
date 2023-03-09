@@ -16,7 +16,7 @@ tps = LinRange(0,div(params.n_steps,2)*Δt,div(params.n_steps,2)+1)
 kernel= exp.(-20.0*LinRange(0,500*1e-3, 500))
 β = 1.0
 
-integrator=BBK_Kernel(force, β , kernel[1:1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
+integrator=BBK_Kernel(force, β , kernel[1:1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel
 # integrator=BBK(force, β , kernel[1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
 init_conds = initialize_initcond(integrator, Dict())
 init_state = InitState(integrator, init_conds)

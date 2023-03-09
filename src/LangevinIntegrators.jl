@@ -70,9 +70,6 @@ include("integrators/boundary_conditions.jl")
 export SeparateSpace
 export noBC, PBC, ReflectingBC
 
-include("integrators/correlated_noise.jl")
-
-
 include("integrators/overdamped/overdamped_em.jl")
 export EM
 
@@ -104,8 +101,9 @@ include("integrators/hidden/hidden_aboba.jl")
 export ABOBA_Hidden
 
 #MemoryKernel
-include("integrators/kernel/kernel_em.jl")
-export EM_Kernel
+
+include("integrators/kernel/kernel_base.jl")
+
 include("integrators/kernel/kernel_bbk.jl")
 export BBK_Kernel
 include("integrators/kernel/kernel_g_jf.jl")
