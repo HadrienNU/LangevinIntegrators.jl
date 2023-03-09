@@ -51,14 +51,14 @@ function UpdateState!(state::MemoryKernelState, integrator::GJF_Kernel; kwargs..
     randn_correlated(state.ξ, integrator.σ_corr)
     memory_integral(state.memory, integrator)
 
-    state.v_mid = integrator.sc₁ * state.v + 0.5* integrator.d₁ *integrator.Δt*state.f/integrator.M + 0.5*integrator.d₁*(state.ξ.int_val-state.memory.int_val)
+    state.v_mid = integrator.sc₁ * state.v + 0.5* integrator.d₁ *integrator.Δt*state.f/integrator.M + 0.5*integrator.d₁*(state.ξ.int_val-integrator.Δt*state.memory.int_val)
 
     state.x = state.x .+ integrator.d₁*integrator.Δt * state.v_mid
 
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
-    state.v = (integrator.c₂ * state.v_mid +  0.5*integrator.d₁* integrator.Δt *state.f/integrator.M  + 0.5*integrator.d₁*(state.ξ.int_val-state.memory.int_val))/integrator.sc₁
+    state.v = (integrator.c₂ * state.v_mid +  0.5*integrator.d₁* integrator.Δt *state.f/integrator.M  + 0.5*integrator.d₁*(state.ξ.int_val-integrator.Δt*state.memory.int_val))/integrator.sc₁
 
     store_new_value(state.memory, state.v_mid)
 
