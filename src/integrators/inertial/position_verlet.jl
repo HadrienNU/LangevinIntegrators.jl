@@ -1,4 +1,3 @@
-abstract type PositionVerletIntegrator <: InertialIntegrator end
 
 """
     PositionVerlet(force, M, Δt)

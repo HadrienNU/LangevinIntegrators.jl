@@ -1,4 +1,3 @@
-abstract type VelocityVerletIntegrator <: InertialIntegrator end
 
 """
     VelocityVerlet(force, M, Δt)

@@ -1,7 +1,7 @@
 struct EM_Hidden{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <: HiddenIntegrator
     force::FP
     Δt::TF
-    S::AA
+    σ::AA
     friction_vv::Array{TF}
     friction_vh::Array{TF}
     friction_hv::Array{TF}
@@ -61,7 +61,7 @@ function UpdateState!(state::HiddenEMState, integrator::EM_Hidden; kwargs...)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.x .+= integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
-    gauss = integrator.S * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
+    gauss = integrator.σ * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
     friction_h = -integrator.friction_hv * state.v .- integrator.friction_hh * state.h
     state.v .+= -integrator.friction_vv * state.v .- integrator.friction_vh * state.h .+ integrator.Δt * state.f .+ gauss[1:integrator.dim]
     state.h .+= friction_h .+ gauss[1+integrator.dim:integrator.dim_tot] #gauss and friction should be taking Dt into account
