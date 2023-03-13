@@ -49,8 +49,9 @@ mutable struct HiddenABOBAState{TF<:AbstractFloat} <: AbstractMemoryHiddenState
     x_mid::Vector{TF}
     p_mid::Vector{TF}
     f_mid::Vector{TF}
+    ξ::Vector{TF}
     function HiddenABOBAState(x₀::Vector{TF}, v₀::Vector{TF}, h₀::Vector{TF},f::Vector{TF}) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, h₀, similar(x₀), similar(v₀), similar(v₀), f)
+        return new{TF}(x₀, v₀, h₀, similar(x₀), similar(v₀), f, similar(f))
     end
 end
 
@@ -68,11 +69,11 @@ function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs.
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
-    gauss = integrator.σ * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
+    state.ξ = integrator.σ * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
 
-    state.h = integrator.friction_hv * state.p_mid .+ integrator.friction_hh * state.h .+ gauss[1+integrator.dim:integrator.dim_tot]
+    @views state.h = integrator.friction_hv * state.p_mid .+ integrator.friction_hh * state.h .+ state.ξ[1+integrator.dim:integrator.dim_tot]
 
-    state.v = integrator.friction_vv * state.p_mid .+ integrator.friction_vh * state.h .+ 0.5 * integrator.Δt * state.f_mid .+ gauss[1:integrator.dim]
+    @views state.v = integrator.friction_vv * state.p_mid .+ integrator.friction_vh * state.h .+ 0.5 * integrator.Δt * state.f_mid .+ state.ξ[1:integrator.dim]
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
 

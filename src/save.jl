@@ -65,7 +65,7 @@ end
 function save_state(save::TrajectorySave, t::Float64, state::AbstractState; kwargs...)
     save.save_index += 1
     for (i,s) in enumerate(save.to_save)
-        save.xt[i][save.save_index,: ] = deepcopy(getfield(state,s))
+        save.xt[i][save.save_index,: ] .= deepcopy(getfield(state,s))
     end
     save.time[save.save_index] = t
     # On peut faire quelque pour enregistrer dans un fichier tous les nb pas de temps, on remet alors save_index à 1
