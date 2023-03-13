@@ -17,7 +17,8 @@ kernel= exp.(-20.0*LinRange(0,500*1e-3, 500))
 β = 1.0
 
 # integrator=BBK_Kernel(force, β , kernel[1:1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
-integrator=OBABO(force, β , kernel[1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
+integrator=GJF(force, β , kernel[1], 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
+#integrator=Verlet(force, 1.0, Δt, 1)  #BBK_Kernel,GJF_Kernel,EM_Kernel
 init_conds = initialize_initcond(integrator, Dict())
 init_state = InitState(integrator, init_conds)
 

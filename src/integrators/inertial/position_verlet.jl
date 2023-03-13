@@ -1,4 +1,3 @@
-abstract type PositionVerletIntegrator <: InertialIntegrator end
 
 """
     PositionVerlet(force, M, Δt)
@@ -81,7 +80,7 @@ function UpdateState!(state::PositionVerletState, integrator::PositionVerlet; kw
     apply_space!(integrator.bc,state.x_mid,state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     # Au passage il faudra rajouter ici un terme de métrique quand il est présent
-    state.v =  state.v  .+  integrator.Δt / integrator.M * state.f_mid
+    state.v .+= integrator.Δt / integrator.M * state.f_mid
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
     return nostop
@@ -94,8 +93,8 @@ function UpdateState!(state::PositionVerletState, integrator::ABOBA; kwargs...)
     apply_space!(integrator.bc,state.x_mid,state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     # Au passage il faudra rajouter ici un terme de métrique quand il est présent
-    state.ξ = integrator.σ *randn(integrator.dim)
-    state.v =  integrator.c₂ .* (state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid) .+ 0.5 * integrator.Δt / integrator.M * state.f_mid +  state.ξ
+    state.ξ .= integrator.σ *randn(integrator.dim)
+    state.v .=  integrator.c₂ * (state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid) .+ 0.5 * integrator.Δt / integrator.M * state.f_mid .+  state.ξ
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
     apply_space!(integrator.bc,state.x,state.v)
 

@@ -65,7 +65,7 @@ end
     int_linear = read_integrator_hidden_npz("test_linear_force.npz")
 
     @test int_linear.dim_tot == 2
-    @test size(int_linear.S) == (2, 2)
+    @test size(int_linear.σ) == (2, 2)
     @test int_linear.friction_hv[1, 1] ≈ -0.024106487767047175
     @test int_linear.friction_hh[1, 1] ≈ 0.0147817703
 

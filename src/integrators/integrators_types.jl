@@ -4,8 +4,14 @@ abstract type AbstractIntegrator end
 abstract type OverdampedIntegrator <: AbstractIntegrator end
 abstract type HiddenOverdampedIntegrator <: OverdampedIntegrator end
 abstract type KernelOverdampedIntegrator <: OverdampedIntegrator end
+
 abstract type InertialIntegrator <: AbstractIntegrator end
+abstract type VelocityVerletIntegrator <: InertialIntegrator end
+abstract type PositionVerletIntegrator <: InertialIntegrator end
+
 abstract type HiddenIntegrator <: InertialIntegrator end
+abstract type HiddenVelocityVerletIntegrator <: HiddenIntegrator end
+
 abstract type KernelIntegrator <: InertialIntegrator end
 
 

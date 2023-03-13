@@ -5,7 +5,7 @@ struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
     M::TM
     Δt::TF
     c₂::TF
-    sc1::TF
+    sc₁::TF
     d₁::TF
     σ::TF
     dim::Int64
@@ -62,25 +62,25 @@ function GJ(force::FP, β::TF, γ::TF, M::TM, Δt::TF, type="I", dim::Int64=1, b
     else # Raise an error
         println("Unknown GJ type")
     end
-    sc1 = sqrt((1+c₂)/2)
+    sc₁ = sqrt((1+c₂)/2)
     d₁  = sqrt((1-c₂)/a)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
-    return GJ(force, β, γ, M, Δt, c₂, sc1, d₁, σ, dim, bc)
+    return GJ(force, β, γ, M, Δt, c₂, sc₁, d₁, σ, dim, bc)
 end
 
-# A passer en forme compact
+
 function UpdateState!(state::VelocityVerletState, integrator::GJ; kwargs...)
 
-    state.ξ = integrator.σ *randn(integrator.dim)
+    state.ξ .= integrator.σ * randn(integrator.dim)
 
-    state.v_mid = integrator.sc1 * state.v + 0.5*integrator.d₁ *integrator.Δt*state.f/integrator.M + 0.5*integrator.d₁*state.ξ
+    state.v_mid .= integrator.sc₁ * state.v .+ 0.5*integrator.d₁ *integrator.Δt*state.f/integrator.M .+ 0.5*integrator.d₁*state.ξ
 
-    state.x = state.x .+ integrator.d₁*integrator.Δt * state.v_mid
+    state.x .+= integrator.d₁*integrator.Δt * state.v_mid
 
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
-    state.v = (integrator.c₂ * state.v_mid +  0.5*integrator.d₁* integrator.Δt *state.f/integrator.M  + 0.5*integrator.d₁*state.ξ)/integrator.sc1
+    state.v .= (integrator.c₂ * state.v_mid .+  0.5*integrator.d₁* integrator.Δt *state.f/integrator.M  .+ 0.5*integrator.d₁*state.ξ)/integrator.sc₁
 
 
 

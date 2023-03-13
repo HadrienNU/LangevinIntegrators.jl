@@ -24,10 +24,6 @@ const SUITE = BenchmarkGroup()
 SUITE["integrator_kernel"] = BenchmarkGroup(["run"])
 #Benchmark for Kernel integrator
 kernel= exp.(-20.0*LinRange(0,500*Δt, 500))
-integrator_kernelem=EM_Kernel(force, β , kernel, 1.0, Δt, 1)
-init_conds=initialize_initcond(integrator_kernelem,init_conds_args)
-state_kernelem=InitState(integrator_kernelem, init_conds)
-SUITE["integrator_kernel"]["run_EM"] = @benchmarkable run_trajectory!($state_kernelem, $integrator_kernelem; params = $params)
 
 integrator_kernelbbk=BBK_Kernel(force, β , kernel, 1.0, Δt, 1)
 init_conds=initialize_initcond(integrator_kernelbbk,init_conds_args)
@@ -38,4 +34,3 @@ integrator_kernelgjf=GJF_Kernel(force, β , kernel, 1.0, Δt, 1)
 init_conds=initialize_initcond(integrator_kernelgjf,init_conds_args)
 state_kernelgjf=InitState(integrator_kernelgjf, init_conds)
 SUITE["integrator_kernel"]["run_GJF"] = @benchmarkable run_trajectory!($state_kernelgjf, $integrator_kernelgjf; params = $params)
-

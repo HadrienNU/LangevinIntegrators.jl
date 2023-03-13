@@ -76,12 +76,12 @@ end
 
 function UpdateState!(state::VelocityVerletState, integrator::BBK; kwargs...)
     # state.ξ = integrator.σ * randn(integrator.dim)
-    state.v_mid = integrator.c₀ * state.v .+ 0.5 * integrator.Δt / integrator.M * state.f  .+ 0.5*state.ξ
-    @. state.x = state.x + integrator.Δt * state.v_mid
+    state.v_mid .= integrator.c₀ * state.v .+ 0.5 * integrator.Δt / integrator.M * state.f  .+ 0.5*state.ξ
+    @. state.x += integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.ξ = integrator.σ * randn(integrator.dim)
-    state.v = integrator.c₁ *(state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f + 0.5*state.ξ)
+    state.ξ .= integrator.σ * randn(integrator.dim)
+    state.v .= integrator.c₁ * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ 0.5*state.ξ)
     return nostop
 end
 
@@ -89,12 +89,12 @@ end
 
 
 function UpdateState!(state::VelocityVerletState, integrator::VEC; kwargs...)
-    state.ξ = integrator.σ * randn(integrator.dim)
-    state.ξ₂ = integrator.σ * randn(integrator.dim)
-    state.v_mid = integrator.sc₂ * state.v .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
-    @. state.x = state.x + integrator.Δt * (state.v_mid + (0.5/sqrt(3))*state.ξ₂)
+    state.ξ .= integrator.σ * randn.(integrator.dim)
+    state.ξ₂ .= integrator.σ * randn.(integrator.dim)
+    state.v_mid .= integrator.sc₂ * state.v .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ .+ integrator.d₂*state.ξ₂
+    @. state.x += integrator.Δt * (state.v_mid + (0.5/sqrt(3))*state.ξ₂)
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v = integrator.sc₂ * state.v_mid .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ + integrator.d₂*state.ξ₂
+    state.v .= integrator.sc₂ * state.v_mid .+ integrator.c₁* state.f  .+ integrator.d₁*state.ξ .+ integrator.d₂*state.ξ₂
     return nostop
 end

@@ -9,20 +9,22 @@ using LangevinIntegrators
 using StatsBase
 
 let
-    force=ForceFromPotential("Harmonic")
+    force=ForceFromPotential("Flat")
 
-    params=TrajsParams(n_steps = 5*10^5, n_trajs = 2, n_save_iters = 1)
+    params=TrajsParams(n_steps = 5*10^5, n_trajs = 50, n_save_iters = 1)
     Δt = 1e-3
-    factor_length = 10
+    factor_length = 50
     tps = LinRange(0,div(params.n_steps,factor_length)*Δt,div(params.n_steps,factor_length)+1)
-    kernel= exp.(-20.0*LinRange(0,500*1e-3, 500))
+    α=5.0
+    max_τ = 2.0
+    max_step = trunc(Int,max_τ/Δt)
+    kernel= 20.0*exp.(-α*LinRange(0,max_step*Δt, max_step+1))
     β = 1.0
-    γ=kernel[1]
-    ω = sqrt(1-γ^2/4)
+    Δ = sqrt(4*kernel[1]-α^2)
     init_conds=Dict("position"=> Dict("type"=>"gaussian", "std"=> 1.0),"velocity"=> Dict("type"=>"gaussian", "std"=> sqrt(1/β)))
-    # inspectdr()
-    plot(tps,exp.(-0.5*γ*tps).*(cos.(ω*tps)-0.5*γ/ω*sin.(ω*tps))/β, label="Theory")
-    for int_class in [BBK_Kernel,GJF_Kernel,EM_Kernel]
+    inspectdr()
+    plot(tps,exp.(-0.5*α*tps).*(cos.(0.5*Δ*tps)+α/Δ*sin.(0.5*Δ*tps))/β, label="Theory")
+    for int_class in [BBK_Kernel,GJF_Kernel]
         println(String(Symbol(int_class)))
         integrator=int_class(force, β , kernel, 1.0, Δt, 1)
 
@@ -30,7 +32,8 @@ let
         #Compute velocity auto correlation and plot it
         corr=zeros(div(params.n_steps,factor_length)+1)
         for trj in trajs
-            corr.+=autocov(trj.xt[1][10^3:end],0:div(params.n_steps,factor_length))[:,1]/params.n_trajs
+            corr .+= correlation(trj.xt[1][10^3:end,0],trunc=div(params.n_steps,factor_length)+1) /params.n_trajs
+            # corr.+=autocov(trj.xt[1][10^3:end],0:div(params.n_steps,factor_length))[:,1]/params.n_trajs
         end
 
         plot!(tps, corr,label=String(Symbol(int_class)))

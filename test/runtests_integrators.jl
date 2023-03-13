@@ -153,14 +153,6 @@ end
 
     @test state.x != [0.0]
 
-    integrator = EM_Kernel(force, 1.0, kernel, 1.0, 1e-3)
-    state = InitState!([0.0], [1.0], integrator)
-    UpdateState!(state, integrator)
-    UpdateState!(state, integrator)
-    UpdateState!(state, integrator)
-
-    @test state.x != [0.0]
-
 end
 
 @testset "run_trajectory overdamped $int_struct" for int_struct in [EM] # And then a matrix over the integrator

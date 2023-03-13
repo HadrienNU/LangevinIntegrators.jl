@@ -46,7 +46,7 @@ end
 
 function UpdateState!(state::EMState, integrator::EM; kwargs...)
 
-    state.x = state.x .+ integrator.Δt .* state.f .+ integrator.σ .* randn(integrator.dim)
+    state.x .+= integrator.Δt .* state.f .+ integrator.σ * randn(integrator.dim)
     apply_space!(integrator.bc,state.x)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
