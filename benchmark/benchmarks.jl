@@ -36,6 +36,11 @@ init_conds=initialize_initcond(integrator_bbk,init_conds_args)
 state_bbk=InitState(integrator_bbk, init_conds)
 SUITE["integrator_inertial"]["run_BBK"] = @benchmarkable run_trajectory!($state_bbk, $integrator_bbk; params = $params)
 
+integrator_vec=VEC(force, β, 1.0, 1.0, Δt)
+state_vec=InitState(integrator_vec, init_conds)
+SUITE["integrator_inertial"]["run_VEC"] = @benchmarkable run_trajectory!($state_vec, $integrator_vec; params = $params)
+
+
 integrator_gjf=GJF(force, β, 1.0, 1.0, Δt)
 state_gjf=InitState(integrator_gjf, init_conds)
 SUITE["integrator_inertial"]["run_GJF"] = @benchmarkable run_trajectory!($state_gjf, $integrator_gjf; params = $params)
@@ -48,7 +53,12 @@ integrator_baoab=BAOAB(force, β, 1.0, 1.0, Δt)
 state_baoab=InitState(integrator_baoab, init_conds)
 SUITE["integrator_inertial"]["run_BAOAB"] = @benchmarkable run_trajectory!($state_baoab, $integrator_baoab; params = $params)
 
-integrator_verlet=Verlet(force, β, Δt)
+integrator_obabo=OBABO(force, β, 1.0, 1.0, Δt)
+state_obabo=InitState(integrator_obabo, init_conds)
+SUITE["integrator_inertial"]["run_OBABO"] = @benchmarkable run_trajectory!($state_obabo, $integrator_obabo; params = $params)
+
+
+integrator_verlet=Verlet(force, 1.0, Δt)
 state_verlet=InitState(integrator_verlet, init_conds)
 SUITE["integrator_inertial"]["run_Verlet"] = @benchmarkable run_trajectory!($state_verlet, $integrator_verlet; params = $params)
 

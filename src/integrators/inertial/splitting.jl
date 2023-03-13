@@ -68,12 +68,12 @@ end
 
 function UpdateState!(state::VelocityVerletState, integrator::BAOAB; kwargs...)
 
-    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
-    state.ξ = integrator.σ .* randn(integrator.dim)
-    @. state.x = state.x .+ 0.5 * integrator.Δt * state.v_mid + 0.5 * integrator.Δt * (integrator.c₂ .* state.v_mid .+ state.ξ)
+    state.v_mid .= state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
+    state.ξ .= integrator.σ * randn(integrator.dim)
+    state.x .+= 0.5 * integrator.Δt * state.v_mid .+ 0.5 * integrator.Δt * (integrator.c₂ .* state.v_mid .+ state.ξ)
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v = integrator.c₂ * state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ
+    state.v .= integrator.c₂ * state.v_mid  .+ 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ
 
     return nostop
 end
@@ -82,13 +82,13 @@ end
 
 function UpdateState!(state::VelocityVerletState, integrator::OBABO; kwargs...)
 
-    state.ξ₂ = integrator.σ .* randn(integrator.dim)
-    state.v_mid = integrator.cc₂*state.v .+ 0.5 * integrator.Δt / integrator.M * state.f + state.ξ₂
-    @. state.x = state.x .+ integrator.Δt * state.v_mid
+    state.ξ₂ .= integrator.σ * randn(integrator.dim)
+    state.v_mid .= integrator.cc₂*state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ₂
+    @. state.x += integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x,state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.ξ = integrator.σ .* randn(integrator.dim)
-    state.v = integrator.cc₂ * (state.v_mid  + 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
+    state.ξ .= integrator.σ * randn(integrator.dim)
+    state.v .= integrator.cc₂ * (state.v_mid  .+ 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
 
     return nostop
 end

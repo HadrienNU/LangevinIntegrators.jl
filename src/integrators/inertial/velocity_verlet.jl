@@ -51,10 +51,10 @@ end
 
 
 function UpdateState!(state::VelocityVerletState, integrator::VelocityVerlet; kwargs...)
-    state.v_mid = state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
-    @. state.x = state.x + integrator.Δt * state.v_mid
+    state.v_mid .= state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
+    @. state.x += integrator.Δt * state.v_mid
     apply_space!(integrator.bc,state.x, state.v_mid)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v = state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
+    state.v .= state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
     return nostop
 end

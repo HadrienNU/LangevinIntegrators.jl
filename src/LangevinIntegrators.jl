@@ -128,4 +128,8 @@ export run_trajectory!
 export run_trajectories
 export run_fpt, run_transitions
 
+include("utils.jl")
+
+export correlation
+
 end

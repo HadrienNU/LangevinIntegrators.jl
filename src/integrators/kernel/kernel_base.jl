@@ -8,7 +8,7 @@ mutable struct CircularVector{TF<:AbstractFloat} # TODO replace the vector by a 
         if length(values) <1
             throw(ArgumentError("CircularVector cannot be not empty"))
         end
-        return new{TF}(values,similar(values[1]),length(values),length(values),length(values[1]))
+        return new{TF}(values,similar(values[1]),1,length(values),length(values[1]))
     end
 end
 
@@ -28,6 +28,7 @@ function Base.getindex(vec::CircularVector,ind::Int)
     return vec.values[1+(ind+vec.curr_ind-1)%length(vec)]
 end
 
+
 function store_new_value(vec::CircularVector, val::Vector{TF}) where {TF<:AbstractFloat}
     vec.curr_ind -= 1
     if vec.curr_ind == 0
@@ -40,7 +41,7 @@ end
 function randn_correlated(noise_vec::CircularVector, σ_corr::Array{TF}) where {TF<:AbstractFloat}
     # Compute the next correlated gaussian noise
     store_new_value(noise_vec,randn(noise_vec.dim))
-    noise_vec.int_val = zeros(noise_vec.dim)
+    noise_vec.int_val[:] .= 0. #zeros(noise_vec.dim)
     for l in 1:noise_vec.dim, k in 1:noise_vec.dim
         for i in 1:size(σ_corr,1)
             @inbounds noise_vec.int_val[k] += σ_corr[i,k,l]*noise_vec[i][l]
@@ -56,10 +57,21 @@ end
 
 
 function memory_integral(vt::CircularVector, integrator::MKI) where {MKI <: KernelIntegrator} # Keep integrator as argument as it allow to specialize the function if needed for various integrator
-    vt.int_val = zeros(vt.dim)
+    vt.int_val[:] .= 0. #zeros(vt.dim)
     for l in 1:vt.dim, k in 1:vt.dim
-        for i in 2:(size(integrator.kernel,1))
+        for i in 2:size(integrator.kernel,1)
             @inbounds vt.int_val[k] += integrator.kernel[i,k,l]*vt[i][l]
+        end
+    end
+    vt.int_val*=integrator.Δt
+    return vt.int_val
+end
+
+function memory_integral(vt::CircularVector, kernel::Array{TF}, Δt::TF) where {TF<:AbstractFloat}
+    vt.int_val[:] .= 0. # zeros(vt.dim)
+    for l in 1:vt.dim, k in 1:vt.dim
+        for i in 2:size(kernel,1)
+            @inbounds vt.int_val[k] += kernel[i,k,l]*vt[i][l]* Δt
         end
     end
     return vt.int_val
