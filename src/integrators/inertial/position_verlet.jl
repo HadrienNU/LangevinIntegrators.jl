@@ -10,27 +10,27 @@ Set up the position Verlet integrator.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-struct PositionVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: PositionVerletIntegrator
+struct PositionVerlet{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: PositionVerletIntegrator
     force::FP
-    M::TM
+    M::TFM
     Δt::TF
-    σ::TF
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
-    function PositionVerlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-        new{FP,TF,TM}(force, M, Δt, zero(M), dim, bc)
+    function PositionVerlet(force::FP, M::TFM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}}
+        new{FP,TF,TFM}(force, M, Δt, zero(M), dim, bc)
     end
 end
 
 
-struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat,TM} <: PositionVerletIntegrator
+struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: PositionVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    c₂::TF
-    σ::TF
+    c₂::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -48,7 +48,7 @@ Set up the ABOBA integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function ABOBA(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function ABOBA(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(-2 * γ * Δt)) / β) / sqrt(M)
     return ABOBA(force, β, γ, M, Δt, c₂, σ, dim, bc)
@@ -60,7 +60,7 @@ mutable struct PositionVerletState{TF<:AbstractFloat} <: AbstractInertialState
     x_mid::Vector{TF}
     f_mid::Vector{TF}
     ξ::Vector{TF}
-    function PositionVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TF) where {TF<:AbstractFloat}
+    function PositionVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TFM) where {TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}}
         return new{TF}(x₀, v₀, similar(x₀), f, σ*randn(length(f)))
     end
 end

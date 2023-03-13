@@ -1,13 +1,13 @@
-struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct BBK{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    c₀::TF
-    c₁::TF
-    c₂::TF
-    σ::TF
+    c₀::TFM
+    c₁::TFM
+    c₂::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -25,7 +25,7 @@ Set up the BBK integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BBK(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BBK(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     c₀ = (1 - 0.5 * Δt * γ / M)
     c₁ = 1.0 / (1 + 0.5 * Δt * γ / M)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
@@ -33,18 +33,18 @@ function BBK(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{
     return BBK(force, β, γ, M, Δt, c₀, c₁, c₂, σ, dim, bc)
 end
 
-struct VEC{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct VEC{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    c₁::TF
-    sc₂::TF
-    d₁::TF
-    d₂::TF
-    c₂::TF
-    σ::TF
+    c₁::TFM
+    sc₂::TFM
+    d₁::TFM
+    d₂::TFM
+    c₂::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -63,7 +63,7 @@ Taken from "Second-order integrators for Langevin equations with holonomic const
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function VEC(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function VEC(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     sc₂ = (1 - 0.5 * γ * Δt/ M +  0.125*(γ * Δt)^2/ M)
     c₁ =  0.5 * Δt *(1 - 0.25 * γ * Δt) / M
     d₁ = 0.5 *(1 - 0.25 * γ * Δt)

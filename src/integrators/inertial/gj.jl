@@ -1,13 +1,13 @@
-struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct GJ{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    c₂::TF
-    sc₁::TF
-    d₁::TF
-    σ::TF
+    c₂::TFM
+    sc₁::TFM
+    d₁::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -25,7 +25,7 @@ Set up the G-JF integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF(force::FP, β::TF, γ::TF, M::TM, Δt::TF,  dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJF(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF,  dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     return GJ(force, β, γ, M, Δt, "I", dim, bc)
 end
 
@@ -44,7 +44,7 @@ Use type to select the approriate integrator
 * Δt    - Time step
 * type - Choice of the integrator should be one of "I","II","III","IV","V","VI"
 """
-function GJ(force::FP, β::TF, γ::TF, M::TM, Δt::TF, type="I", dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJ(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, type="I", dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     #Faire un switch sur les valeur de type pour avoir les coeffs des autres GJ
     a = γ * Δt/ M
     if type == "I"

@@ -1,13 +1,13 @@
-struct GJF_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TM} <: KernelIntegrator
+struct GJF_Kernel{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: KernelIntegrator
     force::FP
     β::TF
     kernel::Array{TF}
     σ_corr::Array{TF}
-    M::TM
+    M::Union{TF,TFM}
     Δt::TF
-    c₂::TF
-    sc₁::TF
-    d₁::TF
+    c₂::TFM
+    sc₁::TFM
+    d₁::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -27,7 +27,7 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function GJF_Kernel(force::FP, β::TF, kernel::Array{TF}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM<:AbstractMatrix{TF}}
     if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end

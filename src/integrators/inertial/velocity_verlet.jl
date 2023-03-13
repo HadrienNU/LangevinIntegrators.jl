@@ -10,19 +10,19 @@ Set up the velocity Verlet integrator.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-struct VelocityVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct VelocityVerlet{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
-    M::TM
+    M::TFM
     Δt::TF
-    σ::TF
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
-    function VelocityVerlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
-        new{FP,TF,TM}(force, M, Δt, zero(M), dim, bc)
+    function VelocityVerlet(force::FP, M::TFM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}}
+        new{FP,TF,TFM}(force, M, Δt, zero(M), dim, bc)
     end
 end
 
-function Verlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing)  where {FP<:AbstractForce,TF<:AbstractFloat,TM}  # Equivalence of Verlet and VelocityVerlet
+function Verlet(force::FP, M::TFM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing)  where {FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}}  # Equivalence of Verlet and VelocityVerlet
     return VelocityVerlet(force, M, Δt, dim, bc)
 end
 
@@ -34,7 +34,7 @@ mutable struct VelocityVerletState{TF<:AbstractFloat} <: AbstractInertialState
     f::Vector{TF}
     ξ::Vector{TF}
     ξ₂::Vector{TF}
-    function VelocityVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TF) where {TF<:AbstractFloat}
+    function VelocityVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TFM) where {TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}}
         return new{TF}(x₀, v₀, similar(v₀), f, σ*randn(length(f)), σ*randn(length(f)))
     end
 end

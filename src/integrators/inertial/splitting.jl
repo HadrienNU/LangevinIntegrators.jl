@@ -1,11 +1,11 @@
-struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    c₂::TF
-    σ::TF
+    c₂::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -23,22 +23,22 @@ Set up the BAOAB integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BAOAB(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function BAOAB(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(-2 * γ * Δt)) / β) / sqrt(M)
     return BAOAB(force, β, γ, M, Δt, c₂, σ, dim, bc)
 end
 
 
-struct OBABO{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletIntegrator
+struct OBABO{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
     force::FP
     β::TF
-    γ::TF
-    M::TM
+    γ::TFM
+    M::Union{TF,TFM}
     Δt::TF
-    cc₂::TF
-    c₂::TF
-    σ::TF
+    cc₂::TFM
+    c₂::TFM
+    σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
 end
@@ -57,7 +57,7 @@ Set up the OBABO integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function OBABO(force::FP, β::TF, γ::TF, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+function OBABO(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
     cc₂ = exp(-0.5 * Δt * γ) / M
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(- γ * Δt)) / β)  / sqrt(M)
