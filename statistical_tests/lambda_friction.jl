@@ -11,11 +11,33 @@ using Distributions
 """
 Compute on one traj the wanted observable
 """
-function scalar_product(xt, lambda,Δt, γ)
+function scalar_product(xt, vt, lambda,Δt, γ)
     acc = (xt[3:end]-2*xt[2:end-1]+xt[1:end-2])/ (Δt^2)
     ut0 = (xt[2:end-1]-xt[1:end-2])/Δt
     ut = lambda*(xt[3:end]-xt[2:end-1])/Δt+ (1.0 -lambda)*(xt[2:end-1]-xt[1:end-2])/Δt
-    return ut.*acc+γ*ut.*ut
+    # acc = (ut[2:end]-ut[1:end-1])/ Δt
+    # return ut.*(acc.+γ*ut)
+    # return ut[1:end-1].*(((ut[2:end]-ut[1:end-1])/ Δt)+γ*ut[1:end-1])
+    # return (((ut[2:end]-ut[1:end-1])/ Δt)+γ*ut[1:end-1]).^2
+    # return (((ut[2:end]-ut[1:end-1])/ Δt)+γ*ut0[1:end-1]).*ut0[1:end-1]
+    return (vt[3:end-1]-ut[2:end]).*(vt[2:end-2]-ut[1:end-1])
+end
+
+
+function likelihood_vec(xt, lambda,Δt, γ)
+    acc = (xt[3:end]-2*xt[2:end-1]+xt[1:end-2])/ (Δt^2)
+    ut1 = (xt[3:end]-xt[2:end-1])/Δt
+    ut = lambda*(xt[3:end]-xt[2:end-1])/Δt+ (1.0 -lambda)*(xt[2:end-1]-xt[1:end-2])/Δt
+    left = ut-ut1
+    return left.*(2*ut1/Δt-acc)+γ*left.*left
+    # return ut.*ut
+end
+
+
+function likelihood(xt, lambda,Δt, γ)
+    acc = (xt[3:end]-2*xt[2:end-1]+xt[1:end-2])/ (Δt^2)
+    ut = lambda*(xt[3:end]-xt[2:end-1])/Δt+ (1.0 -lambda)*(xt[2:end-1]-xt[1:end-2])/Δt
+    return ((ut[2:end]+(γ-1)*ut[1:end-1]).^2)
     # return ut.*ut
 end
 
@@ -49,19 +71,19 @@ let
 
         c2 = (1.0-integrator.c₂)/Δt
 
-        x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[2][:,1], Δt, c2) for trj in trajs]...)
-        val_velocity = mean(x)
-        err_vel = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
-        x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[3][:,1], Δt, c2) for trj in trajs]...)
-        val_velocity_mid = mean(x)
-        err_vel_mid = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
-        plot!(lambda_range, val_velocity*ones(length(lambda_range)), yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
-        plot!(lambda_range, val_velocity_mid*ones(length(lambda_range)), yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
+        # x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[2][:,1], Δt, c2) for trj in trajs]...)
+        # val_velocity = mean(x)
+        # err_vel = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
+        # x = vcat([scalar_product_vel(trj.xt[1][:,1],trj.xt[3][:,1], Δt, c2) for trj in trajs]...)
+        # val_velocity_mid = mean(x)
+        # err_vel_mid = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
+        # plot!(lambda_range, val_velocity*ones(length(lambda_range)), yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
+        # plot!(lambda_range, val_velocity_mid*ones(length(lambda_range)), yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
 
         var_scalar_product=zeros(size(lambda_range))
         err_scalar_product=zeros(size(lambda_range))
         for (n,lambda) in enumerate(lambda_range)
-            x = vcat([scalar_product(trj.xt[1][1:every:end,1],lambda, every*Δt, c2) for trj in trajs]...)
+            x = vcat([scalar_product(trj.xt[1][1:every:end,1],trj.xt[2][1:every:end,1],lambda, every*Δt, c2) for trj in trajs]...)
             var_scalar_product[n] = mean(x)
             err_scalar_product[n] =quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
         end
