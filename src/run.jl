@@ -5,7 +5,11 @@ Launch the trajectories
 =#
 
 
-function generate_initial_conditions(integrator::S; params = TrajsParams(), init_conds_args = Dict()) where {S<:AbstractIntegrator}
+function generate_initial_conditions(
+    integrator::S;
+    params = TrajsParams(),
+    init_conds_args = Dict(),
+) where {S<:AbstractIntegrator}
     init_conds = initialize_initcond(integrator, init_conds_args)
     state = InitState(integrator, init_conds; id = 1) # To get the type of the state
     init_states = Vector{typeof(state)}(undef, params.n_trajs)
@@ -24,7 +28,13 @@ evolve in time one trajectory starting at state and integrated by integrator
 * state   - Initial State
 * integrator    - Friction matrix
 """
-function run_trajectory!(state::IS, integrator::S, save_traj::Union{AbstractSave,Nothing} = nothing; params = TrajsParams(), kwargs...) where {IS<:AbstractState,S<:AbstractIntegrator}
+function run_trajectory!(
+    state::IS,
+    integrator::S,
+    save_traj::Union{AbstractSave,Nothing} = nothing;
+    params = TrajsParams(),
+    kwargs...,
+) where {IS<:AbstractState,S<:AbstractIntegrator}
     n = 0
     for fix in integrator.force.fixes
         init_fix(fix; kwargs...)
@@ -54,8 +64,17 @@ end
 """
 For launching a bunch of trajectories. For distributed computing see examples
 """
-function run_trajectories(integrator::S; params = TrajsParams(), init_conds_args = Dict(), kwargs...) where {S<:AbstractIntegrator}
-    init_states = generate_initial_conditions(integrator; params = params, init_conds_args = init_conds_args)
+function run_trajectories(
+    integrator::S;
+    params = TrajsParams(),
+    init_conds_args = Dict(),
+    kwargs...,
+) where {S<:AbstractIntegrator}
+    init_states = generate_initial_conditions(
+        integrator;
+        params = params,
+        init_conds_args = init_conds_args,
+    )
     #To make the system threadsafe, we have to copy the integrator into nthreads copy, and provide one copy per thread
     if Threads.nthreads() > 1
         integrators_set = [deepcopy(integrator) for n = 1:Threads.nthreads()]
@@ -63,17 +82,40 @@ function run_trajectories(integrator::S; params = TrajsParams(), init_conds_args
         integrators_set = [integrator]
     end
     #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
-    save_trajs = Array{AbstractSave}(undef,params.n_trajs)
+    save_trajs = Array{AbstractSave}(undef, params.n_trajs)
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
-        save_trajs[n] = TrajectorySave(params.n_save_iters, params.save_filename_pattern, n, params.n_steps, init_states[n]; kwargs...)
-        run_trajectory!(init_states[n], integrators_set[Threads.threadid()], save_trajs[n]; params = params, id_traj=n, kwargs...)
+        save_trajs[n] = TrajectorySave(
+            params.n_save_iters,
+            params.save_filename_pattern,
+            n,
+            params.n_steps,
+            init_states[n];
+            kwargs...,
+        )
+        run_trajectory!(
+            init_states[n],
+            integrators_set[Threads.threadid()],
+            save_trajs[n];
+            params = params,
+            id_traj = n,
+            kwargs...,
+        )
     end
     return save_trajs # This is a set of trajectories
 end
 
 
-function run_fpt(integrator::S; params = TrajsParams(), init_conds_args = Dict(), kwargs...) where {S<:AbstractIntegrator}
-    init_states = generate_initial_conditions(integrator; params = params, init_conds_args = init_conds_args)
+function run_fpt(
+    integrator::S;
+    params = TrajsParams(),
+    init_conds_args = Dict(),
+    kwargs...,
+) where {S<:AbstractIntegrator}
+    init_states = generate_initial_conditions(
+        integrator;
+        params = params,
+        init_conds_args = init_conds_args,
+    )
     #To make the system threadsafe, we have to copy the integrator into nthreads copy, and provide one copy per thread
     if Threads.nthreads() > 1
         integrators_set = [deepcopy(integrator) for n = 1:Threads.nthreads()]
@@ -81,11 +123,18 @@ function run_fpt(integrator::S; params = TrajsParams(), init_conds_args = Dict()
         integrators_set = [integrator]
     end
 
-    reached = Array{Bool}(undef,params.n_trajs)
-    fpt=Array{Float64}(undef,params.n_trajs)
+    reached = Array{Bool}(undef, params.n_trajs)
+    fpt = Array{Float64}(undef, params.n_trajs)
 
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
-        finaltime, stoppingCriterion = run_trajectory!(init_states[n], integrators_set[Threads.threadid()], nothing; params = params, id_traj=n, kwargs...)
+        finaltime, stoppingCriterion = run_trajectory!(
+            init_states[n],
+            integrators_set[Threads.threadid()],
+            nothing;
+            params = params,
+            id_traj = n,
+            kwargs...,
+        )
         reached[n] = (stoppingCriterion != 0)
         fpt[n] = finaltime
     end
@@ -93,8 +142,19 @@ function run_fpt(integrator::S; params = TrajsParams(), init_conds_args = Dict()
 end
 
 
-function run_transitions(integrator::S, x0, x1; params = TrajsParams(), init_conds_args = Dict(), kwargs...) where {S<:LangevinIntegrators.AbstractIntegrator}
-    init_states = generate_initial_conditions(integrator; params = params, init_conds_args = init_conds_args)
+function run_transitions(
+    integrator::S,
+    x0,
+    x1;
+    params = TrajsParams(),
+    init_conds_args = Dict(),
+    kwargs...,
+) where {S<:LangevinIntegrators.AbstractIntegrator}
+    init_states = generate_initial_conditions(
+        integrator;
+        params = params,
+        init_conds_args = init_conds_args,
+    )
     #To make the system threadsafe, we have to copy the integrator into nthreads copy, and provide one copy per thread
     if Threads.nthreads() > 1
         integrators_set = [deepcopy(integrator) for n = 1:Threads.nthreads()]
@@ -102,10 +162,20 @@ function run_transitions(integrator::S, x0, x1; params = TrajsParams(), init_con
         integrators_set = [integrator]
     end
     #Il faudrait aussi faire un truc pour créer un dossier par thread pour écrire les fichiers pour que ça ne se marche pas dessus (notamment pour plumed)
-    save_trajs = [TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...) for n = 1:params.n_trajs]
+    save_trajs = [
+        TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...) for
+        n = 1:params.n_trajs
+    ]
     Threads.@threads for n = 1:params.n_trajs # If there is only only Thread that would be serial
         # save_trajs[n] = TransitionObserver(params.n_save_iters, x0, x1, init_states[n]; kwargs...)
-        run_trajectory!(init_states[n], integrators_set[Threads.threadid()], save_trajs[n]; params = params, id_traj=n, kwargs...)
+        run_trajectory!(
+            init_states[n],
+            integrators_set[Threads.threadid()],
+            save_trajs[n];
+            params = params,
+            id_traj = n,
+            kwargs...,
+        )
     end
     return save_trajs # This is a set of transition times
 end

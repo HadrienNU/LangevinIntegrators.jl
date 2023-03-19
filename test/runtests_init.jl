@@ -39,7 +39,7 @@
     @test cond_arr[3].std == 1.0
 
 
-    integrator, params, init_conds_args= set_from_conf("test_params.ini")
+    integrator, params, init_conds_args = set_from_conf("test_params.ini")
 
     @test params.n_steps == 5000
     @test params.n_trajs == 1
@@ -73,7 +73,7 @@ end
     @test force_eval(int_linear.force, [1.0])[1] ≈ -1.00027734
 
 
-    integrator, params, init_conds_args= set_hidden_from_npz("test_linear_force.npz")
+    integrator, params, init_conds_args = set_hidden_from_npz("test_linear_force.npz")
 
     @test integrator.Δt ≈ 0.005
     @test init_conds_args["hidden"]["mean"] ≈ [0.19713836]
@@ -101,7 +101,8 @@ end
     @test state isa LangevinIntegrators.AbstractInertialState
 
     #Hidden
-    integrator = EM_Hidden(force, [[1.0, 1.0] [-1.0, 2.0]], [[1.0, 0.0] [0.0, 1.0]], 1e-3, 1)
+    integrator =
+        EM_Hidden(force, [[1.0, 1.0] [-1.0, 2.0]], [[1.0, 0.0] [0.0, 1.0]], 1e-3, 1)
     cond_arr = initialize_initcond(integrator, init_conds_args)
     state = InitState(integrator, cond_arr)
     @test state.x ≈ [1.0]
@@ -110,16 +111,20 @@ end
 
     #Various Initial conditions
     constant_cond = LangevinIntegrators.Constant_InitCond(5.0)
-    uniform_cond = LangevinIntegrators.Uniform_InitCond(-1.0,1.0)
+    uniform_cond = LangevinIntegrators.Uniform_InitCond(-1.0, 1.0)
     integrator = VelocityVerlet(force, 1.0, 1e-3)
 
-    state = InitState(integrator, [constant_cond,uniform_cond])
+    state = InitState(integrator, [constant_cond, uniform_cond])
     @test state.x ≈ [5.0]
     @test state.v[1] >= -1.0 && state.v[1] <= 1.0
 
-    @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> -1.0,"high"=>1.0)).low == uniform_cond.low
-    @test LangevinIntegrators.get_init_conditions(Dict("type"=>"uniform","low"=> "-1.0","high"=>"1.0")).high == uniform_cond.high
-    array_cond=LangevinIntegrators.Array_InitCond([[5.0],[2.0]])
+    @test LangevinIntegrators.get_init_conditions(
+        Dict("type" => "uniform", "low" => -1.0, "high" => 1.0),
+    ).low == uniform_cond.low
+    @test LangevinIntegrators.get_init_conditions(
+        Dict("type" => "uniform", "low" => "-1.0", "high" => "1.0"),
+    ).high == uniform_cond.high
+    array_cond = LangevinIntegrators.Array_InitCond([[5.0], [2.0]])
 
     @test LangevinIntegrators.generate_initcond(array_cond; id = 1) ≈ [5.0]
     @test LangevinIntegrators.generate_initcond(array_cond; id = 2) ≈ [2.0]

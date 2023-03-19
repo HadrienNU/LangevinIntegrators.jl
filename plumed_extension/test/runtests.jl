@@ -34,7 +34,8 @@ using Test
 
 
     # Testing in conjunction with force
-    plumedFix = plumed("test_plumed_committor.dat", "plumed.log", 1, 0.001; temperature = 1.0)
+    plumedFix =
+        plumed("test_plumed_committor.dat", "plumed.log", 1, 0.001; temperature = 1.0)
     #Put it into a force and a integrator and run a trajectories
 
     init_conds_args = Dict("position" => Dict("type" => "Cste"))
@@ -51,7 +52,7 @@ using Test
     # At the end, we should check that the colvar file contains the same value that the final state
     colvar = readdlm("colvar", comments = true)
     @test colvar[1, 1] ≈ integrator.Δt
-    @test colvar[2, 1] ≈ 2*integrator.Δt # This check that plumed is not called twice in the same time step
+    @test colvar[2, 1] ≈ 2 * integrator.Δt # This check that plumed is not called twice in the same time step
     @test colvar[end, 1] ≈ time
     @test round(state.x[1], digits = 4) ≈ round(colvar[end, 2], digits = 4) # The precison  is lower in colvar file
     @test round(plumedFix.bias_energy, digits = 4) ≈ round(colvar[end, 3], digits = 4) # The precison  is lower in colvar file
@@ -68,6 +69,6 @@ using Test
 
     force = ForceFromPotential("Harmonic")
     integrator = EM(force, 1.0, 0.001)
-    addPlumed!(integrator,"test_plumed_committor.dat", "plumed.log")
+    addPlumed!(integrator, "test_plumed_committor.dat", "plumed.log")
     @test length(integrator.force.fixes) == 1
 end

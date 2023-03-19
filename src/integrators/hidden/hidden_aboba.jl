@@ -1,4 +1,5 @@
-struct ABOBA_Hidden{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <: HiddenIntegrator
+struct ABOBA_Hidden{FP<:AbstractForce,TF<:AbstractFloat,AA<:AbstractArray} <:
+       HiddenIntegrator
     force::FP
     Δt::TF
     σ::AA
@@ -24,7 +25,14 @@ Set up the ABOBA_Hidden integrator for underdamped Langevin with hidden variable
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function ABOBA_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
+function ABOBA_Hidden(
+    force::FP,
+    A::Array{TF},
+    C::Array{TF},
+    Δt::TF,
+    dim::Int,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat}
     dim_tot = size(A)[1]
     friction = exp(-1 * Δt * A)
     C_sym = 0.5 .* (C .+ C')
@@ -38,7 +46,7 @@ function ABOBA_Hidden(force::FP, A::Array{TF}, C::Array{TF}, Δt::TF, dim::Int, 
         friction[(1+dim):dim_tot, (1+dim):dim_tot],
         dim,
         dim_tot,
-        bc
+        bc,
     )
 end
 
@@ -50,7 +58,12 @@ mutable struct HiddenABOBAState{TF<:AbstractFloat} <: AbstractMemoryHiddenState
     p_mid::Vector{TF}
     f_mid::Vector{TF}
     ξ::Vector{TF}
-    function HiddenABOBAState(x₀::Vector{TF}, v₀::Vector{TF}, h₀::Vector{TF},f::Vector{TF}) where {TF<:AbstractFloat}
+    function HiddenABOBAState(
+        x₀::Vector{TF},
+        v₀::Vector{TF},
+        h₀::Vector{TF},
+        f::Vector{TF},
+    ) where {TF<:AbstractFloat}
         return new{TF}(x₀, v₀, h₀, similar(x₀), similar(v₀), f, similar(f))
     end
 end
@@ -65,17 +78,21 @@ end
 function UpdateState!(state::HiddenABOBAState, integrator::ABOBA_Hidden; kwargs...)
 
     @. state.x_mid = state.x + 0.5 * integrator.Δt * state.v
-    apply_space!(integrator.bc,state.x_mid,state.v)
+    apply_space!(integrator.bc, state.x_mid, state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     @. state.p_mid = state.v + 0.5 * integrator.Δt * state.f_mid
 
     state.ξ = integrator.σ * randn(integrator.dim_tot) # For latter consider, putting gauss in state to reserve the memory
 
-    @views state.h = integrator.friction_hv * state.p_mid .+ integrator.friction_hh * state.h .+ state.ξ[1+integrator.dim:integrator.dim_tot]
+    @views state.h =
+        integrator.friction_hv * state.p_mid .+ integrator.friction_hh * state.h .+
+        state.ξ[1+integrator.dim:integrator.dim_tot]
 
-    @views state.v = integrator.friction_vv * state.p_mid .+ integrator.friction_vh * state.h .+ 0.5 * integrator.Δt * state.f_mid .+ state.ξ[1:integrator.dim]
+    @views state.v =
+        integrator.friction_vv * state.p_mid .+ integrator.friction_vh * state.h .+
+        0.5 * integrator.Δt * state.f_mid .+ state.ξ[1:integrator.dim]
     @. state.x = state.x_mid + 0.5 * integrator.Δt * state.v
-    apply_space!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc, state.x, state.v)
 
     return nostop
 end
