@@ -20,14 +20,15 @@ function __init__()
 end
 
 # acquire the lock before any code calls Python
-pylock(f::Function) = Base.lock(PYLOCK[]) do
-    prev_gc = GC.enable(false)
-    try
-        return f()
-    finally
-        GC.enable(prev_gc) # recover previous state
+pylock(f::Function) =
+    Base.lock(PYLOCK[]) do
+        prev_gc = GC.enable(false)
+        try
+            return f()
+        finally
+            GC.enable(prev_gc) # recover previous state
+        end
     end
-end
 
 #Package for the force evaluation
 using ForwardDiff # For automatic differentiation of potential
@@ -119,7 +120,8 @@ export read_conf, read_integrator_conf, read_integrator_hidden_npz
 export TrajsParams
 
 include("save.jl")
-export TrajectorySave, TrajectorySaveInertial, TrajectorySaveOnlyHidden, TrajectorySaveHidden
+export TrajectorySave,
+    TrajectorySaveInertial, TrajectorySaveOnlyHidden, TrajectorySaveHidden
 export TransitionObserver
 
 include("run.jl")

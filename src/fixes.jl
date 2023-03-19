@@ -42,7 +42,12 @@ function LWall(exponent, at, strenght)
     return Wall(exponent, at, strenght, 1.0, 0.0)
 end
 
-function apply_fix!(fix::Wall, x::Array{TF}, f::Array{TF}; kwargs...) where {TF<:AbstractFloat}
+function apply_fix!(
+    fix::Wall,
+    x::Array{TF},
+    f::Array{TF};
+    kwargs...,
+) where {TF<:AbstractFloat}
     uscaled = x .- fix.at # Dire que si c'est négatif ou positif selon dir, on met à zero
     uscaled[fix.dir*uscaled.>0.0] .= 0.0 #selon la direction on met à zero les composantes positives ou négatives
     f .+= -fix.exponent * fix.strenght .* uscaled .^ (fix.exponent - 1)
@@ -68,7 +73,12 @@ function Quadratic(at::Array{TF}, strenght::Array{TF}) where {TF<:AbstractFloat}
     return PolynomialForce(2, at::Array{TF}, strenght::Array{TF}, 0.0)
 end
 
-function apply_fix!(fix::PolynomialForce, x::Array{TF}, f::Array{TF}; kwargs...) where {TF<:AbstractFloat}
+function apply_fix!(
+    fix::PolynomialForce,
+    x::Array{TF},
+    f::Array{TF};
+    kwargs...,
+) where {TF<:AbstractFloat}
     f .+= -fix.exponent * fix.strenght .* (x .- fix.at) .^ (fix.exponent - 1)
     return 0
 end

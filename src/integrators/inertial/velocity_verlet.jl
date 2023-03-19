@@ -17,12 +17,24 @@ struct VelocityVerlet{FP<:AbstractForce,TF<:AbstractFloat,TM} <: VelocityVerletI
     σ::TF
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
-    function VelocityVerlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
+    function VelocityVerlet(
+        force::FP,
+        M::TM,
+        Δt::TF,
+        dim::Int64 = 1,
+        bc::Union{AbstractSpace,Nothing} = nothing,
+    ) where {FP<:AbstractForce,TF<:AbstractFloat,TM}
         new{FP,TF,TM}(force, M, Δt, zero(M), dim, bc)
     end
 end
 
-function Verlet(force::FP, M::TM, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing)  where {FP<:AbstractForce,TF<:AbstractFloat,TM}  # Equivalence of Verlet and VelocityVerlet
+function Verlet(
+    force::FP,
+    M::TM,
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM}  # Equivalence of Verlet and VelocityVerlet
     return VelocityVerlet(force, M, Δt, dim, bc)
 end
 
@@ -34,13 +46,18 @@ mutable struct VelocityVerletState{TF<:AbstractFloat} <: AbstractInertialState
     f::Vector{TF}
     ξ::Vector{TF}
     ξ₂::Vector{TF}
-    function VelocityVerletState(x₀::Vector{TF}, v₀::Vector{TF}, f::Vector{TF}, σ::TF) where {TF<:AbstractFloat}
-        return new{TF}(x₀, v₀, similar(v₀), f, σ*randn(length(f)), σ*randn(length(f)))
+    function VelocityVerletState(
+        x₀::Vector{TF},
+        v₀::Vector{TF},
+        f::Vector{TF},
+        σ::TF,
+    ) where {TF<:AbstractFloat}
+        return new{TF}(x₀, v₀, similar(v₀), f, σ * randn(length(f)), σ * randn(length(f)))
     end
 end
 
 
-function InitState!(x₀, v₀, integrator :: VVI ) where {VVI <: VelocityVerletIntegrator}
+function InitState!(x₀, v₀, integrator::VVI) where {VVI<:VelocityVerletIntegrator}
     if integrator.dim != length(x₀)
         throw(ArgumentError("Mismatch of dimension in state initialization"))
     end
@@ -52,7 +69,7 @@ end
 function UpdateState!(state::VelocityVerletState, integrator::VelocityVerlet; kwargs...)
     state.v_mid .= state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     @. state.x += integrator.Δt * state.v_mid
-    apply_space!(integrator.bc,state.x, state.v_mid)
+    apply_space!(integrator.bc, state.x, state.v_mid)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.v .= state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f
     return nostop

@@ -70,15 +70,28 @@ function InitState(integrator::OverdampedIntegrator, init_cond::Array; id = 1)
 end
 
 function InitState(integrator::InertialIntegrator, init_cond::Array; id = 1)
-    return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), integrator)
+    return InitState(
+        generate_initcond(init_cond[1]; id = id),
+        generate_initcond(init_cond[2]; id = id),
+        integrator,
+    )
 end
 
 function InitState(integrator::KernelIntegrator, init_cond::Array; id = 1)
-    return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), integrator)
+    return InitState(
+        generate_initcond(init_cond[1]; id = id),
+        generate_initcond(init_cond[2]; id = id),
+        integrator,
+    )
 end
 
 function InitState(integrator::HiddenIntegrator, init_cond::Array; id = 1)
-    return InitState(generate_initcond(init_cond[1]; id = id), generate_initcond(init_cond[2]; id = id), generate_initcond(init_cond[3]; id = id), integrator)
+    return InitState(
+        generate_initcond(init_cond[1]; id = id),
+        generate_initcond(init_cond[2]; id = id),
+        generate_initcond(init_cond[3]; id = id),
+        integrator,
+    )
 end
 
 #InitState by copy of initial conditions
