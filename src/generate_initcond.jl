@@ -30,11 +30,13 @@ function initialize_initcond(integrator, args; verbose = 0)
     # En vrai ça se contente de savoir si on doit générer, 1 2 ou 3 init_cond et ça appelle get_init_conditions qui les crée
     # Ca permet de définir des valeurs par défauts si rien n'est donné
     # Get dimension of the system for default value
-    intcond_pos = get_init_conditions(get(args, "position", Dict("type" => "Cste")), integrator.dim)
+    intcond_pos =
+        get_init_conditions(get(args, "position", Dict("type" => "Cste")), integrator.dim)
 
     if integrator isa OverdampedIntegrator
         if integrator isa HiddenOverdampedIntegrator
-            initcond_hidden = get_init_conditions(args["hidden"], integrator.dim_tot-integrator.dim)
+            initcond_hidden =
+                get_init_conditions(args["hidden"], integrator.dim_tot - integrator.dim)
             return [intcond_pos, initcond_hidden]
         elseif integrator isa KernelOverdampedIntegrator
             initcond_mem = get_init_conditions(args["memory"], integrator.dim)
@@ -42,13 +44,22 @@ function initialize_initcond(integrator, args; verbose = 0)
         end
         return [intcond_pos]
     else
-        initcond_velocity = get_init_conditions(get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0)), integrator.dim) # à remplacer la la maxelliene
+        initcond_velocity = get_init_conditions(
+            get(args, "velocity", Dict("type" => "Gaussian", "std" => 1.0)),
+            integrator.dim,
+        ) # à remplacer la la maxelliene
         if integrator isa HiddenIntegrator
-            initcond_hidden = get_init_conditions(get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)), integrator.dim_tot-integrator.dim)
+            initcond_hidden = get_init_conditions(
+                get(args, "hidden", Dict("type" => "Gaussian", "std" => 1.0)),
+                integrator.dim_tot - integrator.dim,
+            )
 
             return [intcond_pos, initcond_velocity, initcond_hidden]
         elseif integrator isa KernelIntegrator
-            initcond_mem = get_init_conditions(get(args, "memory", Dict("type" => "Cste")), integrator.dim)
+            initcond_mem = get_init_conditions(
+                get(args, "memory", Dict("type" => "Cste")),
+                integrator.dim,
+            )
             return [intcond_pos, initcond_velocity, initcond_mem]
         end
         if integrator isa InertialIntegrator
@@ -68,11 +79,11 @@ struct Constant_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Array{TF}
     dim::Int64
     function Constant_InitCond(val::Array{TF}) where {TF<:AbstractFloat}
-        new{TF}(val,length(val))
+        new{TF}(val, length(val))
     end
 end
 
-function Constant_InitCond(val::TF, dim::Int=1) where {TF<:AbstractFloat}
+function Constant_InitCond(val::TF, dim::Int = 1) where {TF<:AbstractFloat}
     return Constant_InitCond([val])
 end
 
@@ -80,7 +91,7 @@ struct Array_InitCond{TF<:AbstractFloat} <: AbstractInitCond
     val::Vector{Vector{TF}}
     dim::Int64
     function Array_InitCond(vals::Vector{Vector{TF}}) where {TF<:AbstractFloat}
-        new{TF}(vals,length(vals[1]))
+        new{TF}(vals, length(vals[1]))
     end
 end
 
@@ -88,12 +99,12 @@ struct Uniform_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     low::Array{TF}
     high::Array{TF}
     dim::Int64
-    function Uniform_InitCond(low::Array{TF},high::Array{TF}) where {TF<:AbstractFloat}
-        new{TF}(low,high,length(low))
+    function Uniform_InitCond(low::Array{TF}, high::Array{TF}) where {TF<:AbstractFloat}
+        new{TF}(low, high, length(low))
     end
 end
 
-function Uniform_InitCond(low::TF, high::TF, dim::Int=1) where {TF<:AbstractFloat}
+function Uniform_InitCond(low::TF, high::TF, dim::Int = 1) where {TF<:AbstractFloat}
     return Uniform_InitCond([low], [high])
 end
 
@@ -102,11 +113,11 @@ struct Gaussian_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     std::TF
     dim::Int64
     function Gaussian_InitCond(mean::Array{TF}, std::TF) where {TF<:AbstractFloat}
-        new{TF}(mean,std,length(mean))
+        new{TF}(mean, std, length(mean))
     end
 end
 
-function Gaussian_InitCond(mean::TF, std::TF, dim::Int=1) where {TF<:AbstractFloat}
+function Gaussian_InitCond(mean::TF, std::TF, dim::Int = 1) where {TF<:AbstractFloat}
     return Gaussian_InitCond([mean], [std])
 end
 
@@ -115,12 +126,15 @@ struct Histogram_InitCond{TF<:AbstractFloat} <: AbstractRandomInitCond
     xaxis::Vector{TF}
     cdf::Vector{TF}
     dim::Int64
-    function Histogram_InitCond(bins_center::Array{TF}, histogram::Vector{TF}) where {TF<:AbstractFloat}
+    function Histogram_InitCond(
+        bins_center::Array{TF},
+        histogram::Vector{TF},
+    ) where {TF<:AbstractFloat}
         cdf = cumsum(histogram)
-        insert!(cdf,1,0)
-        cdf = cdf/cdf[end] # To be sure of the normalisation
-        xaxis=insert!(copy(bins_center),1,1.5*bins_center[1]-0.5*bins_center[2])
-        new{TF}(xaxis,cdf,1)
+        insert!(cdf, 1, 0)
+        cdf = cdf / cdf[end] # To be sure of the normalisation
+        xaxis = insert!(copy(bins_center), 1, 1.5 * bins_center[1] - 0.5 * bins_center[2])
+        new{TF}(xaxis, cdf, 1)
     end
 end
 
@@ -186,8 +200,12 @@ end
 
 
 function generate_initcond(init_cond::Histogram_InitCond; kwargs...)
-    a=rand()
+    a = rand()
     a == 1.0 && return init_cond.xaxis[end] # To exclude the unlikely case of a ==1.0
-    ind=searchsortedlast(init_cond.cdf,a)
-    return [init_cond.xaxis[ind] + ((a-init_cond.cdf[ind])/(init_cond.cdf[ind+1]-init_cond.cdf[ind]))*(init_cond.xaxis[ind+1]-init_cond.xaxis[ind])]
+    ind = searchsortedlast(init_cond.cdf, a)
+    return [
+        init_cond.xaxis[ind] +
+        ((a - init_cond.cdf[ind]) / (init_cond.cdf[ind+1] - init_cond.cdf[ind])) *
+        (init_cond.xaxis[ind+1] - init_cond.xaxis[ind]),
+    ]
 end

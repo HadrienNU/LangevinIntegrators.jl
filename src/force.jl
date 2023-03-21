@@ -13,7 +13,7 @@ function addFix!(force::FP, fix::AbstractFix) where {FP<:AbstractForce}
     return force
 end
 
-function addFix!(integrator::AbstractIntegrator,fix::AbstractFix) # Add it to the integrator
+function addFix!(integrator::AbstractIntegrator, fix::AbstractFix) # Add it to the integrator
     addFix!(integrator.force, fix)
 end
 
@@ -43,7 +43,12 @@ function ForceFromPotential(potential::String, ndim = 1::Int)
 end
 
 
-function forceUpdate!(force::ForceFromPotential, f::Vector{TF}, x::Vector{TF}; kwargs...) where {TF<:AbstractFloat}
+function forceUpdate!(
+    force::ForceFromPotential,
+    f::Vector{TF},
+    x::Vector{TF};
+    kwargs...,
+) where {TF<:AbstractFloat}
     ForwardDiff.gradient!(f, force.V, x, force.cfg)
     f .*= -1
     stop_condition = false
@@ -87,7 +92,13 @@ function ForceFromBasis(type::String, coeffs::Array{TF}) where {TF<:AbstractFloa
     return ForceFromBasis(basis, ndim, Vector{AbstractFix}(undef, 0))
 end
 
-function forceUpdate!(force::FB, f::Vector{TF}, x::Vector{TF}, ; kwargs...) where {FB<:AbstractForceFromBasis,TF<:AbstractFloat}
+function forceUpdate!(
+    force::FB,
+    f::Vector{TF},
+    x::Vector{TF},
+    ;
+    kwargs...,
+) where {FB<:AbstractForceFromBasis,TF<:AbstractFloat}
     for d = 1:force.ndim
         f[d] = force.basis[d](x[1]) # TODO, dealing with nd function
     end
@@ -119,7 +130,12 @@ struct ForceFromSplines <: AbstractForceFromBasis # use BSplineKit # The struct 
     fixes::Array{AbstractFix} # List of fix to apply
 end
 
-function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) where {TF<:AbstractFloat}
+function ForceFromSplines(
+    k::Int,
+    knots::Array{TF},
+    coeffs::Array{TF};
+    der = 0,
+) where {TF<:AbstractFloat}
     if ndims(coeffs) >= 2 #TODO change for a Vector of vector
         ndim = size(coeffs)[1]
         nb_coeffs = size(coeffs)[2]
@@ -132,7 +148,13 @@ function ForceFromSplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) 
     B = BSplineBasis(BSplineOrder(k + 1), knots; augment = Val(false))
     basis = Vector{SplineExtrapolation}(undef, ndim)
     for d = 1:ndim
-        basis[d] =  BSplineKit.SplineExtrapolations.extrapolate(BSplineKit.Derivative(der) * Spline(B, coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)]), BSplineKit.SplineExtrapolations.Smooth())
+        basis[d] = BSplineKit.SplineExtrapolations.extrapolate(
+            BSplineKit.Derivative(der) * Spline(
+                B,
+                coeffs[d, 1:(nb_coeffs == length(knots) ? nb_coeffs - (k + 1) : nb_coeffs)],
+            ),
+            BSplineKit.SplineExtrapolations.Smooth(),
+        )
     end
     return ForceFromSplines(basis, ndim, Vector{AbstractFix}(undef, 0))
 end
@@ -178,7 +200,12 @@ struct ForceFromScipySplines{TF<:AbstractFloat} <: AbstractForceFromBasis  # use
     ndim::Int
     fixes::Array{AbstractFix} # List of fix to apply
 end
-function ForceFromScipySplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der = 0) where {TF<:AbstractFloat}
+function ForceFromScipySplines(
+    k::Int,
+    knots::Array{TF},
+    coeffs::Array{TF};
+    der = 0,
+) where {TF<:AbstractFloat}
     if ndims(coeffs) >= 2 #TODO change for a Vector of vector
         ndim = size(coeffs)[1]
     else
@@ -188,10 +215,20 @@ function ForceFromScipySplines(k::Int, knots::Array{TF}, coeffs::Array{TF}; der 
     return ForceFromScipySplines(knots, coeffs, k, der, ndim, Vector{AbstractFix}(undef, 0))
 end
 
-function forceUpdate!(force::ForceFromScipySplines, f::Vector{TF}, x::Vector{TF}, ; kwargs...) where {TF<:AbstractFloat}
+function forceUpdate!(
+    force::ForceFromScipySplines,
+    f::Vector{TF},
+    x::Vector{TF},
+    ;
+    kwargs...,
+) where {TF<:AbstractFloat}
     for d = 1:force.ndim
         pylock() do # Lock Thread
-            f[d] = scipy_interpolate.splev(x[1], (force.knots, force.coeffs_splines[d, :], force.k), force.der)[]
+            f[d] = scipy_interpolate.splev(
+                x[1],
+                (force.knots, force.coeffs_splines[d, :], force.k),
+                force.der,
+            )[]
         end
     end
     stop_condition = false
@@ -206,21 +243,29 @@ end
 
 
 
-function forceUpdate(force::FP, x::Vector{TF}; applyFix=false) where {FP<:AbstractForce,TF<:AbstractFloat}
+function forceUpdate(
+    force::FP,
+    x::Vector{TF};
+    applyFix = false,
+) where {FP<:AbstractForce,TF<:AbstractFloat}
     f = similar(x)
     forceUpdate!(force, f, x; applyFix = applyFix) # For the initialization or the computation of the force, do not include fix
     return f
 end
 
 function force_eval(force::FP, x::Vector{TF}) where {FP<:AbstractForce,TF<:AbstractFloat} # When we just want a single point evaluation
-    return force_eval(force,[x])[1]
+    return force_eval(force, [x])[1]
 end
 
 # A function to plot value of the force for comparison with python code
-function force_eval(force::FP, x::Vector{Vector{TF}}; applyFix=true) where {FP<:AbstractForce,TF<:AbstractFloat} # Evaluate over a bunch of point
+function force_eval(
+    force::FP,
+    x::Vector{Vector{TF}};
+    applyFix = true,
+) where {FP<:AbstractForce,TF<:AbstractFloat} # Evaluate over a bunch of point
     f = similar(x)
     for (n, val) in enumerate(x)
-        f[n] = forceUpdate(force, val; applyFix=applyFix)
+        f[n] = forceUpdate(force, val; applyFix = applyFix)
     end
     return f
 end

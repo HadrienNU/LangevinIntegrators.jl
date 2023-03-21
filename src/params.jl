@@ -50,7 +50,9 @@ function getsubDict(s::ConfParse, block::String)
     new_dict = Dict()
     for (key, k) in s._data[lowercase(block)]
         if length(k) == 1
-            new_val = tryparse(Float64, first(k)) !== nothing ? parse(Float64, first(k)) : first(k)
+            new_val =
+                tryparse(Float64, first(k)) !== nothing ? parse(Float64, first(k)) :
+                first(k)
         else
             new_val = k
         end
@@ -60,7 +62,7 @@ function getsubDict(s::ConfParse, block::String)
 end
 
 function transform_dict_into_kwargs(dict)
-    return Dict(Symbol(k)=>v for (k,v) in dict)
+    return Dict(Symbol(k) => v for (k, v) in dict)
 end
 
 function read_conf(file::String)
@@ -79,7 +81,12 @@ function read_conf(file::String)
 
     # Some informations to save the trajectories
     dump_dict = haskey(conf, "dump") ? getsubDict(conf, "dump") : Dict()
-    params = TrajsParams(; n_steps = n_steps, n_trajs = n_trajs, verbose=verbose, transform_dict_into_kwargs(dump_dict)...)
+    params = TrajsParams(;
+        n_steps = n_steps,
+        n_trajs = n_trajs,
+        verbose = verbose,
+        transform_dict_into_kwargs(dump_dict)...,
+    )
 
     # The information about the initial conditions
     init_conds_args = Dict()
@@ -93,7 +100,8 @@ function read_conf(file::String)
         hidden_dict = getsubDict(conf, "init_hidden")
         if haskey(hidden_dict, "file") && split(hidden_dict["file"], ".")[2] == "npz" #If init_cond from .npz
             data = np.load(hidden_dict["file"], allow_pickle = true)
-            init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
+            init_conds_args["hidden"] =
+                Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
         else
             init_conds_args["hidden"] = hidden_dict
         end
@@ -142,14 +150,17 @@ function read_integrator_conf(file::String)
                 knots = parse.(Float64, physics_conf["splines_knots"])
                 ForceFromSplines(k, knots, coeffs)
             else
-                force = ForceFromBasis(physics_conf["force"][1], reshape(coeffs, (1, length(coeffs))))
+                force = ForceFromBasis(
+                    physics_conf["force"][1],
+                    reshape(coeffs, (1, length(coeffs))),
+                )
             end
         end
     elseif haskey(physics_conf, "potential")
         if typeof(physics_conf["potential"]) == String
-            force = ForceFromPotential(physics_conf["potential"],dim)
+            force = ForceFromPotential(physics_conf["potential"], dim)
         else
-            force = ForceFromPotential(physics_conf["potential"][1],dim)
+            force = ForceFromPotential(physics_conf["potential"][1], dim)
         end
     else
         force = nothing
@@ -166,14 +177,29 @@ function read_integrator_conf(file::String)
         temp = retrieve(conf, "physics", "temperature", Float64, 1.0)
         γ = retrieve(conf, "physics", "friction", Float64, 1.0)
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
-        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(force, 1.0 / temp, γ, mass, Δt, dim)
+        integrator = getfield(LangevinIntegrators, Symbol(uppercase(integrator_type)))(
+            force,
+            1.0 / temp,
+            γ,
+            mass,
+            Δt,
+            dim,
+        )
     elseif integrator_type == "verlet"
         mass = retrieve(conf, "physics", "mass", Float64, 1.0)
         integrator = Verlet(force, mass, Δt, dim)
     elseif integrator_type in ["em_hidden", "hidden_em", "euler_hidden", "hidden_euler"]
-        integrator = read_integrator_hidden_npz(retrieve(conf, "physics", "hidden"); integrator_type = "EM", force = force)
+        integrator = read_integrator_hidden_npz(
+            retrieve(conf, "physics", "hidden");
+            integrator_type = "EM",
+            force = force,
+        )
     elseif integrator_type in ["aboba_hidden", "hidden_aboba"]
-        integrator = read_integrator_hidden_npz(retrieve(conf, "physics", "hidden"); integrator_type = "aboba", force = force)
+        integrator = read_integrator_hidden_npz(
+            retrieve(conf, "physics", "hidden");
+            integrator_type = "aboba",
+            force = force,
+        )
     end
 
     return integrator
@@ -201,9 +227,11 @@ function set_hidden_from_npz(file::String; kwargs...)
     # The information about the initial conditions
     init_conds_args = Dict()
     init_conds_args["position"] = get(kwargs, :init_position, Dict("type" => "Cste"))
-    init_conds_args["velocity"] = get(kwargs, :init_velocity, Dict("type" => "Gaussian", "mean" => 0.0, "std" => 1.0))
+    init_conds_args["velocity"] =
+        get(kwargs, :init_velocity, Dict("type" => "Gaussian", "mean" => 0.0, "std" => 1.0))
     data = np.load(file, allow_pickle = true)
-    init_conds_args["hidden"] = Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
+    init_conds_args["hidden"] =
+        Dict("type" => "Gaussian", "mean" => get(data, "µ_0"), "std" => 1.0)
 
     return integrator, params, init_conds_args
 end
@@ -219,7 +247,8 @@ function read_integrator_hidden_npz(file::String; integrator_type = "EM", kwargs
     Δt = get(kwargs, :dt, get(data, :dt)[]) # To allow changing the time step
 
     force = get(kwargs, :force, nothing)
-    force = isnothing(force) ? force_from_dict(get(data, :force), get(data, :basis)[]) : force
+    force =
+        isnothing(force) ? force_from_dict(get(data, :force), get(data, :basis)[]) : force
     if dim_h > 0
         if lowercase(integrator_type) in ["em", "euler"]
             integrator = EM_Hidden(force, get(data, :A), get(data, :C), Δt, dim)
@@ -237,7 +266,8 @@ function force_from_dict(coeffs, args)
     force = ForceFromPotential("Flat")
     basis_type = get(args, :basis_type)
     if basis_type == "bsplines"
-        force = ForceFromSplines(get(args, :bsplines)[1][3], get(args, :bsplines)[1][1], coeffs)
+        force =
+            ForceFromSplines(get(args, :bsplines)[1][3], get(args, :bsplines)[1][1], coeffs)
     elseif basis_type == "linear"
         coeffs_taylor = zeros(Float64, (1, 2))
         coeffs_taylor[1, :] = [get(args, :mean)[1], coeffs[1, 1]]
@@ -246,8 +276,15 @@ function force_from_dict(coeffs, args)
         #
         # elseif basis_type == "bins"
         #
-    elseif basis_type == "free_energy_kde" || basis_type == "free_energy" || basis_type == "free_energy_histogram"
-        force = ForceFromSplines(get(args, :fe_spline)[3], get(args, :fe_spline)[1], -1 * coeffs[1, 1] .* get(args, :fe_spline)[2]; der = 1)
+    elseif basis_type == "free_energy_kde" ||
+           basis_type == "free_energy" ||
+           basis_type == "free_energy_histogram"
+        force = ForceFromSplines(
+            get(args, :fe_spline)[3],
+            get(args, :fe_spline)[1],
+            -1 * coeffs[1, 1] .* get(args, :fe_spline)[2];
+            der = 1,
+        )
     else
         throw(ArgumentError("Unsupported basis type"))
     end
@@ -277,6 +314,19 @@ Set options for samplers.
 * save_filename_pattern - The pattern for saving the trajectories. If this include a *, that will be replaced by the id of the traj.
 * verbose       - Verbose argument
 """
-function TrajsParams(; n_steps = 10^4, n_trajs = 1, n_save_iters=nothing, save_filename_pattern = nothing, verbose=0, kwargs...)
-    return TrajsParams(n_steps, n_trajs, isnothing(n_save_iters) ? n_steps : n_save_iters, save_filename_pattern, verbose)
+function TrajsParams(;
+    n_steps = 10^4,
+    n_trajs = 1,
+    n_save_iters = nothing,
+    save_filename_pattern = nothing,
+    verbose = 0,
+    kwargs...,
+)
+    return TrajsParams(
+        n_steps,
+        n_trajs,
+        isnothing(n_save_iters) ? n_steps : n_save_iters,
+        save_filename_pattern,
+        verbose,
+    )
 end

@@ -1,4 +1,5 @@
-struct BBK_Kernel{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: KernelIntegrator
+struct BBK_Kernel{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+       KernelIntegrator
     force::FP
     β::TF
     kernel::Array{TF}
@@ -26,36 +27,50 @@ Adapted from Iterative Reconstruction of Memory Kernels Gerhard Jung,*,†,‡ M
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BBK_Kernel(force::FP, β::TF, kernel::Array{TF}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM<:AbstractMatrix{TF}}
-    if  size(kernel,2) != dim || size(kernel,2) != size(kernel,3)
+function BBK_Kernel(
+    force::FP,
+    β::TF,
+    kernel::Array{TF},
+    M::Union{TF,TM},
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+    if size(kernel, 2) != dim || size(kernel, 2) != size(kernel, 3)
         throw(ArgumentError("Mismatch of dimension bewteen kernel and space dimension"))
     end
-    ker_mat=reshape(kernel,:,dim,dim)
-    invK = inv(1 .+ 0.5 * Δt * Δt * ker_mat[1,:,:])
-    if dim==1
-        noise_fdt=Δt * sqrt(2.0 / β / M) * real.(ifft(sqrt.(fft(ker_mat,1)),1))
+    ker_mat = reshape(kernel, :, dim, dim)
+    invK = inv(1 .+ 0.5 * Δt * Δt * ker_mat[1, :, :])
+    if dim == 1
+        noise_fdt = Δt * sqrt(2.0 / β / M) * real.(ifft(sqrt.(fft(ker_mat, 1)), 1))
     else
-        noise_fdt=Δt * sqrt(2.0 / β / M) * real.(ifft(sqrt.(fft(ker_mat,1)),1))# note quand Kernel est une matrix il faut faire le cholesky
+        noise_fdt = Δt * sqrt(2.0 / β / M) * real.(ifft(sqrt.(fft(ker_mat, 1)), 1))# note quand Kernel est une matrix il faut faire le cholesky
     end
-    c₀ = 1 .- 0.5 * Δt * Δt * ker_mat[1,:,:]
+    c₀ = 1 .- 0.5 * Δt * Δt * ker_mat[1, :, :]
     return BBK_Kernel(force, β, ker_mat, noise_fdt, M, Δt, c₀, invK, dim, bc)
 end
 
 
 function UpdateState!(state::MemoryKernelState, integrator::BBK_Kernel; kwargs...)
 
-    state.v_mid .= integrator.c₀ * state.v .+ 0.5 * integrator.Δt / integrator.M * state.f  .- 0.5* integrator.Δt*state.memory.int_val .+ 0.5*state.ξ.int_val
+    state.v_mid .=
+        integrator.c₀ * state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .-
+        0.5 * integrator.Δt * state.memory.int_val .+ 0.5 * state.ξ.int_val
     @. state.x += integrator.Δt * state.v_mid
 
-    apply_space!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc, state.x, state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
     randn_correlated(state.ξ, integrator.σ_corr)
-    memory_integral(state.memory, integrator.kernel,integrator.Δt)
+    memory_integral(state.memory, integrator.kernel, integrator.Δt)
 
-    state.v .= integrator.c₁ * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f  .- 0.5* integrator.Δt*state.memory.int_val .+ 0.5*state.ξ.int_val)
+    state.v .=
+        integrator.c₁ * (
+            state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .-
+            0.5 * integrator.Δt * state.memory.int_val .+ 0.5 * state.ξ.int_val
+        )
 
-    store_new_value(state.memory,state.v)
+    store_new_value(state.memory, state.v)
 
     return nostop
 end

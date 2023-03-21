@@ -10,11 +10,11 @@ abstract type AbstractConstraints end
 # Les contraintes permettent de faire des BC bizarres si besoin
 
 # On va définir l'espace sphére
-function apply_space!(space::Nothing,x::Array{TF}) where {TF<:AbstractFloat}
+function apply_space!(space::Nothing, x::Array{TF}) where {TF<:AbstractFloat}
 
 end
 
-function apply_space!(space::Nothing,x::Array{TF},v::Array{TF}) where {TF<:AbstractFloat}
+function apply_space!(space::Nothing, x::Array{TF}, v::Array{TF}) where {TF<:AbstractFloat}
 
 end
 
@@ -25,19 +25,23 @@ That can hold a constraints on some dimension if needed
 struct SeparateSpace <: AbstractSpace
     bcs::Array{AbstractConstraints}
     dim::Int
-    SeparateSpace(bcs) = new(bcs,length(bcs))
+    SeparateSpace(bcs) = new(bcs, length(bcs))
 end
 
 
-function apply_space!(space::SeparateSpace,x::Array{TF}) where {TF<:AbstractFloat}
-    for n in 1:space.dim
-        x[n], _  = apply_bc(space.bcs[n],x[n],0.0)
+function apply_space!(space::SeparateSpace, x::Array{TF}) where {TF<:AbstractFloat}
+    for n = 1:space.dim
+        x[n], _ = apply_bc(space.bcs[n], x[n], 0.0)
     end
 end
 
-function apply_space!(space::SeparateSpace,x::Array{TF},v::Array{TF}) where {TF<:AbstractFloat}
-    for n in 1:space.dim
-        x[n], v[n] = apply_bc(space.bcs[n],x[n],v[n])
+function apply_space!(
+    space::SeparateSpace,
+    x::Array{TF},
+    v::Array{TF},
+) where {TF<:AbstractFloat}
+    for n = 1:space.dim
+        x[n], v[n] = apply_bc(space.bcs[n], x[n], v[n])
     end
 end
 
@@ -65,13 +69,13 @@ end
 
 function apply_bc(bc::ReflectingBC, x_i::TF, v_i::TF) where {TF<:AbstractFloat}
     if x_i >= bc.upp_lim
-        v_i=-v_i
+        v_i = -v_i
         x_i = bc.upp_lim
     elseif x_i <= bc.low_lim
-        v_i=-v_i
+        v_i = -v_i
         x_i = bc.low_lim
     end
-    return x_i,v_i
+    return x_i, v_i
 end
 
 # For more general space, define an apply_space more general

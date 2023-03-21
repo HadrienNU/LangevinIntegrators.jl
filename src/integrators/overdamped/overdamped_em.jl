@@ -20,7 +20,13 @@ Set up the EM integrator for overdamped Langevin.
 * β     - Inverse temperature
 * Δt    - Time step
 """
-function EM(force::FP, β::TF, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat}
+function EM(
+    force::FP,
+    β::TF,
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat}
     σ = sqrt(2 * Δt / β)
     return EM(force, β, Δt, σ, dim, bc)
 end
@@ -47,7 +53,7 @@ end
 function UpdateState!(state::EMState, integrator::EM; kwargs...)
 
     state.x .+= integrator.Δt .* state.f .+ integrator.σ * randn(integrator.dim)
-    apply_space!(integrator.bc,state.x)
+    apply_space!(integrator.bc, state.x)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
 
     return nostop

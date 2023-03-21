@@ -1,4 +1,5 @@
-struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
+struct BAOAB{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+       VelocityVerletIntegrator
     force::FP
     β::TF
     γ::TFM
@@ -23,14 +24,23 @@ Set up the BAOAB integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function BAOAB(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
+function BAOAB(
+    force::FP,
+    β::TF,
+    γ::Union{TF,TM},
+    M::Union{TF,TM},
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(-2 * γ * Δt)) / β) / sqrt(M)
     return BAOAB(force, β, γ, M, Δt, c₂, σ, dim, bc)
 end
 
 
-struct OBABO{FP<:AbstractForce,TF<:AbstractFloat, TFM <: Union{TF,AbstractMatrix{TF}}} <: VelocityVerletIntegrator
+struct OBABO{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+       VelocityVerletIntegrator
     force::FP
     β::TF
     γ::TFM
@@ -57,10 +67,18 @@ Set up the OBABO integrator for inertial Langevin.
 * M     - Mass (either scalar or vector)
 * Δt    - Time step
 """
-function OBABO(force::FP, β::TF, γ::Union{TF,TM}, M::Union{TF,TM}, Δt::TF, dim::Int64=1, bc::Union{AbstractSpace,Nothing}=nothing) where {FP<:AbstractForce,TF<:AbstractFloat, TM <: AbstractMatrix{TF}}
+function OBABO(
+    force::FP,
+    β::TF,
+    γ::Union{TF,TM},
+    M::Union{TF,TM},
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     cc₂ = exp(-0.5 * Δt * γ) / M
     c₂ = exp(-Δt * γ) / M
-    σ = sqrt((1 - exp(- γ * Δt)) / β)  / sqrt(M)
+    σ = sqrt((1 - exp(-γ * Δt)) / β) / sqrt(M)
     return OBABO(force, β, γ, M, Δt, cc₂, c₂, σ, dim, bc)
 end
 
@@ -70,10 +88,14 @@ function UpdateState!(state::VelocityVerletState, integrator::BAOAB; kwargs...)
 
     state.v_mid .= state.v .+ 0.5 * integrator.Δt / integrator.M * state.f
     state.ξ .= integrator.σ * randn(integrator.dim)
-    state.x .+= 0.5 * integrator.Δt * state.v_mid .+ 0.5 * integrator.Δt * (integrator.c₂ .* state.v_mid .+ state.ξ)
-    apply_space!(integrator.bc,state.x,state.v)
+    state.x .+=
+        0.5 * integrator.Δt * state.v_mid .+
+        0.5 * integrator.Δt * (integrator.c₂ .* state.v_mid .+ state.ξ)
+    apply_space!(integrator.bc, state.x, state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.v .= integrator.c₂ * state.v_mid  .+ 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ
+    state.v .=
+        integrator.c₂ * state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+
+        state.ξ
 
     return nostop
 end
@@ -83,12 +105,15 @@ end
 function UpdateState!(state::VelocityVerletState, integrator::OBABO; kwargs...)
 
     state.ξ₂ .= integrator.σ * randn(integrator.dim)
-    state.v_mid .= integrator.cc₂*state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ₂
+    state.v_mid .=
+        integrator.cc₂ * state.v .+ 0.5 * integrator.Δt / integrator.M * state.f .+ state.ξ₂
     @. state.x += integrator.Δt * state.v_mid
-    apply_space!(integrator.bc,state.x,state.v)
+    apply_space!(integrator.bc, state.x, state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
     state.ξ .= integrator.σ * randn(integrator.dim)
-    state.v .= integrator.cc₂ * (state.v_mid  .+ 0.5 * integrator.Δt / integrator.M * state.f) .+ state.ξ
+    state.v .=
+        integrator.cc₂ * (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f) .+
+        state.ξ
 
     return nostop
 end
