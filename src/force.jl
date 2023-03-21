@@ -35,9 +35,15 @@ struct ForceFromPotential{G<:Function} <: AbstractForce
 end
 
 
-function ForceFromPotential(potential::String, ndim = 1::Int)
-    x₀ = zeros(ndim) #Vector{Float64}(undef, ndim)
-    V = getfield(LangevinIntegrators, Symbol(potential)) # Eventuellement créer un sous module avec juste les potentials pour ne pas chercher partout
+function ForceFromPotential(potential::Union{String,Function}, ndim = 1::Int; x₀::Union{Vector{TF},Nothing} = nothing, potential_kwargs::Dict = Dict()) where {TF<:AbstractFloat}
+    if isnothing(x₀)
+        x₀ = zeros(ndim) #Vector{Float64}(undef, ndim)
+    end
+    if !isempty(methods(potential))
+        V = x -> potential(x, potential_kwargs...)
+    else
+        V = x -> getfield(LangevinIntegrators, Symbol(potential))(x,potential_kwargs...) # Eventuellement créer un sous module avec juste les potentials pour ne pas chercher partout
+    end
     cfg = ForwardDiff.GradientConfig(V, x₀)
     return ForceFromPotential(cfg, V, ndim, Vector{AbstractFix}(undef, 0))
 end
