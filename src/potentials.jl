@@ -4,7 +4,7 @@ function Flat(x::AbstractArray)
     return 0.0
 end
 
-function Harmonic(x::AbstractArray; ω₀::Float = 1.0)
+function Harmonic(x::AbstractArray; ω₀::Float64 = 1.0)
     return 0.5 * ω₀ * dot(x, x)
 end
 
