@@ -15,7 +15,7 @@ function scalar_product(xt, lambda,Δt, γ)
     acc = (xt[3:end]-2*xt[2:end-1]+xt[1:end-2])/ (Δt^2)
     ut0 = (xt[2:end-1]-xt[1:end-2])/Δt
     ut = lambda*(xt[3:end]-xt[2:end-1])/Δt+ (1.0 -lambda)*(xt[2:end-1]-xt[1:end-2])/Δt
-    return ut.*acc+γ*ut.*ut0
+    return ut.*acc#+γ*ut.*ut0
     # return ut.*ut
 end
 
@@ -57,21 +57,21 @@ let
         err_scalar_product=zeros(size(cg_range))
         for (n,cg_step) in enumerate(cg_range)
 
-            x = vcat([scalar_product_vel(trj.xt[1][1:cg_step:end,1],trj.xt[2][1:cg_step:end,1], cg_step*Δt, c2) for trj in trajs]...)
-            val_velocity[n] = mean(x)
-            err_vel[n] = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
-            x = vcat([scalar_product_vel(trj.xt[1][1:cg_step:end,1],trj.xt[3][1:cg_step:end,1], cg_step*Δt, c2) for trj in trajs]...)
-            val_velocity_mid[n] = mean(x)
-            err_vel_mid[n] = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
+            # x = vcat([scalar_product_vel(trj.xt[1][1:cg_step:end,1],trj.xt[2][1:cg_step:end,1], cg_step*Δt, c2) for trj in trajs]...)
+            # val_velocity[n] = mean(x)
+            # err_vel[n] = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
+            # x = vcat([scalar_product_vel(trj.xt[1][1:cg_step:end,1],trj.xt[3][1:cg_step:end,1], cg_step*Δt, c2) for trj in trajs]...)
+            # val_velocity_mid[n] = mean(x)
+            # err_vel_mid[n] = quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
 
 
             x = vcat([scalar_product(trj.xt[1][1:cg_step:end,1], 0.0, Δt*cg_step, c2) for trj in trajs]...)
             var_scalar_product[n] = mean(x)
             err_scalar_product[n] =quantile(TDist(length(x)-1), 1 - 0.05/2) * std(x)/sqrt(length(x))
         end
-        plot!(cg_range, val_velocity, yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
-        plot!(cg_range, val_velocity_mid, yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
-        plot!(cg_range, var_scalar_product, yerr = err_scalar_product,marker=(:circle,3),label="$(String(Symbol(int_class))) $Δt" )
+        # plot!(cg_range, val_velocity, yerr =err_vel , label="Integrator velocity $(String(Symbol(int_class))) $Δt")
+        # plot!(cg_range, val_velocity_mid, yerr =err_vel_mid , label="Integrator half step velocity $(String(Symbol(int_class))) $Δt")
+        plot!(cg_range, var_scalar_product, yerr = err_scalar_product,marker=(:auto,8),label="$(String(Symbol(int_class))) $Δt" )
     end
     xlabel!("n")
     ylabel!("<vₜ aₜ>")
