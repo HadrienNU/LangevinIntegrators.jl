@@ -42,6 +42,51 @@ function BBK(
     return BBK(force, β, γ, M, Δt, c₀, c₁, c₂, σ, dim, bc)
 end
 
+struct ISP{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+       VelocityVerletIntegrator
+    force::FP
+    β::TF
+    γ::TFM
+    M::Union{TF,TFM}
+    Δt::TF
+    c₀::TFM
+    c₁::TFM
+    c₂::TFM
+    σ::TFM
+    dim::Int64
+    bc::Union{AbstractSpace,Nothing}
+end
+
+"""
+    ISP(force, β, γ, M, Δt)
+
+Set up the Langevin Impulse/ ISP (Izaguirre, Skeel, Pande) integrator integrator for inertial Langevin.
+
+### Fields
+
+* force   - In place gradient of the potential
+* β     - Inverse temperature
+* γ     - Damping Coefficient
+* M     - Mass (either scalar or vector)
+* Δt    - Time step
+"""
+function ISP(
+    force::FP,
+    β::TF,
+    γ::Union{TF,TM},
+    M::Union{TF,TM},
+    Δt::TF,
+    dim::Int64 = 1,
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+    c₀ = (1 - 0.5 * Δt * γ / M)
+    c₁ = 1.0 / (1 + 0.5 * Δt * γ / M)
+    σ = sqrt(2 * γ * Δt / β) / sqrt(M)
+    c₂ = c₀ * c₁
+    return ISP(force, β, γ, M, Δt, c₀, c₁, c₂, σ, dim, bc)
+end
+
+
 struct VEC{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
        VelocityVerletIntegrator
     force::FP

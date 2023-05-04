@@ -1,11 +1,11 @@
 
-abstract type AbstractIntegrator end
+abstract type AbstractLangevinIntegrator end
 
-abstract type OverdampedIntegrator <: AbstractIntegrator end
+abstract type OverdampedIntegrator <: AbstractLangevinIntegrator end
 abstract type HiddenOverdampedIntegrator <: OverdampedIntegrator end
 abstract type KernelOverdampedIntegrator <: OverdampedIntegrator end
 
-abstract type InertialIntegrator <: AbstractIntegrator end
+abstract type InertialIntegrator <: AbstractLangevinIntegrator end
 abstract type VelocityVerletIntegrator <: InertialIntegrator end
 abstract type PositionVerletIntegrator <: InertialIntegrator end
 
