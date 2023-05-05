@@ -1,10 +1,11 @@
-struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+struct BBK{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}, NP <: AbstractNoise} <:
        VelocityVerletIntegrator
+    Δt::TF
     force::FP
+    M::Union{TF,TFM}
     β::TF
     γ::TFM
-    M::Union{TF,TFM}
-    Δt::TF
+    noise::NP
     c₀::TFM
     c₁::TFM
     c₂::TFM
@@ -33,22 +34,27 @@ function BBK(
     M::Union{TF,TM},
     Δt::TF,
     dim::Int64 = 1,
+    noise= nothing:: Union{Nothing,AbstractNoise},
     bc::Union{AbstractSpace,Nothing} = nothing,
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     c₀ = (1 - 0.5 * Δt * γ / M)
     c₁ = 1.0 / (1 + 0.5 * Δt * γ / M)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
     c₂ = c₀ * c₁
-    return BBK(force, β, γ, M, Δt, c₀, c₁, c₂, σ, dim, bc)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return BBK(Δt,force, M, β, γ, noise, c₀, c₁, c₂, σ, dim, bc)
 end
 
-struct ISP{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+struct ISP{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}, NP <: AbstractNoise} <:
        VelocityVerletIntegrator
+    Δt::TF
     force::FP
+    M::Union{TF,TFM}
     β::TF
     γ::TFM
-    M::Union{TF,TFM}
-    Δt::TF
+    noise::NP
     c₀::TFM
     c₁::TFM
     c₂::TFM
@@ -76,24 +82,29 @@ function ISP(
     γ::Union{TF,TM},
     M::Union{TF,TM},
     Δt::TF,
-    dim::Int64 = 1,
+    dim::Int64 = 1,noise= nothing:: Union{Nothing,AbstractNoise},
     bc::Union{AbstractSpace,Nothing} = nothing,
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     c₀ = (1 - 0.5 * Δt * γ / M)
     c₁ = 1.0 / (1 + 0.5 * Δt * γ / M)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
     c₂ = c₀ * c₁
-    return ISP(force, β, γ, M, Δt, c₀, c₁, c₂, σ, dim, bc)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return ISP(Δt,force, M, β, γ, noise, c₀, c₁, c₂, σ, dim, bc)
 end
 
 
-struct VEC{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+struct VEC{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}, NP <: AbstractNoise} <:
        VelocityVerletIntegrator
+    Δt::TF
     force::FP
+    M::Union{TF,TFM}
     β::TF
     γ::TFM
-    M::Union{TF,TFM}
-    Δt::TF
+    noise::NP
+    noise2::NP
     c₁::TFM
     sc₂::TFM
     d₁::TFM
@@ -125,6 +136,7 @@ function VEC(
     M::Union{TF,TM},
     Δt::TF,
     dim::Int64 = 1,
+    noise= nothing:: Union{Nothing,AbstractNoise},
     bc::Union{AbstractSpace,Nothing} = nothing,
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     sc₂ = (1 - 0.5 * γ * Δt / M + 0.125 * (γ * Δt)^2 / M)
@@ -133,7 +145,10 @@ function VEC(
     d₂ = -0.25 * γ * Δt / sqrt(3)
     c₂ = sc₂ * sc₂
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
-    return VEC(force, β, γ, M, Δt, c₁, sc₂, d₁, d₂, c₂, σ, dim, bc)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return VEC(Δt,force, M, β, γ, noise, deepcopy(noise), c₁, sc₂, d₁, d₂, c₂, σ, dim, bc)
 end
 
 
@@ -145,7 +160,9 @@ function UpdateState!(state::VelocityVerletState, integrator::BBK; kwargs...)
     @. state.x += integrator.Δt * state.v_mid
     apply_space!(integrator.bc, state.x, state.v)
     nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
-    state.ξ .= integrator.σ * randn(integrator.dim)
+    # state.ξ .= integrator.σ * randn(integrator.dim)
+    generate_noise!(state.ξ, integrator.noise, state.x, state.v)
+    state.ξ .= integrator.σ * state.ξ
     state.v .=
         integrator.c₁ *
         (state.v_mid .+ 0.5 * integrator.Δt / integrator.M * state.f .+ 0.5 * state.ξ)
@@ -156,8 +173,14 @@ end
 
 
 function UpdateState!(state::VelocityVerletState, integrator::VEC; kwargs...)
-    state.ξ .= integrator.σ * randn.(integrator.dim)
-    state.ξ₂ .= integrator.σ * randn.(integrator.dim)
+    # state.ξ .= integrator.σ * randn.(integrator.dim)
+    # state.ξ₂ .= integrator.σ * randn.(integrator.dim)
+
+    generate_noise!(state.ξ, integrator.noise, state.x, state.v)
+    state.ξ .= integrator.σ * state.ξ
+    generate_noise!(state.ξ₂, integrator.noise2, state.x, state.v)
+    state.ξ₂ .= integrator.σ * state.ξ₂
+
     state.v_mid .=
         integrator.sc₂ * state.v .+ integrator.c₁ * state.f .+ integrator.d₁ * state.ξ .+
         integrator.d₂ * state.ξ₂

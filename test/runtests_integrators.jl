@@ -53,31 +53,31 @@ end
 
     @test state.x != [0.0]
 
-    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, "II")
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, type="II")
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
-    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, "III")
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, type="III")
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
-    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, "IV")
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, type="IV")
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
-    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, "V")
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, type="V")
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
 
     @test state.x != [0.0]
 
-    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, "VI")
+    integrator = GJ(force, 1.0, 1.0, 1.0, 1e-3, type="VI")
     state = InitState!([0.0], [0.0], integrator)
     UpdateState!(state, integrator)
 

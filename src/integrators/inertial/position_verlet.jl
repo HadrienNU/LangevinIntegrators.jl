@@ -15,9 +15,9 @@ struct PositionVerlet{
     TF<:AbstractFloat,
     TFM<:Union{TF,AbstractMatrix{TF}},
 } <: PositionVerletIntegrator
-    force::FP
-    M::TFM
     Δt::TF
+    force::FP
+    M::Union{TF,TFM}
     σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
@@ -28,18 +28,19 @@ struct PositionVerlet{
         dim::Int64 = 1,
         bc::Union{AbstractSpace,Nothing} = nothing,
     ) where {FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}}
-        new{FP,TF,TFM}(force, M, Δt, zero(M), dim, bc)
+        new{FP,TF,TFM}(Δt, force, M, zero(M), dim, bc)
     end
 end
 
 
-struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+struct ABOBA{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}},NP<:AbstractNoise} <:
        PositionVerletIntegrator
+    Δt::TF
     force::FP
+    M::Union{TF,TFM}
     β::TF
     γ::TFM
-    M::Union{TF,TFM}
-    Δt::TF
+    noise::NP
     c₂::TFM
     σ::TFM
     dim::Int64
@@ -66,11 +67,15 @@ function ABOBA(
     M::Union{TF,TM},
     Δt::TF,
     dim::Int64 = 1,
+    noise= nothing:: Union{Nothing,AbstractNoise},
     bc::Union{AbstractSpace,Nothing} = nothing,
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     c₂ = exp(-Δt * γ) / M
     σ = sqrt((1 - exp(-2 * γ * Δt)) / β) / sqrt(M)
-    return ABOBA(force, β, γ, M, Δt, c₂, σ, dim, bc)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return ABOBA(Δt,force, M, β, γ, noise, c₂, σ, dim, bc)
 end
 
 mutable struct PositionVerletState{TF<:AbstractFloat} <: AbstractInertialState
@@ -79,6 +84,7 @@ mutable struct PositionVerletState{TF<:AbstractFloat} <: AbstractInertialState
     x_mid::Vector{TF}
     f_mid::Vector{TF}
     ξ::Vector{TF}
+
     function PositionVerletState(
         x₀::Vector{TF},
         v₀::Vector{TF},
@@ -117,7 +123,8 @@ function UpdateState!(state::PositionVerletState, integrator::ABOBA; kwargs...)
     apply_space!(integrator.bc, state.x_mid, state.v)
     nostop = forceUpdate!(integrator.force, state.f_mid, state.x_mid; kwargs...)
     # Au passage il faudra rajouter ici un terme de métrique quand il est présent
-    state.ξ .= integrator.σ * randn(integrator.dim)
+    generate_noise!(state.ξ, integrator.noise, state.x, state.v)
+    state.ξ .= integrator.σ * state.ξ
     state.v .=
         integrator.c₂ * (state.v .+ 0.5 * integrator.Δt / integrator.M * state.f_mid) .+
         0.5 * integrator.Δt / integrator.M * state.f_mid .+ state.ξ

@@ -86,7 +86,46 @@ function memory_integral(
     end
     return vt.int_val
 end
-
+#
+# # Return
+# function KernelIntegrator(integrator::Type{LI},force::FP,
+# β::TF,
+# kernel::Array{TF},
+# M::Union{TF,TM},
+# Δt::TF,
+# dim::Int64 = 1,
+# noise= nothing:: Union{Nothing,AbstractNoise},
+# bc::Union{AbstractSpace,Nothing} = nothing,)  where {LI<:InertialIntegrator, FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+#
+#     # Buid MemoryNoise
+#
+#     #
+# end
+#
+# function GJF_Kernel(
+#     force::FP,
+#     β::TF,
+#     kernel::Array{TF},
+#     M::Union{TF,TM},
+#     Δt::TF,
+#     dim::Int64 = 1,
+#     bc::Union{AbstractSpace,Nothing} = nothing,
+# ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+#     return KernelIntegrator(GJF)
+# end
+#
+#
+# function BBK_Kernel(
+#     force::FP,
+#     β::TF,
+#     kernel::Array{TF},
+#     M::Union{TF,TM},
+#     Δt::TF,
+#     dim::Int64 = 1,
+#     bc::Union{AbstractSpace,Nothing} = nothing,
+# ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+#     return KernelIntegrator(BBK)
+# end
 
 mutable struct MemoryKernelState{TF<:AbstractFloat} <: AbstractMemoryKernelState
     x::Vector{TF}

@@ -1,10 +1,11 @@
-struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}} <:
+struct GJ{FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}},NP<:AbstractNoise} <:
        VelocityVerletIntegrator
+    Δt::TF
     force::FP
+    M::Union{TF,TFM}
     β::TF
     γ::TFM
-    M::Union{TF,TFM}
-    Δt::TF
+    noise::NP
     c₂::TFM
     sc₁::TFM
     d₁::TFM
@@ -33,9 +34,10 @@ function GJF(
     M::Union{TF,TM},
     Δt::TF,
     dim::Int64 = 1,
+    noise= nothing:: Union{Nothing,AbstractNoise},
     bc::Union{AbstractSpace,Nothing} = nothing,
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
-    return GJ(force, β, γ, M, Δt, "I", dim, bc)
+    return GJ(force, β, γ, M, Δt, dim, noise, bc, type="I")
 end
 
 """
@@ -59,9 +61,10 @@ function GJ(
     γ::Union{TF,TM},
     M::Union{TF,TM},
     Δt::TF,
-    type = "I",
     dim::Int64 = 1,
-    bc::Union{AbstractSpace,Nothing} = nothing,
+    noise= nothing:: Union{Nothing,AbstractNoise},
+    bc::Union{AbstractSpace,Nothing} = nothing;
+    type = "I",
 ) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
     #Faire un switch sur les valeur de type pour avoir les coeffs des autres GJ
     a = γ * Δt / M
@@ -83,13 +86,16 @@ function GJ(
     sc₁ = sqrt((1 + c₂) / 2)
     d₁ = sqrt((1 - c₂) / a)
     σ = sqrt(2 * γ * Δt / β) / sqrt(M)
-    return GJ(force, β, γ, M, Δt, c₂, sc₁, d₁, σ, dim, bc)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return GJ(Δt,force, M, β, γ, noise,  c₂, sc₁, d₁, σ, dim, bc)
 end
 
 
 function UpdateState!(state::VelocityVerletState, integrator::GJ; kwargs...)
-
-    state.ξ .= integrator.σ * randn(integrator.dim)
+    generate_noise!(state.ξ, integrator.noise, state.x, state.v_mid)
+    state.ξ .= integrator.σ * state.ξ
 
     state.v_mid .=
         integrator.sc₁ * state.v .+

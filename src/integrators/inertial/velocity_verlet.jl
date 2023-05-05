@@ -15,9 +15,9 @@ struct VelocityVerlet{
     TF<:AbstractFloat,
     TFM<:Union{TF,AbstractMatrix{TF}},
 } <: VelocityVerletIntegrator
-    force::FP
-    M::TFM
     Δt::TF
+    force::FP
+    M::Union{TF,TFM}
     σ::TFM
     dim::Int64
     bc::Union{AbstractSpace,Nothing}
@@ -28,7 +28,7 @@ struct VelocityVerlet{
         dim::Int64 = 1,
         bc::Union{AbstractSpace,Nothing} = nothing,
     ) where {FP<:AbstractForce,TF<:AbstractFloat,TFM<:Union{TF,AbstractMatrix{TF}}}
-        new{FP,TF,TFM}(force, M, Δt, zero(M), dim, bc)
+        new{FP,TF,TFM}(Δt,force, M,  zero(M), dim, bc)
     end
 end
 
