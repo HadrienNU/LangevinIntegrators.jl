@@ -84,6 +84,36 @@ function apply_fix!(
 end
 
 
+"""
+Stopper(at, direction)
+
+Stop the trajectory if the condition at is reached
+"""
+
+struct Stopper{TF<:AbstractFloat} <: AbstractFix # TODO, having dir as an array so arbitrary corner can be selected
+    at::Array{TF}
+    dir::Array{TF}
+    # function Stopper(at::Array{TF},dir::Array{TF}) where {TF<:AbstractFloat}
+    #     return new(at,dir) # Check that dimension are the same
+    # end
+end
+
+function Stopper(at::Array{TF}) where {TF<:AbstractFloat}
+    return  Stopper(at,ones(TF,size(at)))
+end
+
+
+function apply_fix!(
+    fix::Stopper,
+    x::Array{TF},
+    f::Array{TF};
+    kwargs...,
+) where {TF<:AbstractFloat}
+    return reduce(&,fix.dir.*(x-fix.at) .> 0)
+end
+
+
+
 function init_fix(fix::AbstractFix; kwargs...) # Different from the constructor as it is call at the start of each trajectory
     return fix
 end

@@ -8,9 +8,10 @@ function Harmonic(x::AbstractArray; ω₀::Float64 = 1.0)
     return 0.5 * ω₀ * dot(x, x)
 end
 
-function DoubleWell(x)
-    return (x[1]^2 - 1)^2
+function DoubleWell(x; a::Float64=1.0)
+    return a*(x[1]^2 - 1)^2
 end
+
 
 function Muller(x::AbstractArray)
 

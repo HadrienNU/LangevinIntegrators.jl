@@ -149,7 +149,7 @@ end
 
 function get_init_conditions(args::Dict, dim = 1)
     type = get(args, "type", "Constant")
-    if lowercase(type) in ["cste", "constant"]
+    if lowercase(type) in ["cst", "cste", "constant"]
         return Constant_InitCond(get(args, "val", zeros(dim)))
     elseif lowercase(type) in ["uniform", "random"]
         low = get(args, "low", zeros(dim))

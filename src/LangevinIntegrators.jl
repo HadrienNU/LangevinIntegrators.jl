@@ -51,6 +51,7 @@ export InitState!
 include("fixes.jl")
 
 export LWall, UWall, Quadratic
+export Stopper
 
 include("potentials.jl")
 include("force.jl")
