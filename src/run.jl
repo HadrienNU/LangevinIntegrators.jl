@@ -9,7 +9,7 @@ function generate_initial_conditions(
     integrator::S;
     params = TrajsParams(),
     init_conds_args = Dict(),
-) where {S<:AbstractIntegrator}
+) where {S<:AbstractLangevinIntegrator}
     init_conds = initialize_initcond(integrator, init_conds_args)
     state = InitState(integrator, init_conds; id = 1) # To get the type of the state
     init_states = Vector{typeof(state)}(undef, params.n_trajs)
@@ -34,7 +34,7 @@ function run_trajectory!(
     save_traj::Union{AbstractSave,Nothing} = nothing;
     params = TrajsParams(),
     kwargs...,
-) where {IS<:AbstractState,S<:AbstractIntegrator}
+) where {IS<:AbstractState,S<:AbstractLangevinIntegrator}
     n = 0
     for fix in integrator.force.fixes
         init_fix(fix; kwargs...)
@@ -69,7 +69,7 @@ function run_trajectories(
     params = TrajsParams(),
     init_conds_args = Dict(),
     kwargs...,
-) where {S<:AbstractIntegrator}
+) where {S<:AbstractLangevinIntegrator}
     init_states = generate_initial_conditions(
         integrator;
         params = params,
@@ -100,6 +100,7 @@ function run_trajectories(
             id_traj = n,
             kwargs...,
         )
+        GC.gc()
     end
     return save_trajs # This is a set of trajectories
 end
@@ -110,7 +111,7 @@ function run_fpt(
     params = TrajsParams(),
     init_conds_args = Dict(),
     kwargs...,
-) where {S<:AbstractIntegrator}
+) where {S<:AbstractLangevinIntegrator}
     init_states = generate_initial_conditions(
         integrator;
         params = params,
@@ -149,7 +150,7 @@ function run_transitions(
     params = TrajsParams(),
     init_conds_args = Dict(),
     kwargs...,
-) where {S<:LangevinIntegrators.AbstractIntegrator}
+) where {S<:LangevinIntegrators.AbstractLangevinIntegrator}
     init_states = generate_initial_conditions(
         integrator;
         params = params,

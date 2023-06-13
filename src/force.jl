@@ -13,7 +13,7 @@ function addFix!(force::FP, fix::AbstractFix) where {FP<:AbstractForce}
     return force
 end
 
-function addFix!(integrator::AbstractIntegrator, fix::AbstractFix) # Add it to the integrator
+function addFix!(integrator::AbstractLangevinIntegrator, fix::AbstractFix) # Add it to the integrator
     addFix!(integrator.force, fix)
 end
 
