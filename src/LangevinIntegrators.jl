@@ -100,6 +100,8 @@ include("integrators/hidden/hidden_em.jl")
 export EM_Hidden
 include("integrators/hidden/hidden_aboba.jl")
 export ABOBA_Hidden
+include("integrators/hidden/hidden_splitting.jl")
+export BAOAB_Hidden
 
 #MemoryKernel
 

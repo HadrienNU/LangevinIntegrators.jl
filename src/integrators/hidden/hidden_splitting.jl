@@ -5,11 +5,11 @@ struct BAOAB_Hidden{FP<:AbstractForce,TF<:AbstractFloat,TM} <:
     γ::Matrix{TF}
     M::TM
     Δt::TF
-    c₂::Matrix{TF}
-    c₂_vh::Matrix{TF}
-    c₂_hv::Matrix{TF}
-    c₂_hh::Matrix{TF}
-    σ::Matrix{TF}
+    c₂::Array{TF}
+    c₂_vh::Array{TF}
+    c₂_hv::Array{TF}
+    c₂_hh::Array{TF}
+    σ::Array{TF}
     dim::Int64
     dim_tot::Int64
     bc::Union{AbstractSpace,Nothing}
@@ -30,8 +30,8 @@ Set up the BAOAB_Hidden integrator for underdamped Langevin with hidden variable
 """
 function BAOAB_Hidden(
     force::FP,
-    C::Array{TF},
     A::Array{TF},
+    C::Array{TF},
     M::TM,
     Δt::TF,
     dim::Int,
