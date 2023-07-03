@@ -12,7 +12,7 @@ let
     force = ForceFromPotential("Flat")
     integrator = EM(force, 1.0, 0.001)
     params = TrajsParams()
-    state = InitState(integrator, params)
+    state = InitState(integrator)
     addPlumed!(integrator, "plumed.dat", "plumed.log")
 
     traj = TrajectorySave(

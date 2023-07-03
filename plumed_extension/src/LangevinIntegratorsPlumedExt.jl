@@ -2,7 +2,7 @@ module LangevinIntegratorsPlumedExt
 using CBinding
 
 import LangevinIntegrators: AbstractFix, init_fix, apply_fix!, close_fix
-import LangevinIntegrators: AbstractIntegrator, addFix!
+import LangevinIntegrators: AbstractLangevinIntegrator, addFix!
 
 path_plumed = get(ENV, "PLUMED_INCLUDE_PATH", "/usr/local/include")
 
@@ -209,7 +209,7 @@ Set up plumed from plumed_input_file script and add it to the integrator as a fi
 
 """
 function addPlumed!(
-    integrator::AbstractIntegrator,
+    integrator::AbstractLangevinIntegrator,
     plumed_input_file::String,
     plumed_log_file::String = "p.log";
     temperature = 1.0,
