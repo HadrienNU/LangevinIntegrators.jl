@@ -27,4 +27,5 @@ struct GJ <: StochasticDiffEqAlgorithm
   type::String
 end
 GJ(;type="I") = GJ(type)
-GJF()=GJ("II")
+# GJF()=GJ("II")
+# Ou aors via GJ{I},etc..
