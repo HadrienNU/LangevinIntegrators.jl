@@ -1,0 +1,18 @@
+name = "LangevinDiffEq"
+uuid = "ae036c66-2ee6-4ba6-b8dd-46a5ac88ed96"
+authors = ["Hadrien <hadrien@langevin>"]
+version = "0.1.0"
+
+[deps]
+DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
+DiffEqDevTools = "f3b72e0c-5b89-59e1-b016-84e28bfd966d"
+DiffEqNoiseProcess = "77a26b50-5914-5dd7-bc55-306e6241c503"
+MuladdMacro = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+RecursiveArrayTools = "731186ca-8d62-57ce-b412-fbd966d074cd"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
+StochasticDiffEq = "789caeaf-c7a9-5a7d-9973-96adeb23e2a0"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"

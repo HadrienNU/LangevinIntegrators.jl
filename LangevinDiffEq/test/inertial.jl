@@ -1,13 +1,10 @@
-# En fait on va commencer par écrire les tests
-
-# Tests existants pour BAOAB
-using StochasticDiffEq, DiffEqNoiseProcess, Test, DiffEqDevTools, Random
+using LangevinDiffEq, DiffEqNoiseProcess, Test, DiffEqDevTools, Random
 Random.seed!(1)
 
 f1_harmonic(v,u,p,t) = -u
 f2_harmonic(v,u,p,t) = v
 γ = 1
-g(u,p,t) = γ # Ca devrait être gamma ? On doit poiuvoir dans un second implémenter une version de l'aglo qui a gamma constant
+g(u,p,t) = γ 
 
 
 @testset "Scalar u" begin
@@ -15,7 +12,7 @@ g(u,p,t) = γ # Ca devrait être gamma ? On doit poiuvoir dans un second implém
     v0 = 1
 
     ff_harmonic = DynamicalSDEFunction(f1_harmonic,f2_harmonic,g)
-    prob1 = DynamicalSDEProblem(ff_harmonic,ff_harmonic.g,v0,u0,(0.0,5.0))
+    prob1 = DynamicalSDEProblem(ff_harmonic,g,v0,u0,(0.0,5.0))
 
     dts = (1/2) .^ (8:-1:4)
 
@@ -36,10 +33,10 @@ end
 
     ff_harmonic = DynamicalSDEFunction(f1_harmonic,f2_harmonic,g)
     prob1 = DynamicalSDEProblem(ff_harmonic,g,v0,u0,(0.0,5.0))
-    sol1 = solve(prob1,BAOAB(gamma=γ);dt=1/10,save_noise=true)
+    sol1 = solve(prob1,GJ();dt=1/10,save_noise=true)
 
     prob2 = DynamicalSDEProblem(f1_harmonic_iip,f2_harmonic_iip,g_iip,v0,u0,(0.0,5.0); noise=NoiseWrapper(sol1.W))
-    sol2 = solve(prob2,BAOAB(gamma=γ);dt=1/10)
+    sol2 = solve(prob2,GJ();dt=1/10)
 
     @test sol1[:] ≈ sol2[:]
 
