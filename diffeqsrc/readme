@@ -1,0 +1,36 @@
+Pour le problème on va prendre directement DynamicalSDEFunction et DynamicalSDEProblem qui ont tout ce qu'il faut dedans
+
+Gamma est dans le problème dynamique, à voir si on peut le récupérer dans l'initialisation et dire si c'est constant ou pas
+
+
+Donc on doit juste ajouter un algo qui résoud ce problème
+
+A ajouter:
+GJ(type=??)
+ABOBA
+BAOAB (mais corectement implémenté)
+OBABO
+BBK
+ISP
+VEC (en priorité)
+
+
+Les Verlets y sont déjà
+
+
+Ce sont les fonction alg_cache qui font la conversion entre le type de l'intégrateur et le cache qui est passé à perfrom_step
+Donc ce sont aussi les fct d'initialisation de l'intégrateur
+Donc on met le code d'initialisation de l'intégrateur dans alg_cache
+
+initialize! dans perfor_step, ca a l'air d'être le code d'initialisation d'une trajectoire donc probalement équivalene à InitState!
+
+et Update step dabs perform_step
+
+
+
+
+Et il faut aussi écrire tout un temps de fonction build_problem_overdamped, build problem_underdamped, ... pour contruire les fonction et problèmes à partir des forces etc..
+En fait il faut surtout construire les fonctions puisque les problèmes se crée à partir des conditions initiales
+
+
+Comme ça on peut facilement matcher le code déjà écris avec DiffEq.jl

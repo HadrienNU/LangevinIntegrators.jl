@@ -66,6 +66,7 @@ function InitState!(x₀, v₀, integrator::VVI) where {VVI<:VelocityVerletInteg
         throw(ArgumentError("Mismatch of dimension in state initialization"))
     end
     f = forceUpdate(integrator.force, x₀)
+
     return VelocityVerletState(x₀, v₀, f, integrator.σ)
 end
 

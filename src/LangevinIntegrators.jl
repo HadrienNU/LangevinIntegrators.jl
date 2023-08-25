@@ -85,6 +85,7 @@ export VelocityVerlet
 include("integrators/inertial/taylor.jl")
 export BBK
 export VEC
+export VECSp
 include("integrators/inertial/splitting.jl")
 export BAOAB
 export OBABO

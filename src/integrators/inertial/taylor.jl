@@ -192,3 +192,83 @@ function UpdateState!(state::VelocityVerletState, integrator::VEC; kwargs...)
         integrator.d₁ * state.ξ .+ integrator.d₂ * state.ξ₂
     return nostop
 end
+
+
+
+struct VECSp{FP<:AbstractForce,TF<:AbstractFloat, NP <: AbstractNoise} <:
+       VelocityVerletIntegrator
+    Δt::TF
+    force::FP
+    M::TF
+    β::TF
+    γ::Function
+    noise::NP
+    noise2::NP
+    c₁::Function
+    sc₂::Function
+    d₁::Function
+    d₂::Function
+    c₂::Function
+    σ::Function
+    dim::Int64
+    bc::Union{AbstractSpace,Nothing}
+end
+
+"""
+    VECSp(force, β, γ, M, Δt)
+
+Set up the Vanden-Eijnden Ciccotti integrator for inertial Langevin.
+Taken from "Second-order integrators for Langevin equations with holonomic constraints" doi: 10.1016/j.cplett.2006.07.086
+
+### Fields
+
+* force   - In place gradient of the potential
+* β     - Inverse temperature
+* γ     - Damping Coefficient
+* M     - Mass (either scalar or vector)
+* Δt    - Time step
+"""
+function VECSp(
+    force::FP,
+    β::TF,
+    γ::Function,
+    M::Union{TF,TM},
+    Δt::TF,
+    dim::Int64 = 1,
+    noise= nothing:: Union{Nothing,AbstractNoise},
+    bc::Union{AbstractSpace,Nothing} = nothing,
+) where {FP<:AbstractForce,TF<:AbstractFloat,TM<:AbstractMatrix{TF}}
+    sc₂ = x-> (1 - 0.5 * γ(x) * Δt / M + 0.125 * (γ(x)* Δt)^2 / M)
+    c₁ = x-> 0.5 * Δt * (1 - 0.25 * γ(x) * Δt) / M
+    d₁ = x-> 0.5 * (1 - 0.25 * γ(x) * Δt)
+    d₂ = x-> -0.25 * γ(x) * Δt / sqrt(3)
+    c₂ = x-> sc₂(x) * sc₂(x)
+    σ = x-> sqrt(2 * γ(x) * Δt / β) / sqrt(M)
+    if isnothing(noise)
+        noise=GaussianNoise(dim)
+    end
+    return VECSp(Δt,force, M, β, γ, noise, deepcopy(noise), c₁, sc₂, d₁, d₂, c₂, σ, dim, bc)
+end
+
+
+
+function UpdateState!(state::VelocityVerletState, integrator::VECSp; kwargs...)
+    # state.ξ .= integrator.σ * randn.(integrator.dim)
+    # state.ξ₂ .= integrator.σ * randn.(integrator.dim)
+
+    generate_noise!(state.ξ, integrator.noise, state.x, state.v)
+    state.ξ .= integrator.σ(state.x) * state.ξ
+    generate_noise!(state.ξ₂, integrator.noise2, state.x, state.v)
+    state.ξ₂ .= integrator.σ(state.x) * state.ξ₂
+
+    state.v_mid .=
+        integrator.sc₂(state.x) * state.v .+ integrator.c₁(state.x) * state.f .+ integrator.d₁(state.x) * state.ξ .+
+        integrator.d₂(state.x) * state.ξ₂
+    @. state.x += integrator.Δt * (state.v_mid + (0.5 / sqrt(3)) * state.ξ₂)
+    apply_space!(integrator.bc, state.x, state.v)
+    nostop = forceUpdate!(integrator.force, state.f, state.x; kwargs...)
+    state.v .=
+        integrator.sc₂(state.x) * state.v_mid .+ integrator.c₁(state.x) * state.f .+
+        integrator.d₁(state.x) * state.ξ .+ integrator.d₂(state.x) * state.ξ₂
+    return nostop
+end
