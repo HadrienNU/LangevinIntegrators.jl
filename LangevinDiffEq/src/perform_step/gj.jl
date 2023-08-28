@@ -25,23 +25,23 @@ function initialize!(integrator, cache::GJConstantCache)
 
   a = γ * dt
   if integrator.alg.type == "I"
-      c₂ = (1 - 0.5 * a) / (1 + 0.5 * a)
+      c₂ = (1 .- 0.5 * a) ./ (1 .+ 0.5 * a)
   elseif integrator.alg.type == "II"
-      c₂ = exp(-a)
+      c₂ = exp.(-a)
   elseif integrator.alg.type == "III"
-      c₂ = 1 - a
+      c₂ = 1 .- a
   elseif integrator.alg.type == "IV"
-      c₂ = (sqrt(1 + 4 * a) - 1) / (2 * a)
+      c₂ = (sqrt.(1 .+ 4 * a) .- 1) ./ (2 * a)
   elseif integrator.alg.type == "V"
-      c₂ = 1 / (1 + a)
+      c₂ = 1 ./ (1 .+ a)
   elseif integrator.alg.type == "VI"
-      c₂ = 1 / (1 + 0.5 * a)^2
+      c₂ = 1 ./ (1 .+ 0.5 * a).^2
   else # Raise an error
       println("Unknown GJ type")
   end
-  cache.sc₁ = sqrt((1 + c₂) / 2)
-  cache.d₁ = sqrt((1 - c₂) / a)
-  cache.σ = sqrt(2 * γ * dt)
+  @. cache.sc₁ = sqrt((1 + c₂) / 2)
+  @. cache.d₁ = sqrt((1 - c₂) / a)
+  @. cache.σ = sqrt(2 * γ * dt)
 end
 
 function initialize!(integrator, cache::GJCache)
@@ -52,27 +52,27 @@ function initialize!(integrator, cache::GJCache)
   verify_f2(integrator.f.f2, cache.k, du1, u1, p, t, integrator, cache)
   integrator.f.f1(cache.k,du1,u1,p,t)
 
-  γ=integrator.g(u1,p,t)
+  γ=integrator.g(du1,u1,p,t)
 
-  a = γ * dt
+  a = γ .* dt
   if integrator.alg.type == "I"
-      c₂ = (1 - 0.5 * a) / (1 + 0.5 * a)
+      c₂ = (1 .- 0.5 * a) ./ (1 .+ 0.5 * a)
   elseif integrator.alg.type == "II"
-      c₂ = exp(-a)
+      c₂ = exp.(-a)
   elseif integrator.alg.type == "III"
-      c₂ = 1 - a
+      c₂ = 1 .- a
   elseif integrator.alg.type == "IV"
-      c₂ = (sqrt(1 + 4 * a) - 1) / (2 * a)
+      c₂ = (sqrt.(1 .+ 4 * a) .- 1) ./ (2 * a)
   elseif integrator.alg.type == "V"
-      c₂ = 1 / (1 + a)
+      c₂ = 1 ./ (1 .+ a)
   elseif integrator.alg.type == "VI"
-      c₂ = 1 / (1 + 0.5 * a)^2
+      c₂ = 1 ./ (1 .+ 0.5 * a).^2
   else # Raise an error
       println("Unknown GJ type")
   end
-  cache.sc₁ = sqrt((1 + c₂) / 2)
-  cache.d₁ = sqrt((1 - c₂) / a)
-  cache.σ = sqrt(2 * γ * dt / β)
+  @. cache.sc₁ = sqrt((1 + c₂) / 2)
+  @. cache.d₁ = sqrt((1 - c₂) / a)
+  @. cache.σ = sqrt(2 * γ * dt ) #/ β
 end
 
 
@@ -99,25 +99,22 @@ end
 
 @muladd function perform_step!(integrator,cache::GJCache,f=integrator.f)
   @unpack t,dt,sqdt,uprev,u,p,W = integrator
-  @unpack utmp, dutmp, k, gtmp, noise, half, c₂, sc₁, d₁, σ = cache
+  @unpack dutmp, k, gtmp, noise, half, c₂, sc₁, d₁, σ = cache
   du1 = uprev.x[1]
   u1 = uprev.x[2]
 
-  # B
-  @.. dutmp = du1 + half*dt*k
+  integrator.g(gtmp,u1,p,t+dt*half)
+  @.. noise = σ*W.dW / sqdt
 
-  # A
-  @.. utmp = u1 + half*dt*dutmp
+  # vt+1/2
+  @.. dutmp =  sc₁ * du1 + d₁ * half*dt * k +  half * d₁ * noise
 
-  # O
-  integrator.g(gtmp,utmp,p,t+dt*half)
-  @.. noise = gtmp*W.dW / sqdt
-  @.. dutmp = c1*dutmp + c2*noise
+  # xt+1
+  @.. u.x[2] = u1 + d₁ * dt * dutmp
 
-  # A
-  @.. u.x[2] = utmp + half*dt*dutmp
 
-  # B
-  f.f1(k,dutmp,u.x[2],p,t+dt)
-  @.. u.x[1] = dutmp + half*dt*k
+  # vt+1
+  k = f.f1(k,dutmp,u.x[2],p,t+dt)
+  @.. u.x[1] = ( c₂ * dutmp + half *  dt * d₁ * k  + half * d₁ * noise ) / sc₁
+
 end

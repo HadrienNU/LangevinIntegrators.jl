@@ -27,4 +27,4 @@ GJ(;type="I") = GJ(type)
 # Ou aors via GJ{I},etc..
 
 
-alg_compatible(prob::DiffEqBase.AbstractSDEProblem,alg::GJ) = true  # Ca devrait être is split problem
+alg_compatible(prob::DiffEqBase.AbstractSDEProblem,alg::GJ) = is_diagonal_noise(prob)  # Ca devrait être is split problem

@@ -22,12 +22,21 @@ Ce sont les fonction alg_cache qui font la conversion entre le type de l'intégr
 Donc ce sont aussi les fct d'initialisation de l'intégrateur
 Donc on met le code d'initialisation de l'intégrateur dans alg_cache
 
-initialize! dans perfor_step, ca a l'air d'être le code d'initialisation d'une trajectoire donc probalement équivalene à InitState!
+initialize! dans perform_step, ca a l'air d'être le code d'initialisation d'une trajectoire donc probalement équivalene à InitState!
 
 et Update step dabs perform_step
 
 
+A changer dans StochasticDiffEq.jl __init(),
+if prob.f isa DynamicalSDEFunction
+    noise_rate_prototype = rate_prototype.x[1]
 
+en
+if is_diagonal_noise(prob)
+  if prob.f isa DynamicalSDEFunction
+      noise_rate_prototype = rate_prototype.x[1]
+
+Pour avoir la possibilité d'avoir des matrices de bruit
 
 Et il faut aussi écrire tout un temps de fonction build_problem_overdamped, build problem_underdamped, ... pour contruire les fonction et problèmes à partir des forces etc..
 En fait il faut surtout construire les fonctions puisque les problèmes se crée à partir des conditions initiales

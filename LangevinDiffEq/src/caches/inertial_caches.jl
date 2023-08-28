@@ -13,7 +13,6 @@ mutable struct GJConstantCache{uType,uMatrixType,uEltypeNoUnits} <: StochasticLa
 end
 
 @cache struct GJCache{uType,uMatrixType,uEltypeNoUnits,rateNoiseType,uTypeCombined} <: StochasticLangevinEqMutableCache
-  utmp::uType
   dutmp::uType
   k::uType
   gtmp::uType
@@ -32,13 +31,12 @@ function alg_cache(alg::GJ,prob,u,ΔW,ΔZ,p,rate_prototype,noise_rate_prototype,
   sc₁ = zero(noise_rate_prototype)
   d₁ = zero(noise_rate_prototype)
   σ = zero(noise_rate_prototype)
-
+  println("ConstantCache ",rate_prototype," ",noise_rate_prototype)
   GJConstantCache(k, uEltypeNoUnits(1//2), c₂, sc₁, d₁, σ)
 end
 
 function alg_cache(alg::GJ,prob,u,ΔW,ΔZ,p,rate_prototype,noise_rate_prototype,jump_rate_prototype,::Type{uEltypeNoUnits},::Type{uBottomEltypeNoUnits},::Type{tTypeNoUnits},uprev,f,t,dt,::Type{Val{true}}) where {uEltypeNoUnits,uBottomEltypeNoUnits,tTypeNoUnits}
   dutmp = zero(u.x[1])
-  utmp = zero(u.x[2])
   k = zero(rate_prototype.x[2])
 
   gtmp = zero(noise_rate_prototype)
@@ -50,5 +48,6 @@ function alg_cache(alg::GJ,prob,u,ΔW,ΔZ,p,rate_prototype,noise_rate_prototype,
   d₁ = zero(noise_rate_prototype)
   σ = zero(noise_rate_prototype)
   tmp = zero(u)
-  GJCache(utmp, dutmp, k, gtmp, noise, half, c₂, sc₁, d₁, σ,tmp)
+  println("Cache ",rate_prototype," ",noise_rate_prototype)
+  GJCache(dutmp, k, gtmp, noise, half, c₂, sc₁, d₁, σ,tmp)
 end
