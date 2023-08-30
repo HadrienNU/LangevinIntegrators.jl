@@ -1,4 +1,7 @@
-Pour le problème on va prendre directement DynamicalSDEFunction et DynamicalSDEProblem qui ont tout ce qu'il faut dedans
+Pour le problème on va prendre directement DynamicalSDEFunction et DynamicalSDEProblem qui ont tout ce qu'il faut dedans.
+
+En fait, il va falloir créer un nouveau type de problème pour pouvoir séparer gamma(x) et sigma(x) dans le problème et permettre une évaluation indépendante des 2 fonctions.
+
 
 Gamma est dans le problème dynamique, à voir si on peut le récupérer dans l'initialisation et dire si c'est constant ou pas
 
