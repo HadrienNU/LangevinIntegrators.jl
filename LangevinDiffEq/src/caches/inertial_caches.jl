@@ -1,8 +1,3 @@
-
-abstract type StochasticLangevinEqConstantCache <: StochasticDiffEqConstantCache end # Pourquoi faire ça, Si c'est pour avoir une seul function de check dans initialize!
-abstract type StochasticLangevinEqMutableCache <: StochasticDiffEqMutableCache end
-
-
 mutable struct GJConstantCache{uType, rateNoiseType,uEltypeNoUnits} <: StochasticLangevinEqConstantCache
   type::String
   k::uType  #Force at previous timestep

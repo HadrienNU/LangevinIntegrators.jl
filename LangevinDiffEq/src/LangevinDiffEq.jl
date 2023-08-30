@@ -59,6 +59,11 @@ macro cache(expr)
   end
 end
 
+
+abstract type StochasticLangevinEqConstantCache <: StochasticDiffEqConstantCache end # Pourquoi faire ça, Si c'est pour avoir une seul function de check dans initialize!
+abstract type StochasticLangevinEqMutableCache <: StochasticDiffEqMutableCache end
+
+
 include("caches/inertial_caches.jl")
 include("caches/splitting_caches.jl")
 
