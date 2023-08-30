@@ -16,7 +16,3 @@ const is_APPVEYOR = Sys.iswindows() && haskey(ENV,"APPVEYOR")
   if !is_APPVEYOR && (GROUP == "All" || GROUP == "AlgConvergence")
     @time @safetestset "Dynamical SDE Tests" begin include("inertial.jl") end
   end
-
-
-
-end

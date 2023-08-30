@@ -8,18 +8,19 @@ using RecursiveArrayTools
 import StochasticDiffEq: StochasticDiffEqAlgorithm, StochasticDiffEqConstantCache, StochasticDiffEqMutableCache,is_diagonal_noise
 
 # Functions to be extanded
-import StochasticDiffEq: alg_cache, initialize!, perform_step!, alg_compatible
+import StochasticDiffEq: alg_cache, initialize!, perform_step!, alg_compatible,@cache
 
 using DiffEqBase: @..
 
 using UnPack, MuladdMacro
 # On pourrait aussi faire @importall(StochasticDiffEq), en utilisant la package ImportAll.jl
 
+using Memoization
+
 include("algorithms.jl")
 
-export GJ
-
-
+export GJ, VEC
+export ABOBA,BAOAB, OBABO
 
 
 macro cache(expr)
@@ -59,7 +60,11 @@ macro cache(expr)
 end
 
 include("caches/inertial_caches.jl")
+include("caches/splitting_caches.jl")
+
+include("perform_step/dynamical.jl")
 include("perform_step/gj.jl")
+include("perform_step/splitting.jl")
 
 
 end # module LangevinDiffEq
