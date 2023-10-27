@@ -59,6 +59,8 @@ export ForceFromPotential
 export ForceFromBasis
 export ForceFromSplines
 export ForceFromScipySplines
+export ForceFrom1DInterpolation
+export ForceFrom1DSpline
 
 export force_eval
 

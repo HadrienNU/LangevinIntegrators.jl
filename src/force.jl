@@ -166,6 +166,38 @@ function ForceFromSplines(
 end
 
 
+function ForceFrom1DInterpolation(
+    x::Vector{TF}, y::Vector{TF}, k::Int;
+    der = 0,
+) where {TF<:AbstractFloat}
+    ndim = 1
+    basis = Vector{SplineExtrapolation}(undef, ndim)
+    for d = 1:ndim
+        basis[d] = BSplineKit.SplineExtrapolations.extrapolate(
+            BSplineKit.Derivative(der) * interpolate(x,y, BSplineOrder(k + 1)),
+            BSplineKit.SplineExtrapolations.Smooth(),
+        )
+    end
+    return ForceFromSplines(basis, ndim, Vector{AbstractFix}(undef, 0))
+end
+
+
+function ForceFrom1DSpline(
+    spline;
+    der = 0,
+)
+    ndim = 1
+    basis = Vector{SplineExtrapolation}(undef, ndim)
+    for d = 1:ndim
+        basis[d] = BSplineKit.SplineExtrapolations.extrapolate(
+            BSplineKit.Derivative(der) *spline,
+            BSplineKit.SplineExtrapolations.Smooth(),
+        )
+    end
+    return ForceFromSplines(basis, ndim, Vector{AbstractFix}(undef, 0))
+end
+
+
 #
 # struct ForceFromScipySplines <: AbstractForceFromBasis  # use Scipy
 # 	basis::Array#{Splines}
